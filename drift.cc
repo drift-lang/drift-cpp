@@ -286,20 +286,26 @@ namespace lexer {
 //    start
     void Lexer::tokenizer() {
         while (!this->isEnd()) {
+//            first to skip whitespace
             if (isSpace()) skipWhitespace();
-
+//            identifier
             if (isIdent())
                 this->lexIdent();
+//            digit
             else if (isDigit())
                 this->lexDigit();
+//            string
             else if (now() == '"')
                 this->lexString();
+//            character
             else if (now() == '\'')
                 this->lexChar();
+//            symbol
             else
                 this->lexSymbol();
         }
         this->tokens.push_back(
+//            resolve end insert EFF for end of file
             token::Token{token::EFF, "EFF", ++this->line}
         );
     }
@@ -370,6 +376,7 @@ namespace lexer {
 
         this->tokens.push_back(
             token::Token{
+//                keyword or IDENT
                 token::getKeyword(literal.str()),
                 literal.str(),
                 this->line
@@ -390,42 +397,57 @@ namespace lexer {
         }
 
         this->tokens.push_back(
+//            number
             token::Token{token::NUM, literal.str(), this->line});
     }
 
 //    resolve string literal
     void Lexer::lexString() {
         std::stringstream literal;
+        bool isEndFile = false;
 
+//        skip left double quotation mark
         this->position++;
 
         while (!isEnd()) {
             if (now() == '"') {
+//                end string
                 this->position++;
+                isEndFile = true;
                 break;
             }
             literal << now();
             this->position++;
         }
 
+//        missing closing double quote
+        if (!isEndFile)
+            throw exp::Exp(exp::INVALID_SYNTAX,
+                           "missing closing double quote", this->line);
+
         this->tokens.push_back(
+//            string
             token::Token{token::STR, literal.str(), this->line});
     }
-    
+
 //    resolve character
     void Lexer::lexChar() {
         std::stringstream literal;
 
+//        skip left single quotation mark
         this->position++;
 
         literal << now();
 
         if (peek() != '\'')
+//            this character is empty
             throw exp::Exp(exp::INVALID_SYNTAX, "", this->line);
         else
+//            skip value and right single quotation mark
             this->position += 2;
 
         this->tokens.push_back(
+//            character
             token::Token{token::CHAR, literal.str(), this->line});
     }
 
@@ -463,7 +485,7 @@ namespace lexer {
                 if (peek() == '=') {
                     tok.kind = token::AS_ADD;
                     tok.literal = "+=";
-                    
+
                     this->position++;
 //                    ++
                 } else if (peek() == '+') {
