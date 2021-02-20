@@ -9,6 +9,8 @@
 //
 //          https://github.com/bingxio/drift
 //
+//          https://www.drift-lang.org/
+//
 
 #include <iostream>
 #include <vector>
@@ -16,6 +18,8 @@
 #include <exception>
 #include <fstream>
 #include <map>
+
+#include <cstring>
 
 // tokens
 namespace token {
@@ -84,7 +88,7 @@ namespace token {
     END,
     IF,
     EIF,
-    ELS,
+    NAF,
     FOR,
     DO,
     OUT,
@@ -112,7 +116,7 @@ namespace token {
 //    keywords
     "USE", "DEF", "PUB", "RET",
     "AND", "END", "IF", "EIF",
-    "ELS", "FOR", "DO", "OUT",
+    "NAF", "FOR", "DO", "OUT",
     "TIN", "NEW", "MOD", "AS"
   };
 
@@ -152,7 +156,7 @@ namespace token {
     keyword["end"] = END; // 6
     keyword["if"] = IF;   // 7
     keyword["eif"] = EIF; // 8
-    keyword["els"] = ELS; // 9
+    keyword["naf"] = NAF; // 9
     keyword["for"] = FOR; // 10
     keyword["do"] = DO;   // 11
     keyword["out"] = OUT; // 12
@@ -581,6 +585,7 @@ namespace lexer {
       case '_':
         tok.kind = token::UNDERLINE;
         break;
+        break;
       default:
 //        what
         throw exp::Exp(exp::UNKNOWN_SYMBOL,
@@ -618,23 +623,174 @@ namespace lexer {
 
 // abstract syntax tree
 namespace ast {
+//  types for drift
+  enum TypeKind {
+    T_INT,    // int
+    T_FLOAT,  // float
+    T_STR,    // str
+    T_CHAR,   // char
+    T_BOOL,   // bool
+    T_LIST,   // []<T>
+    T_MAP,    // <T1, T2>
+    T_TUPLE,  // (T)
+    T_USER,   // user
+  };
+
+//  basic type for drift
+//
+#define S_INT   "int"   // 1
+#define S_FLOAT "float" // 2
+#define S_STR   "str"   // 3
+#define S_CHAR  "char"  // 4
+#define S_BOOL  "bool"  // 5
+
+//  TYPE
+  class Type {
+    public:
+//      stringer
+      virtual std::string stringer() = 0;
+//      kind of basic type
+      virtual TypeKind kind() = 0;
+  };
+
+//  <int>
+  class Int : public Type {
+    public:
+      std::string stringer() override { return "<Int>"; }
+
+      TypeKind kind() override { return T_INT; }
+  };
+
+//  float
+  class Float : public Type {
+    public:
+      std::string stringer() override { return "<Float>"; }
+
+      TypeKind kind() override { return T_FLOAT; }
+  };
+
+//  str
+  class Str : public Type {
+    public:
+      std::string stringer() override { return "<Str>"; }
+
+      TypeKind kind() override { return T_STR; }
+  };
+
+//  char
+  class Char : public Type {
+    public:
+      std::string stringer() override { return "<Char>"; }
+
+      TypeKind kind() override { return T_CHAR; }
+  };
+
+//  bool
+  class Bool : public Type {
+    public:
+      std::string stringer() override { return "<Bool>"; }
+
+      TypeKind kind() override { return T_BOOL; }
+  };
+
+//  list (not keyword, for compiler analysis)
+//  []<type>
+  class List : public Type {
+    public:
+      Type *T;  // type for elements
+
+      explicit List(Type *T) : T(T) {}
+
+      std::string stringer() override {
+        return "<list T=" + T->stringer() + " }>";
+      }
+
+      TypeKind kind() override { return T_LIST; }
+  };
+
+//  map (not keyword, for compiler analysis)
+//  <type, type>
+  class Map : public Type {
+    public:
+      Type *T1; // K
+      Type *T2; // V
+
+      explicit Map(Type *T1, Type *T2) : T1(T1), T2(T2) {}
+
+      std::string stringer() override {
+        return "<Map T1=" + T1->stringer() + " T2=" + T2->stringer() + " }>";
+      }
+
+      TypeKind kind() override { return T_MAP; }
+  };
+
+//  tuple (not keyword, for compiler analysis)
+//  (type)
+  class Tuple : public Type {
+    public:
+      Type *T;  // type for elements
+
+      explicit Tuple(Type *T) : T(T) {}
+
+      std::string stringer() override {
+        return "<Tuple T=" + T->stringer() + " }>";
+      }
+
+      TypeKind kind() override { return T_TUPLE; }
+  };
+
+//  user definition type
+//  `type`
+  class User : public Type {
+    public:
+      token::Token name;
+
+      explicit User(token::Token name) {
+        this->name = std::move(name);
+      }
+
+      std::string stringer() override {
+        return "<User Name='" + name.literal + "' }>";
+      }
+
+      TypeKind kind() override { return T_USER; }
+  };
+
 //  ast types
   enum Kind {
 //    expression
-    EXPR_LITERAL,
-    EXPR_BINARY,
-    EXPR_GROUP,
-    EXPR_UNARY,
-    EXPR_NAME,
+    EXPR_LITERAL,   // literal
+    EXPR_BINARY,    // T1 <OP> T2
+    EXPR_GROUP,     // (EXPR)
+    EXPR_UNARY,     // <OP>EXPR
+    EXPR_NAME,      // IDENT
+    EXPR_CALL,      // EXPR(<EXPR>..)
+    EXPR_GET,       // EXPR.NAME
+    EXPR_LIST,      // [<EXPR>..]
+    EXPR_MAP,       // {K1: V1, K2: V2}
+    EXPR_TUPLE,     // (<EXPR>..)
+    EXPR_INDEX,     // EXPR[EXPR]
 //    statement
-    STMT_EXPR
+    STMT_EXPR,      // EXPR
+    STMT_VAR,       // def <name>: <type> = <expr>
+    STMT_IF,        // IF
+    STMT_FOR,       // FOR
+    STMT_DO,        // DO
+    STMT_OUT,       // OUT
+    STMT_TIN,       // TIN
+    STMT_FUNC,      // FUNC
+    STMT_WHOLE,     // CLASS | ENUM | INTERFACE
+    STMT_NEW,       // NEW
+    STMT_AND,       // AND
+    STMT_MOD,       // MOD
+    STMT_USE        // USE
   };
 
 //  abstract expr
   class Expr {
     public:
 //      return string of expr
-      virtual std::string toString() = 0;
+      virtual std::string stringer() = 0;
 //      return kind of expr
       virtual Kind kind() = 0;
   };
@@ -649,14 +805,14 @@ namespace ast {
         this->token = std::move(tok);
       }
 
-      std::string toString() override {
+      std::string stringer() override {
         return "<LiteralExpr { Token='" + token.literal + "' }>";
       }
 
       Kind kind() override { return EXPR_LITERAL; }
   };
 
-//  <expr> <operator> <expr>
+//  T1 <OP> T2
 //  + | - | * | / | += | -= | *= | /= | > | >= | < | <= | != | == | & | |
   class BinaryExpr : public Expr {
     public:
@@ -668,12 +824,12 @@ namespace ast {
         this->op = std::move(op);
       }
 
-      std::string toString() override {
+      std::string stringer() override {
         std::stringstream str;
 
         str << "<BinaryExpr { Left=" <<
-            left->toString() << " Operator='" <<
-            op.literal << "' Right=" << right->toString() << " }>";
+            left->stringer() << " Operator='" <<
+            op.literal << "' Right=" << right->stringer() << " }>";
 
         return str.str();
       }
@@ -681,21 +837,21 @@ namespace ast {
       Kind kind() override { return EXPR_BINARY; }
   };
 
-//  (expr)
+//  (EXPR)
   class GroupExpr : public Expr {
     public:
       Expr *expr;
 
       explicit GroupExpr(Expr *expr) : expr(expr) {}
 
-      std::string toString() override {
-        return "<GroupExpr { Expr=" + this->expr->toString() + " }>";
+      std::string stringer() override {
+        return "<GroupExpr { Expr=" + this->expr->stringer() + " }>";
       }
 
       Kind kind() override { return EXPR_GROUP; }
   };
 
-//  -expr | !expr
+//  <OP>EXPR
   class UnaryExpr : public Expr {
     public:
       token::Token token;
@@ -705,12 +861,12 @@ namespace ast {
         this->token = std::move(tok);
       }
 
-      std::string toString() override {
+      std::string stringer() override {
         std::stringstream str;
 
         str << "<UnaryExpr { Token=" <<
             token.literal << " Expr=" <<
-            expr->toString() << " }>";
+            expr->stringer() << " }>";
 
         return str.str();
       }
@@ -718,7 +874,7 @@ namespace ast {
       Kind kind() override { return EXPR_UNARY; }
   };
 
-//  name expr
+//  IDENT
   class NameExpr : public Expr {
     public:
       token::Token token;
@@ -741,7 +897,7 @@ namespace ast {
         this->prefix = z;
       }
 
-      std::string toString() override {
+      std::string stringer() override {
         std::stringstream str;
 
         str << "<NameExpr { Token='" <<
@@ -756,11 +912,153 @@ namespace ast {
       Kind kind() override { return EXPR_NAME; }
   };
 
+//  EXPR(<EXPR>..)
+  class CallExpr : public Expr {
+    public:
+      Expr *callee;
+      std::vector<Expr *> arguments;
+
+      explicit CallExpr(Expr *expr, std::vector<Expr *> args) : callee(expr) {
+        this->arguments = std::move(args);
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<CallExpr { Callee=" <<
+            callee->stringer();
+
+        if (!arguments.empty()) {
+          str << " Args=";
+
+          for (auto &i : arguments)
+            str << i->stringer() << " ";
+        }
+
+        str << " }>";
+        return str.str();
+      }
+
+      Kind kind() override { return EXPR_CALL; }
+  };
+
+//  EXPR.NAME
+  class GetExpr : public Expr {
+    public:
+      token::Token name;
+
+      Expr *expr;
+
+      explicit GetExpr(Expr *expr, token::Token name) : expr(expr) {
+        this->name = std::move(name);
+      }
+
+      std::string stringer() override {
+        return "<GetExpr { Expr=" +
+               expr->stringer() + " Get='" +
+               name.literal + "' }>";
+      }
+
+      Kind kind() override { return EXPR_GET; }
+  };
+
+//  [<EXPR>..]
+  class ListExpr : public Expr {
+    public:
+      std::vector<Expr *> elements;
+
+      explicit ListExpr(std::vector<Expr *> e) {
+        this->elements = std::move(e);
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<ListExpr { Elements=[";
+        if (!elements.empty()) {
+          for (auto &i : elements)
+            str << i->stringer() << ", ";
+        }
+
+        str << "] }>";
+        return str.str();
+      }
+
+      Kind kind() override { return EXPR_LIST; }
+  };
+
+//  {K1: V1, K2: V2}
+  class MapExpr : public Expr {
+    public:
+      std::map<Expr *, Expr *> elements;
+
+      explicit MapExpr(std::map<Expr *, Expr *> e) {
+        this->elements = std::move(e);
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<MapExpr { Elements={";
+        if (!elements.empty()) {
+          for (auto &i : elements)
+            str << "K : " << i.first->stringer() << ", V : " <<
+                i.second->stringer() << " ,";
+        }
+
+        str << "} }>";
+        return str.str();
+      }
+
+      Kind kind() override { return EXPR_MAP; }
+  };
+
+//  (<EXPR>..)
+  class TupleExpr : public Expr {
+    public:
+      std::vector<Expr *> elements;
+
+      explicit TupleExpr(std::vector<Expr *> e) {
+        this->elements = std::move(e);
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<TupleExpr { Elements=(";
+        if (!elements.empty()) {
+          for (auto &i : elements)
+            str << i->stringer() << ", ";
+        }
+
+        str << ") }>";
+        return str.str();
+      }
+
+      Kind kind() override { return EXPR_TUPLE; }
+  };
+
+//  EXPR[EXPR]
+  class IndexExpr : public Expr {
+    public:
+      Expr *left;
+      Expr *right;
+
+      explicit IndexExpr(Expr *l, Expr *r) : left(l), right(r) {}
+
+      std::string stringer() override {
+        return "<IndexExpr { Left=" + left->stringer() +
+               " Right=" + right->stringer() + " }>";
+      }
+
+      Kind kind() override { return EXPR_INDEX; }
+  };
+
 //  abstract stmt
   class Stmt {
     public:
 //      return string of stmt
-      virtual std::string toString() = 0;
+      virtual std::string stringer() = 0;
 //      return kind of stmt
       virtual Kind kind() = 0;
   };
@@ -772,11 +1070,50 @@ namespace ast {
 
       explicit ExprStmt(Expr *expr) : expr(expr) {}
 
-      std::string toString() override {
-        return "<ExprStmt { Expr=" + expr->toString() + " }>";
+      std::string stringer() override {
+        return "<ExprStmt { Expr=" + expr->stringer() + " }>";
       }
 
       Kind kind() override { return STMT_EXPR; }
+  };
+
+//  def <name>: <type> = <expr>
+  class VarStmt : public Stmt {
+    public:
+      token::Token name;
+
+//      type define
+      Type *T;
+
+//      default is not init
+      Expr *expr = nullptr;
+
+//      has expr
+      explicit VarStmt(token::Token name, Type *T, Expr *e) : T(T), expr(e) {
+        this->name = std::move(name);
+      }
+
+//      not init expr
+      explicit VarStmt(token::Token name, Type *T) : T(T) {
+        this->name = std::move(name);
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<VarStmt { Name='" <<
+            name.literal << "' Type=" <<
+            T->stringer();
+
+        if (expr != nullptr)
+          str << " Expr=" << expr->stringer() << " }>";
+        else
+          str << " }>";
+
+        return str.str();
+      }
+
+      Kind kind() override { return STMT_VAR; }
   };
 }
 
@@ -810,9 +1147,12 @@ namespace parser {
       ast::Expr *addition();
       ast::Expr *multiplication();
       ast::Expr *unary();
+      ast::Expr *call();
       ast::Expr *primary();
 //      parsing statements
       ast::Stmt *stmt();
+//
+      ast::Type *type();
 //      throw an exception
       inline void error(exp::Kind kind, std::string message);
 
@@ -848,7 +1188,7 @@ namespace parser {
     int i = 1;
     for (auto stmt : this->statements)
       std::cout << i++ <<
-                " " + stmt->toString() << std::endl;
+                " " + stmt->stringer() << std::endl;
   }
 
 //  if kind of current token is EFF, its end of file and end of tokens
@@ -882,7 +1222,17 @@ namespace parser {
     return this->tokens.at(this->position - 1);
   }
 
-//  expression
+  /**
+   * expression
+   *
+   * assignment -> logicalOr -> logicalAnd -> equality  |
+   *                                                    v
+   * | unary <- multiplication <- addition <-  comparison
+   * v
+   * primary -> call
+   *
+   * - top down operation precedence grammar analysis -
+   */
   ast::Expr *Parser::expr() { return logicalOr(); }
 
 //  drift does not support assigning values within expressions
@@ -984,7 +1334,58 @@ namespace parser {
 //
       return new ast::UnaryExpr(op, expr);
     }
-    return primary();
+    return call();
+  }
+
+//  expr(<expr>..) | expr.name | expr[expr]
+  ast::Expr *Parser::call() {
+    ast::Expr *expr = primary();
+//    stack up the expression!!
+//
+//    LIKE: bar(foo(1, 2, 3)[x + 4])
+//
+    while (true) {
+//      call
+      if (look(token::L_PAREN)) {
+//        arguments
+        auto args = std::vector<ast::Expr *>();
+//        no argument
+        if (look(token::R_PAREN)) {
+          expr = new ast::CallExpr(expr, args);
+//          to next loop
+          continue;
+//          have arguments
+        } else {
+          do {
+            args.push_back(this->expr());
+//
+          } while (look(token::COMMA));
+        }
+        if (!look(token::R_PAREN))
+          error(exp::UNEXPECTED, "expect ')' after arguments");
+        expr = new ast::CallExpr(expr, args);
+//        get
+      } else if (look(token::DOT)) {
+        token::Token name = look();
+
+        this->position++; // skip name token
+        expr = new ast::GetExpr(expr, name);
+//        index for list
+      } else if (look(token::L_BRACKET)) {
+//        empty index
+        if (look(token::R_BRACKET))
+          error(exp::UNEXPECTED, "null index");
+//        index
+        auto index = this->expr();
+
+        if (!look(token::R_BRACKET))
+          error(exp::UNEXPECTED, "expect ']' after index of list");
+        expr = new ast::IndexExpr(expr, index);
+      } else {
+        break;
+      }
+    }
+    return expr;
   }
 
 //  primary
@@ -1005,8 +1406,7 @@ namespace parser {
         return new ast::NameExpr(tok,
                                  previous().kind == token::PLUS,
                                  previous().kind == token::MINUS, false);
-      else
-        return new ast::NameExpr(tok);
+      return new ast::NameExpr(tok);
     }
 //    name expr of ++ or -- operators
     if (look(token::PLUS) || look(token::MINUS)) {
@@ -1022,12 +1422,74 @@ namespace parser {
     }
 //    group expr
     if (look(token::L_PAREN)) {
-      ast::Expr *expr = this->expr();
+//      vector for tuple and group expression
+      std::vector<ast::Expr *> elem;
+//      empty tuple expr
+      if (look(token::R_PAREN))
+        return new ast::TupleExpr(elem);
+//      tuple or group ?
+      elem.push_back(this->expr());
+
+//      tuple expr
+      if (look(token::COMMA)) {
+        do {
+          elem.push_back(this->expr());
+//
+        } while (look(token::COMMA));
+//
+        if (!look(token::R_PAREN))
+          error(exp::UNEXPECTED, "expect ')' after tuple expression");
+        return new ast::TupleExpr(elem);
+      }
 
       if (look(token::R_PAREN) == false)
         error(exp::UNEXPECTED, "expect ')' after group expression");
 //
-      return new ast::GroupExpr(expr);
+      return new ast::GroupExpr(elem.at(0));
+    }
+//    list expr
+    if (look(token::L_BRACKET)) {
+      auto elem = std::vector<ast::Expr *>();
+
+      if (look(token::R_BRACKET))
+        return new ast::ListExpr(elem);
+      else {
+        do {
+          elem.push_back(this->expr());
+//
+        } while (look(token::COMMA));
+      }
+      if (!look(token::R_BRACKET))
+        error(exp::UNEXPECTED, "expect ']' after elements");
+      return new ast::ListExpr(elem);
+    }
+//    map expr
+    if (look(token::L_BRACE)) {
+      std::map<ast::Expr *, ast::Expr *> elem;
+//      empty map expr
+      if (look(token::R_BRACE))
+        return new ast::MapExpr(elem);
+
+      while (true) {
+        ast::Expr *K = this->expr();
+
+        if (!look(token::COLON)) {
+          error(exp::UNEXPECTED, "expect ':' after key in map");
+        }
+        ast::Expr *V = this->expr();
+
+//        push to map
+        elem.insert(std::make_pair(K, V));
+
+        if (look(token::COMMA)) {
+          continue;
+        }
+        if (look(token::R_BRACE)) {
+          break;
+        }
+        error(exp::UNEXPECTED, "expect ',' or '}' after value in map");
+      }
+      return new ast::MapExpr(elem);
     }
 // end
     error(exp::INVALID_SYNTAX, "invalid syntax");
@@ -1037,53 +1499,163 @@ namespace parser {
 //  statement
   ast::Stmt *Parser::stmt() {
     switch (this->look().kind) {
+//      define statement
+      case token::DEF:
+        this->position++;
+//        variable | enum | class | interface | function
+        if (look(token::IDENT)) {
+          token::Token name = previous();
+
+//          variable define
+          if (look(token::COLON)) {
+            ast::Type *T = this->type();
+            this->position++;
+
+//            value of variable
+            if (look(token::EQ))
+//              there is an initial value
+              return new ast::VarStmt(name, T, this->expr());
+            else
+              return new ast::VarStmt(name, T);
+          }
+        } else
+          error(exp::UNEXPECTED, "what fuck");
+        break;
       default:
+//        expression statement
         return new ast::ExprStmt(this->expr());
     }
+    return nullptr;
   }
 
 //  throw an exception
   inline void Parser::error(exp::Kind kind, std::string message) {
     throw exp::Exp(kind, std::move(message), look().line);
   }
+
+//  type analysis
+  ast::Type *Parser::type() {
+    token::Token now = this->look();
+//    type
+    if (now.kind == token::IDENT) {
+//      T1
+      if (now.literal == S_INT) return new ast::Int();
+//      T2
+      if (now.literal == S_FLOAT) return new ast::Float();
+//      T3
+      if (now.literal == S_STR) return new ast::Str;
+//      T4
+      if (now.literal == S_CHAR) return new ast::Char();
+//      T5
+      if (now.literal == S_BOOL) return new ast::Bool;
+//      user define type
+      return new ast::User(now);
+    }
+//    T6
+    if (now.kind == token::L_BRACKET) {
+      this->position++; // skip left [ symbol
+
+      if (!look(token::R_BRACKET)) {
+        error(exp::UNEXPECTED, "expect ']' after left square bracket");
+      }
+      return new ast::List(this->type());
+    }
+//    T7
+    if (now.kind == token::LESS) {
+      this->position++; // skip left < symbol
+//      key
+      ast::Type *T1 = this->type();
+      this->position++;  // skip left key token
+
+      if (!look(token::COMMA)) {
+        error(exp::UNEXPECTED, "expect ',' after key of map");
+      }
+      ast::Type *T2 = this->type();
+      this->position++;  // skip right value token
+
+      if (look().kind != token::GREATER) {
+        error(exp::UNEXPECTED, "expect '>' after value of map");
+      }
+      return new ast::Map(T1, T2);
+    }
+//    T8
+    if (now.kind == token::L_PAREN) {
+      this->position++; // skip left ( symbol
+
+      ast::Type *T = this->type();
+      this->position++;
+
+      if (look().kind != token::R_PAREN) {
+        error(exp::UNEXPECTED, "expect ')' after tuple define");
+      }
+      return new ast::Tuple(T);
+    }
+    error(exp::INVALID_SYNTAX, "unknown type");
+//
+    return nullptr;
+  }
 }
 
-int main() {
+// run source code
+void run(std::string source) {
+  try {
+//    lexer
+    auto lex = new lexer::Lexer(source);
+
+    lex->tokenizer();
+    lex->dissembleTokens();
+
+//    parser
+    auto parser = new parser::Parser(lex->tokens);
+
+    parser->parse();
+    parser->dissembleStmts();
+//
+  } catch (exp::Exp &e) {
+    std::cout << "\033[31m" << e.toString() << "\033[0m" << std::endl;
+    return;
+  }
+}
+
+// FILE mode
+void runFile(const char *path) {
   std::ifstream stream;
-  stream.open("test2.ft");
+  stream.open(path);
 
   if (stream.fail()) {
     std::cout << "failed to open file" << std::endl;
-    return -1;
+    return;
   }
 
   std::string source((std::istreambuf_iterator<char>(stream)),
                      (std::istreambuf_iterator<char>()));
-
-//    lexer
-  auto lex = new lexer::Lexer(source);
-
-  try {
-    lex->tokenizer();
-  } catch (exp::Exp &e) {
-    std::cout << "\033[31m" << e.toString() << "\033[0m" << std::endl;
-    return -1;
-  }
-
-  lex->dissembleTokens();
-
-//    parser
-  auto parser = new parser::Parser(lex->tokens);
-
-  try {
-    parser->parse();
-  } catch (exp::Exp &e) {
-    std::cout << "\033[31m" << e.toString() << "\033[0m" << std::endl;
-    return -1;
-  }
-
-  parser->dissembleStmts();
+  run(source);
 
   stream.close();
+}
+
+// REPL mode
+void repl() {
+  char *line = (char *) malloc(1024);
+  std::cout <<
+            "\n\tDrift 0.0.1 (repl mode, Feb 20 2021, 15:42) - Hello!! (:\n" << std::endl;
+  std::cout << "\t\t     https://www.drift-lang.org/\n" << std::endl;
+
+  while (true) {
+    std::cout << "ft >> ";
+    std::cin.getline(line, 1024);
+
+    if (strlen(line) == 0) {
+      continue;
+    }
+    run(line);
+  }
+}
+
+int main(int argc, char **argv) {
+  if (argc == 2)
+    runFile(argv[1]);
+  else
+    repl();
   return 0;
 }
