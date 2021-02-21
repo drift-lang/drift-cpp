@@ -87,8 +87,8 @@ namespace token {
     AND,
     END,
     IF,
-    EIF,
-    NAF,
+    EF,
+    NF,
     FOR,
     DO,
     OUT,
@@ -115,8 +115,8 @@ namespace token {
     "EFF",
 //    keywords
     "USE", "DEF", "PUB", "RET",
-    "AND", "END", "IF", "EIF",
-    "NAF", "FOR", "DO", "OUT",
+    "AND", "END", "IF", "EF",
+    "NF", "FOR", "DO", "OUT",
     "TIN", "NEW", "MOD", "AS"
   };
 
@@ -155,8 +155,8 @@ namespace token {
     keyword["and"] = AND; // 5
     keyword["end"] = END; // 6
     keyword["if"] = IF;   // 7
-    keyword["eif"] = EIF; // 8
-    keyword["naf"] = NAF; // 9
+    keyword["ef"] = EF;   // 8
+    keyword["nf"] = NF;   // 9
     keyword["for"] = FOR; // 10
     keyword["do"] = DO;   // 11
     keyword["out"] = OUT; // 12
@@ -1160,35 +1160,42 @@ namespace ast {
   class IfStmt : public Stmt {
     public:
       Expr *condition;        // main condition
-      BlockStmt *thenBranch;   // main condition branch
+      BlockStmt *ifBranch;    // main condition branch
 
-      std::map<Expr *, BlockStmt> eifBranch;  // eif cond and branch
+      std::map<Expr *, BlockStmt *> efBranch;  // ef cond and branch
 
-      BlockStmt *naiBranch;    // nai branch;
+      BlockStmt *nfBranch;    // nf branch;
 
       explicit IfStmt(Expr *cond,
                       BlockStmt *then,
-                      std::map<Expr *, BlockStmt> eif,
+                      std::map<Expr *, BlockStmt *> eif,
                       BlockStmt *nai) {
         this->condition = cond;
-        this->thenBranch = then;
-        this->eifBranch = std::move(eif);
-        this->naiBranch = nai;
+        this->ifBranch = then;
+        this->efBranch = std::move(eif);
+        this->nfBranch = nai;
+      }
+
+      explicit IfStmt(Expr *cond, BlockStmt *then) {
+        this->condition = cond;
+        this->ifBranch = then;
       }
 
       std::string stringer() override {
         std::stringstream str;
 
         str << "<IfStmt { Condition=" << condition->stringer();
-        if (thenBranch != nullptr)
-          str << " ThenBranch=" << thenBranch->stringer();
-        if (!eifBranch.empty()) {
-          str << " EifBranch=";
+        if (ifBranch != nullptr)
+          str << " IfBranch=" << ifBranch->stringer();
+        if (!efBranch.empty()) {
+          str << " EfBranch=";
 
-          for (auto &i: eifBranch)
+          for (auto &i: efBranch)
             str << "K : " << i.first->stringer() << ", V : " <<
-                i.second.stringer() << ", ";
+                i.second->stringer() << ", ";
         }
+        if (nfBranch != nullptr)
+          str << " NfBranch=" << nfBranch->stringer();
 
         str << " }>";
         return str.str();
@@ -1213,8 +1220,17 @@ namespace ast {
       }
 
       std::string stringer() override {
-        return "<ForStmt { Condition=" + condition->stringer() +
-               " Block=" + block->stringer() + " }>";
+        std::stringstream str;
+
+        str << "<ForStmt { Condition=";
+        if (condition == nullptr)
+          str << "DEAD Block=";
+        else
+          str << condition->stringer() << " Block=";
+        str << block->stringer();
+
+        str << " }>";
+        return str.str();
       }
 
       Kind kind() override { return STMT_FOR; }
@@ -1230,16 +1246,16 @@ namespace ast {
   class DoStmt : public Stmt {
     public:
       BlockStmt *block;   // first do block
-      ForStmt *forStmt;   // for statement
+      Stmt *stmt;         // for statement
 
-      explicit DoStmt(BlockStmt *block, ForStmt *stmt) {
+      explicit DoStmt(BlockStmt *block, Stmt *stmt) {
         this->block = block;
-        this->forStmt = stmt;
+        this->stmt = stmt;
       }
 
       std::string stringer() override {
         return "<DoStmt { Block=" + block->stringer() +
-               " ForStmt=" + forStmt->stringer() + " }>";
+               " Stmt=" + stmt->stringer() + " }>";
       }
 
       Kind kind() override { return STMT_DO; }
@@ -1253,7 +1269,7 @@ namespace ast {
       explicit OutStmt(Expr *e) : expr(e) {}
 
       std::string stringer() override {
-        return "<OutExpr { Expr=" + expr->stringer() + " }>";
+        return "<OutStmt { Expr=" + expr->stringer() + " }>";
       }
 
       Kind kind() override { return STMT_OUT; }
@@ -1267,21 +1283,37 @@ namespace ast {
       explicit TinStmt(Expr *e) : expr(e) {}
 
       std::string stringer() override {
-        return "<TinExpr { Expr=" + expr->stringer() + " }>";
+        return "<TinStmt { Expr=" + expr->stringer() + " }>";
       }
 
       Kind kind() override { return STMT_TIN; }
   };
 
-//  new <expr>
+//  new <name>{ K1: V1, K2: V2 }
   class NewStmt : public Stmt {
     public:
-      Expr *expr;
+      token::Token name;
+      std::map<token::Token, Expr *> builder;
 
-      explicit NewStmt(Expr *e) : expr(e) {}
+      explicit NewStmt(token::Token name, std::map<token::Token, Expr *> b){
+        this->name = std::move(name);
+        this->builder = b;
+      }
 
       std::string stringer() override {
-        return "<NewExpr { Expr=" + expr->stringer() + " }>";
+        std::stringstream str;
+
+        str << "<NewStmt { Name='" << name.literal << "' ";
+        if (!builder.empty()){
+          str << " Builder=";
+
+          for (auto &i: builder)
+            str << "K : " << i.first.literal << ", V : " <<
+                i.second->stringer() << ", ";
+        }
+
+        str << " }>";
+        return str.str();
       }
 
       Kind kind() override { return STMT_NEW; }
@@ -1297,7 +1329,7 @@ namespace ast {
       }
 
       std::string stringer() override {
-        return "<ModExpr { Name=" + name.literal + " }>";
+        return "<ModStmt { Name='" + name.literal + "' }>";
       }
 
       Kind kind() override { return STMT_MOD; }
@@ -1337,12 +1369,16 @@ namespace ast {
 //  and <block> end
   class AndStmt : public Stmt {
     public:
-      BlockStmt *block;
+      token::Token name;    // alias name
+      BlockStmt *block;     // block
 
-      explicit AndStmt(BlockStmt *block) : block(block) {}
+      explicit AndStmt(token::Token name, BlockStmt *block) : block(block) {
+        this->name = std::move(name);
+      }
 
       std::string stringer() override {
-        return "<AndStmt Block=" + block->stringer() + " }>";
+        return "<AndStmt Name='" +
+               name.literal + "' Block=" + block->stringer() + " }>";
       }
 
       Kind kind() override { return STMT_AND; }
@@ -1525,7 +1561,10 @@ namespace parser {
       ast::Expr *primary();
 //      parsing statements
       ast::Stmt *stmt();
-      ast::Stmt *block();
+//      determine where to stop the analysis
+      ast::BlockStmt *block(token::Kind x,
+                            token::Kind y = token::EFF,
+                            token::Kind z = token::EFF);
 //
       ast::Type *type();
 //      throw an exception
@@ -1905,28 +1944,86 @@ namespace parser {
         }
         break;
 //      if
-      case token::IF:
+      case token::IF: {
+        this->position++;
+//        if condition
+        ast::Expr *condition = this->expr();
+//        if then branch
+        ast::BlockStmt *thenBranch = this->block(token::EF,
+                                                 token::END,
+                                                 token::NF);
+
+        std::map<ast::Expr *, ast::BlockStmt *> elem;
+
+        while (previous().kind == token::EF) {
+          ast::Expr *eifCondition = this->expr();
+          ast::BlockStmt *eifBranch = this->block(token::EF,
+                                                  token::END,
+                                                  token::NF);
+//
+          elem.insert(std::make_pair(eifCondition, eifBranch));
+        }
+
+        ast::BlockStmt *nafBranch = nullptr;
+
+        if (previous().kind == token::NF) {
+          nafBranch = this->block(token::END);
+        }
+        return new ast::IfStmt(condition, thenBranch, elem, nafBranch);
+      }
         break;
 //      loop
-      case token::FOR:
+      case token::FOR: {
+        this->position++;
+//        dead loop
+        if (look(token::R_ARROW))
+          return new ast::ForStmt(nullptr, this->block(token::END));
+//        for condition
+        ast::Expr *condition = this->expr();
+        ast::BlockStmt *block = this->block(token::END);
+//
+        return new ast::ForStmt(condition, block);
+      }
         break;
 //      do loop
-      case token::DO:
+      case token::DO: {
+        this->position++;
+//        block
+        ast::BlockStmt *block = this->block(token::FOR);
+//        go back to the position of the `for` keyword
+        this->position--;
+        ast::Stmt *stmt = this->stmt();
+//
+        return new ast::DoStmt(block, stmt);
+      }
         break;
 //      out in loop
       case token::OUT:
+        this->position++;
+//
+        return new ast::OutStmt(this->expr());
         break;
 //      tin in loop
       case token::TIN:
+        this->position++;
+//
+        return new ast::TinStmt(this->expr());
         break;
 //      new
       case token::NEW:
+        this->position++;
         break;
 //      and
       case token::AND:
         break;
 //      mod
       case token::MOD:
+        this->position++;
+//
+        if (!look(token::IDENT)) {
+          error(exp::UNEXPECTED, "module name must be an identifier");
+        }
+        return new ast::ModStmt(previous());
         break;
 //      use
       case token::USE:
@@ -1943,11 +2040,27 @@ namespace parser {
     return nullptr;
   }
 
-//  block
-  ast::Stmt *Parser::block() {
+  /**
+   * parse block statement
+   *
+   * the x parameter is required, and y and z have default value
+   * determine where to stop the analysis
+   */
+  ast::BlockStmt *Parser::block(token::Kind x, token::Kind y, token::Kind z) {
     std::vector<ast::Stmt *> body;
 //    until end token
-    while (!look(token::END)) {
+    while (true) {
+      if (look(x)) {
+        break;
+      }
+//      it is not the default value and holds
+      if (y != token::EFF && look(y)) {
+        break;
+      }
+//      it is not the default value and holds
+      if (z != token::EFF && look(z)) {
+        break;
+      }
       body.push_back(this->stmt());
     }
     return new ast::BlockStmt(body);
