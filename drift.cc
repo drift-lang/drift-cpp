@@ -702,7 +702,7 @@ namespace ast {
       explicit List(Type *T) : T(T) {}
 
       std::string stringer() override {
-        return "<list T=" + T->stringer() + " }>";
+        return "<List T=" + T->stringer() + " >";
       }
 
       TypeKind kind() override { return T_LIST; }
@@ -718,7 +718,7 @@ namespace ast {
       explicit Map(Type *T1, Type *T2) : T1(T1), T2(T2) {}
 
       std::string stringer() override {
-        return "<Map T1=" + T1->stringer() + " T2=" + T2->stringer() + " }>";
+        return "<Map T1=" + T1->stringer() + " T2=" + T2->stringer() + " >";
       }
 
       TypeKind kind() override { return T_MAP; }
@@ -733,7 +733,7 @@ namespace ast {
       explicit Tuple(Type *T) : T(T) {}
 
       std::string stringer() override {
-        return "<Tuple T=" + T->stringer() + " }>";
+        return "<Tuple T=" + T->stringer() + " >";
       }
 
       TypeKind kind() override { return T_TUPLE; }
@@ -750,7 +750,7 @@ namespace ast {
       }
 
       std::string stringer() override {
-        return "<User Name='" + name.literal + "' }>";
+        return "<User Name='" + name.literal + "' >";
       }
 
       TypeKind kind() override { return T_USER; }
@@ -773,6 +773,7 @@ namespace ast {
 //    statement
     STMT_EXPR,      // EXPR
     STMT_VAR,       // def <name>: <type> = <expr>
+    STMT_BLOCK,     // BLOCK
     STMT_IF,        // IF
     STMT_FOR,       // FOR
     STMT_DO,        // DO
@@ -783,8 +784,13 @@ namespace ast {
     STMT_NEW,       // NEW
     STMT_AND,       // AND
     STMT_MOD,       // MOD
-    STMT_USE        // USE
+    STMT_USE,       // USE
+    STMT_INHERIT,   // <- <name> + <name>..
+    STMT_INTERFACE  // INTERFACE
   };
+
+//  K1: V1 | K1 + K2: V2
+  using Arg = std::map<token::Token, Type *>;
 
 //  abstract expr
   class Expr {
@@ -1003,7 +1009,7 @@ namespace ast {
         if (!elements.empty()) {
           for (auto &i : elements)
             str << "K : " << i.first->stringer() << ", V : " <<
-                i.second->stringer() << " ,";
+                i.second->stringer() << ", ";
         }
 
         str << "} }>";
@@ -1115,6 +1121,374 @@ namespace ast {
 
       Kind kind() override { return STMT_VAR; }
   };
+
+//  <expr>.. end
+  class BlockStmt : public Stmt {
+    public:
+      std::vector<Stmt *> block;
+
+      explicit BlockStmt(std::vector<Stmt *> block) : block(block) {}
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<BlockStmt { ";
+        if (!block.empty()) {
+          str << "Block=";
+
+          for (auto &i: block)
+            str << i->stringer() << " ";
+        }
+
+        str << " }>";
+        return str.str();
+      }
+
+      Kind kind() override { return STMT_BLOCK; }
+  };
+
+  /**
+   * if <expr>
+   *     <block>
+   * eif <expr>
+   *     <block>
+   * eif <expr>
+   *     <block>
+   * nai
+   *     <block>
+   */
+  class IfStmt : public Stmt {
+    public:
+      Expr *condition;        // main condition
+      BlockStmt *thenBranch;   // main condition branch
+
+      std::map<Expr *, BlockStmt> eifBranch;  // eif cond and branch
+
+      BlockStmt *naiBranch;    // nai branch;
+
+      explicit IfStmt(Expr *cond,
+                      BlockStmt *then,
+                      std::map<Expr *, BlockStmt> eif,
+                      BlockStmt *nai) {
+        this->condition = cond;
+        this->thenBranch = then;
+        this->eifBranch = std::move(eif);
+        this->naiBranch = nai;
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<IfStmt { Condition=" << condition->stringer();
+        if (thenBranch != nullptr)
+          str << " ThenBranch=" << thenBranch->stringer();
+        if (!eifBranch.empty()) {
+          str << " EifBranch=";
+
+          for (auto &i: eifBranch)
+            str << "K : " << i.first->stringer() << ", V : " <<
+                i.second.stringer() << ", ";
+        }
+
+        str << " }>";
+        return str.str();
+      }
+
+      Kind kind() override { return STMT_IF; }
+  };
+
+  /**
+   * for <expr>
+   *     <block>
+   * end
+   */
+  class ForStmt : public Stmt {
+    public:
+      Expr *condition;  // cond
+      BlockStmt *block;  // stmt
+
+      explicit ForStmt(Expr *cond, BlockStmt *block) {
+        this->condition = cond;
+        this->block = block;
+      }
+
+      std::string stringer() override {
+        return "<ForStmt { Condition=" + condition->stringer() +
+               " Block=" + block->stringer() + " }>";
+      }
+
+      Kind kind() override { return STMT_FOR; }
+  };
+
+  /**
+   * do
+   *     <block>
+   * for <expr>
+   *     <block>
+   * end
+   */
+  class DoStmt : public Stmt {
+    public:
+      BlockStmt *block;   // first do block
+      ForStmt *forStmt;   // for statement
+
+      explicit DoStmt(BlockStmt *block, ForStmt *stmt) {
+        this->block = block;
+        this->forStmt = stmt;
+      }
+
+      std::string stringer() override {
+        return "<DoStmt { Block=" + block->stringer() +
+               " ForStmt=" + forStmt->stringer() + " }>";
+      }
+
+      Kind kind() override { return STMT_DO; }
+  };
+
+//  out <expr>
+  class OutStmt : public Stmt {
+    public:
+      Expr *expr;
+
+      explicit OutStmt(Expr *e) : expr(e) {}
+
+      std::string stringer() override {
+        return "<OutExpr { Expr=" + expr->stringer() + " }>";
+      }
+
+      Kind kind() override { return STMT_OUT; }
+  };
+
+//  tin <expr>
+  class TinStmt : public Stmt {
+    public:
+      Expr *expr;
+
+      explicit TinStmt(Expr *e) : expr(e) {}
+
+      std::string stringer() override {
+        return "<TinExpr { Expr=" + expr->stringer() + " }>";
+      }
+
+      Kind kind() override { return STMT_TIN; }
+  };
+
+//  new <expr>
+  class NewStmt : public Stmt {
+    public:
+      Expr *expr;
+
+      explicit NewStmt(Expr *e) : expr(e) {}
+
+      std::string stringer() override {
+        return "<NewExpr { Expr=" + expr->stringer() + " }>";
+      }
+
+      Kind kind() override { return STMT_NEW; }
+  };
+
+//  mod <name>
+  class ModStmt : public Stmt {
+    public:
+      token::Token name;
+
+      explicit ModStmt(token::Token name) {
+        this->name = std::move(name);
+      }
+
+      std::string stringer() override {
+        return "<ModExpr { Name=" + name.literal + " }>";
+      }
+
+      Kind kind() override { return STMT_MOD; }
+  };
+
+//  use <name> | as <name>
+  class UseStmt : public Stmt {
+    public:
+      token::Token name;
+      token::Token *as = nullptr;
+
+//      use <name>
+      explicit UseStmt(token::Token name) {
+        this->name = std::move(name);
+      }
+
+//      use <name> as <name>
+      explicit UseStmt(token::Token name, token::Token *as) {
+        this->name = std::move(name);
+        this->as = as;
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<UseStmt { Name=" << name.literal;
+        if (as != nullptr)
+          str << " As=" << as->literal;
+
+        str << " }>";
+        return str.str();
+      }
+
+      Kind kind() override { return STMT_USE; }
+  };
+
+//  and <block> end
+  class AndStmt : public Stmt {
+    public:
+      BlockStmt *block;
+
+      explicit AndStmt(BlockStmt *block) : block(block) {}
+
+      std::string stringer() override {
+        return "<AndStmt Block=" + block->stringer() + " }>";
+      }
+
+      Kind kind() override { return STMT_AND; }
+  };
+
+//  def (<param>..) <name> -> <ret>
+//      <block>
+//  end
+  class FuncStmt : public Stmt {
+    public:
+      Arg arguments;        // args
+
+      token::Token name;    // name
+      Type *ret;            // return
+      BlockStmt *block;     // body
+
+      explicit FuncStmt(Arg args,
+                        token::Token name,
+                        Type *ret,
+                        BlockStmt *block) {
+        this->arguments = args;
+        this->name = std::move(name);
+        this->ret = ret;
+        this->block = block;
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<FuncStmt { Name=" << name.literal;
+        str << " Args=";
+//        args
+        if (!arguments.empty()) {
+          str << "(";
+          for (auto &i : arguments) {
+            str << "K : " << i.first.literal << ", V : " <<
+                i.second->stringer() << ", ";
+          }
+          str << ")";
+        } else
+          str << "()";
+
+        str << " Ret=" << ret->stringer();
+        str << " Block=" << block->stringer();
+
+        str << " }>";
+        return str.str();
+      }
+
+      Kind kind() override { return STMT_FUNC; }
+  };
+
+//  <- <name> + <name>..
+  class InheritStmt : public Stmt {
+    public:
+      std::vector<token::Token> names;
+
+      explicit InheritStmt(std::vector<token::Token> names) {
+        this->names = std::move(names);
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<InheritStmt Names=";
+        if (!names.empty()) {
+          str << "(";
+          for (auto &i:names) {
+            str << i.literal << ", ";
+          }
+          str << ")";
+        } else
+          str << "()";
+
+        str << " }>";
+        return str.str();
+      }
+
+      Kind kind() override { return STMT_INHERIT; }
+  };
+
+//  def (<param>..) <name> -> <ret>
+  class InterfaceStmt : public Stmt {
+    public:
+      Arg arguments;      // arguments
+
+      token::Token name;  // name
+      Type *ret;          // return
+
+      explicit InterfaceStmt(Arg args, token::Token name, Type *ret) {
+        this->arguments = args;
+        this->name = std::move(name);
+        this->ret = ret;
+      }
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<InterfaceStmt { Name=" << name.literal;
+        str << " Args=";
+//        args
+        if (!arguments.empty()) {
+          str << "(";
+          for (auto &i : arguments) {
+            str << "K : " << i.first.literal << ", V : " <<
+                i.second->stringer() << ", ";
+          }
+          str << ")";
+        } else
+          str << "()";
+
+        str << " Ret=" << ret->stringer();
+
+        str << " }>";
+        return str.str();
+      }
+
+      Kind kind() override { return STMT_INTERFACE; }
+  };
+
+//  class | enum | interface
+  class WholeStmt : public Stmt {
+    public:
+      std::vector<Stmt *> body;
+
+      explicit WholeStmt(std::vector<Stmt *> body) : body(body) {}
+
+      std::string stringer() override {
+        std::stringstream str;
+
+        str << "<WholeStmt { Body=";
+        if (!body.empty()) {
+          str << "(";
+          for (auto &i:body) {
+            str << i->stringer() << ", ";
+          }
+          str << ")";
+        } else
+          str << "()";
+
+        str << " }>";
+        return str.str();
+      }
+
+      Kind kind() override { return STMT_WHOLE; }
+  };
 }
 
 // parser
@@ -1151,6 +1525,7 @@ namespace parser {
       ast::Expr *primary();
 //      parsing statements
       ast::Stmt *stmt();
+      ast::Stmt *block();
 //
       ast::Type *type();
 //      throw an exception
@@ -1192,7 +1567,9 @@ namespace parser {
   }
 
 //  if kind of current token is EFF, its end of file and end of tokens
-  inline bool Parser::isEnd() { return look().kind == token::EFF; }
+  inline bool Parser::isEnd() {
+    return look().kind == token::EFF || this->position >= this->tokens.size();
+  }
 
 //  return the token of the current location
   inline token::Token Parser::look() { return this->tokens.at(this->position); }
@@ -1209,12 +1586,12 @@ namespace parser {
 
 //  if argument is equal to current token
   bool Parser::look(token::Kind kind) {
-    bool eq = this->look().kind == kind;
-//    peek to next token
-    if (eq) {
+    if (this->look().kind == kind) {
       this->position++;
+//
+      return true;
     }
-    return eq;
+    return false;
   }
 
 //  return the previous of tokens
@@ -1491,15 +1868,15 @@ namespace parser {
       }
       return new ast::MapExpr(elem);
     }
-// end
-    error(exp::INVALID_SYNTAX, "invalid syntax");
+//    end
+    error(exp::INVALID_SYNTAX, "invalid expression");
     return nullptr;
   }
 
 //  statement
   ast::Stmt *Parser::stmt() {
     switch (this->look().kind) {
-//      define statement
+//      definition statement
       case token::DEF:
         this->position++;
 //        variable | enum | class | interface | function
@@ -1518,14 +1895,62 @@ namespace parser {
             else
               return new ast::VarStmt(name, T);
           }
-        } else
-          error(exp::UNEXPECTED, "what fuck");
+        }
+//        function
+        else if (look(token::L_PAREN)) {
+          break;
+//        whole
+        } else {
+
+        }
+        break;
+//      if
+      case token::IF:
+        break;
+//      loop
+      case token::FOR:
+        break;
+//      do loop
+      case token::DO:
+        break;
+//      out in loop
+      case token::OUT:
+        break;
+//      tin in loop
+      case token::TIN:
+        break;
+//      new
+      case token::NEW:
+        break;
+//      and
+      case token::AND:
+        break;
+//      mod
+      case token::MOD:
+        break;
+//      use
+      case token::USE:
+        break;
+//      inherit for class
+      case token::L_ARROW:
         break;
       default:
 //        expression statement
         return new ast::ExprStmt(this->expr());
     }
+//    end
+    error(exp::INVALID_SYNTAX, "invalid statement");
     return nullptr;
+  }
+
+//  block
+  ast::Stmt *Parser::block() {
+    std::vector<ast::Stmt *> body;
+//    until end token
+    while (!look(token::END)) {
+      body.push_back(this->stmt());
+    }
+    return new ast::BlockStmt(body);
   }
 
 //  throw an exception
@@ -1590,7 +2015,7 @@ namespace parser {
       }
       return new ast::Tuple(T);
     }
-    error(exp::INVALID_SYNTAX, "unknown type");
+    error(exp::INVALID_SYNTAX, "invalid type");
 //
     return nullptr;
   }
