@@ -12,6 +12,7 @@
 //          https://www.drift-lang.org/
 //
 
+#include <algorithm>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -24,13 +25,14 @@
 // tokens
 namespace token {
 // total number of token for drift
-constexpr int len = 55;
+constexpr int len = 56;
 // token type
 enum Kind {
   IDENT, // identifier literal
   NUM,   // number     literal
   STR,   // string     literal
   CHAR,  // char       literal
+  FLOAT, // float      literal
 
   ADD, // +
   SUB, // -
@@ -106,6 +108,7 @@ std::string kindString[len] = {
     "NUM",
     "STR",
     "CHAR",
+    "FLOAT",
     "ADD",
     "SUB",
     "MUL",
@@ -224,17 +227,23 @@ Kind getKeyword(const std::string &literal) {
 // exceptions
 namespace exp {
 // total number of exceptions
-constexpr int len = 6;
+constexpr int len = 12;
 // exception type
 enum Kind {
   // lexer
   UNKNOWN_SYMBOL, // unknown symbol
   CHARACTER_EXP,  // character is empty
   STRING_EXP,     // lost left or right mark
-                  // parser
+                  // PARSER
   UNEXPECTED,     // unexpected
   INVALID_SYNTAX, // invalid syntax
   INCREMENT_OP,   // left value increment operand
+                  // SEMANTIC
+  TYPE_ERROR,     // type error
+  DIVISION_ZERO,  // div zero
+  CANNOT_PUBLIC,  // can not to public
+  ENUMERATION,    // whole body not definition of enum
+  CALL_INHERIT,   // can only be with call expr
 };
 
 //  return a string of exception type
@@ -247,6 +256,12 @@ std::string kindString[len] = {
     "UNEXPECTED",
     "INVALID_SYNTAX",
     "INCREMENT_OP",
+    // semantic
+    "TYPE_ERROR",
+    "DIVISION_ZERO",
+    "CANNOT_PUBLIC",
+    "ENUMERATION",
+    "CALL_INHERIT",
 }; // NOLINT(cert-err58-cpp)
 
 // exception structure
@@ -267,11 +282,11 @@ public:
   }
 
   // return a string of exception structure
-  std::string toString();
+  std::string stringer();
 };
 
 // return a string of exception structure
-std::string Exp::toString() {
+std::string Exp::stringer() {
   std::stringstream str;
 
   str << "<Exception { Kind=";
@@ -438,17 +453,23 @@ void Lexer::lexIdent() {
 void Lexer::lexDigit() {
   std::stringstream literal;
 
+  bool floating = false;
+
   while (!isEnd()) {
-    if (isDigit() || now() == '.')
+    if (isDigit() || now() == '.') {
       literal << now();
-    else
+
+      if (now() == '.')
+        floating = true;
+    } else
       break;
     this->position++;
   }
 
   this->tokens.push_back(
-      // number
-      token::Token{token::NUM, literal.str(), this->line});
+      // number or float
+      token::Token{floating ? token::FLOAT : token::NUM, literal.str(),
+                   this->line});
 }
 
 // resolve string literal
@@ -501,7 +522,7 @@ void Lexer::lexChar() {
 
   if (peek() != '\'')
     // this character is empty
-    throw exp::Exp(exp::CHARACTER_EXP, "this character is empty", this->line);
+    throw exp::Exp(exp::CHARACTER_EXP, "wrong character", this->line);
   else
     // skip value and right single quotation mark
     this->position += 2;
@@ -663,7 +684,7 @@ enum TypeKind {
   T_STR,   // str
   T_CHAR,  // char
   T_BOOL,  // bool
-  T_LIST,  // []<T>
+  T_ARRAY, // []<T>
   T_MAP,   // <T1, T2>
   T_TUPLE, // (T)
   T_USER,  // user
@@ -726,17 +747,17 @@ public:
   TypeKind kind() override { return T_BOOL; }
 };
 
-// list (not keyword, for compiler analysis)
+// array (not keyword, for compiler analysis)
 // []<type>
-class List : public Type {
+class Array : public Type {
 public:
   Type *T; // type for elements
 
-  explicit List(Type *T) : T(T) {}
+  explicit Array(Type *T) : T(T) {}
 
-  std::string stringer() override { return "<List T=" + T->stringer() + " >"; }
+  std::string stringer() override { return "<Array T=" + T->stringer() + " >"; }
 
-  TypeKind kind() override { return T_LIST; }
+  TypeKind kind() override { return T_ARRAY; }
 };
 
 // map (not keyword, for compiler analysis)
@@ -793,13 +814,15 @@ enum Kind {
   EXPR_NAME,        // IDENT
   EXPR_CALL,        // EXPR(<EXPR>..)
   EXPR_GET,         // EXPR.NAME
-  EXPR_LIST,        // [<EXPR>..]
+  EXPR_SET,         // EXPR.NAME = EXPR
+  EXPR_ASSIGN,      // EXPR = EXPR
+  EXPR_ARRAY,       // [<EXPR>..]
   EXPR_MAP,         // {K1: V1, K2: V2}
   EXPR_TUPLE,       // (<EXPR>..)
   EXPR_INDEX,       // EXPR[EXPR]
                     // statement
   STMT_EXPR,        // EXPR
-  STMT_VAR,         // def <name>: <type> = <expr>
+  STMT_VAR,         // VAR
   STMT_BLOCK,       // BLOCK
   STMT_IF,          // IF
   STMT_FOR,         // FOR
@@ -898,8 +921,8 @@ public:
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<UnaryExpr { Token=" << token.literal
-        << " Expr=" << expr->stringer() << " }>";
+    str << "<UnaryExpr { Token='" << token.literal
+        << "' Expr=" << expr->stringer() << " }>";
 
     return str.str();
   }
@@ -959,11 +982,13 @@ public:
     str << "<CallExpr { Callee=" << callee->stringer();
 
     if (!arguments.empty()) {
-      str << " Args=";
+      str << " Args=(";
 
       for (auto &i : arguments)
-        str << i->stringer() << " ";
-    }
+        str << i->stringer() << ", ";
+      str << ")";
+    } else
+      str << " Args=()";
 
     str << " }>";
     return str.str();
@@ -991,17 +1016,52 @@ public:
   Kind kind() override { return EXPR_GET; }
 };
 
+// EXPR.NAME = EXPR
+class SetExpr : public Expr {
+public:
+  Expr *expr;
+  token::Token name;
+  Expr *value;
+
+  explicit SetExpr(Expr *e, token::Token name, Expr *v) : expr(e), value(v) {
+    this->name = std::move(name);
+  }
+
+  std::string stringer() override {
+    return "<SetExpr { Expr='" + expr->stringer() + " Name='" + name.literal +
+           "' Value=" + value->stringer() + " }>";
+  }
+
+  Kind kind() override { return EXPR_SET; }
+};
+
+// EXPR = EXPR
+class AssignExpr : public Expr {
+public:
+  Expr *expr;
+  Expr *value;
+
+  explicit AssignExpr(Expr *e, Expr *v) : expr(e), value(v) {}
+
+  std::string stringer() override {
+    return "<AssignExpr { Expr='" + expr->stringer() +
+           "' Value=" + value->stringer() + " }>";
+  }
+
+  Kind kind() override { return EXPR_ASSIGN; }
+};
+
 //[<EXPR>..]
-class ListExpr : public Expr {
+class ArrayExpr : public Expr {
 public:
   std::vector<Expr *> elements;
 
-  explicit ListExpr(std::vector<Expr *> e) { this->elements = std::move(e); }
+  explicit ArrayExpr(std::vector<Expr *> e) { this->elements = std::move(e); }
 
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<ListExpr { Elements=[";
+    str << "<ArrayExpr { Elements=[";
     if (!elements.empty()) {
       for (auto &i : elements)
         str << i->stringer() << ", ";
@@ -1011,7 +1071,7 @@ public:
     return str.str();
   }
 
-  Kind kind() override { return EXPR_LIST; }
+  Kind kind() override { return EXPR_ARRAY; }
 };
 
 //{K1: V1, K2: V2}
@@ -1103,9 +1163,7 @@ public:
 };
 
 // def <name>: <type> = <expr>
-class VarStmt : public Stmt
-
-{
+class VarStmt : public Stmt {
 public:
   token::Token name;
 
@@ -1169,11 +1227,11 @@ public:
 /**
  * if <expr>
  *     <block>
- * eif <expr>
+ * ef <expr>
  *     <block>
- * eif <expr>
+ * ef <expr>
  *     <block>
- * nai
+ * nf
  *     <block>
  */
 class IfStmt : public Stmt {
@@ -1379,20 +1437,20 @@ public:
   Kind kind() override { return STMT_USE; }
 };
 
-// ret <expr>
+// ret <stmt>
 // ret ->
 class RetStmt : public Stmt {
 public:
-  Expr *expr = nullptr;
+  Stmt *stmt = nullptr;
 
   explicit RetStmt() {}
-  explicit RetStmt(Expr *e) : expr(e) {}
+  explicit RetStmt(Stmt *s) : stmt(s) {}
 
   std::string stringer() override {
-    if (expr == nullptr) {
-      return "<RetStmt { Expr=NONE }>";
+    if (stmt == nullptr) {
+      return "<RetStmt { Stmt=NONE }>";
     }
-    return "<RetStmt { Expr=" + expr->stringer() + " }>";
+    return "<RetStmt { Stmt=" + stmt->stringer() + " }>";
   }
 
   Kind kind() override { return STMT_RET; }
@@ -1499,10 +1557,13 @@ class CallInheritStmt : public Stmt {
 public:
   Expr *expr;
 
-  explicit CallInheritStmt(Expr *e) : expr(e) {}
+  int line; // line of call inherit statement
+
+  explicit CallInheritStmt(int line, Expr *e) : expr(e) { this->line = line; }
 
   std::string stringer() override {
-    return "<CallInheritStmt { Expr=" + expr->stringer() + " }>";
+    return "<CallInheritStmt { Line=" + std::to_string(line) +
+           " Expr=" + expr->stringer() + " }>";
   }
 
   Kind kind() override { return STMT_CALLINHERIT; }
@@ -1557,13 +1618,17 @@ public:
   Stmt *inherit = nullptr; // inherit within class
   BlockStmt *body;
 
-  explicit WholeStmt(Stmt *inherit, BlockStmt *body)
-      : body(body), inherit(inherit) {}
+  token::Token name;
+
+  explicit WholeStmt(token::Token name, Stmt *inherit, BlockStmt *body)
+      : body(body), inherit(inherit) {
+    this->name = std::move(name);
+  }
 
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<WholeStmt { Inherit=";
+    str << "<WholeStmt { Name='" + name.literal + "' Inherit=";
 
     if (inherit != nullptr)
       str << inherit->stringer() << " Body=";
@@ -1587,12 +1652,18 @@ class EnumStmt : public Stmt {
 public:
   std::vector<token::Token *> field;
 
-  explicit EnumStmt(std::vector<token::Token *> f) : field(f) {}
+  token::Token name;
+
+  explicit EnumStmt(token::Token name, std::vector<token::Token *> f)
+      : field(f) {
+    this->name = std::move(name);
+  }
 
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<EnumStmt { Fields=";
+    str << "<EnumStmt { Name='" + name.literal + "' Fields=";
+
     if (field.empty())
       str << "()";
     else {
@@ -1612,7 +1683,14 @@ public:
 // pub
 class PubStmt : public Stmt {
 public:
-  std::string stringer() override { return "<PubStmt {} >"; }
+  // line of pub statement
+  int line;
+
+  PubStmt(int line) { this->line = line; }
+
+  std::string stringer() override {
+    return "<PubStmt { Line=" + std::to_string(line) + " } >";
+  }
 
   Kind kind() override { return STMT_PUB; }
 };
@@ -1642,7 +1720,7 @@ private:
   inline token::Token previous();
   // parsing expressions
   ast::Expr *expr();
-  // ast::Expr *assignment();
+  ast::Expr *assignment();
   ast::Expr *logicalOr();
   ast::Expr *logicalAnd();
   ast::Expr *equality();
@@ -1748,11 +1826,29 @@ inline token::Token Parser::previous() {
  *
  * - top down operation precedence grammar analysis -
  */
-ast::Expr *Parser::expr() { return logicalOr(); }
+ast::Expr *Parser::expr() { return assignment(); }
 
-// drift does not support assigning values within expressions
+// EXPR.NAME = EXPR : SET
+// EXPR = EXPR      : ASSIGN
+ast::Expr *Parser::assignment() {
+  ast::Expr *expr = logicalOr();
 
-// ast::Expr *Parser::assignment() { return logicalOr(); }
+  if (look(token::EQ)) {
+    ast::Expr *value = assignment();
+
+    // EXPR = EXPR
+    if (expr->kind() == ast::EXPR_NAME || expr->kind() == ast::EXPR_INDEX) {
+      return new ast::AssignExpr(expr, value);
+    }
+    // EXPR.NAME = EXPR
+    if (expr->kind() == ast::EXPR_GET) {
+      ast::GetExpr *get = static_cast<ast::GetExpr *>(expr);
+      return new ast::SetExpr(get->expr, get->name, value);
+    }
+    error(exp::INVALID_SYNTAX, "cannot assign value");
+  }
+  return expr;
+}
 
 // |
 ast::Expr *Parser::logicalOr() {
@@ -1879,7 +1975,7 @@ ast::Expr *Parser::call() {
 
       this->position++; // skip name token
       expr = new ast::GetExpr(expr, name);
-      // index for list
+      // index for array
     } else if (look(token::L_BRACKET)) {
       // empty index
       if (look(token::R_BRACKET))
@@ -1888,7 +1984,7 @@ ast::Expr *Parser::call() {
       auto index = this->expr();
 
       if (!look(token::R_BRACKET))
-        error(exp::UNEXPECTED, "expect ']' after index of list");
+        error(exp::UNEXPECTED, "expect ']' after index of array");
       expr = new ast::IndexExpr(expr, index);
     } else {
       break;
@@ -1900,8 +1996,9 @@ ast::Expr *Parser::call() {
 // primary
 ast::Expr *Parser::primary() {
   // literal expr
-  // number | string | char
-  if (look(token::NUM) || look(token::STR) || look(token::CHAR))
+  // number | float | string | char
+  if (look(token::NUM) || look(token::FLOAT) || look(token::STR) ||
+      look(token::CHAR))
     return new ast::LiteralExpr(this->previous());
   // name expr
   if (look(token::IDENT)) {
@@ -1951,12 +2048,12 @@ ast::Expr *Parser::primary() {
     //
     return new ast::GroupExpr(elem.at(0));
   }
-  // list expr
+  // array expr
   if (look(token::L_BRACKET)) {
     auto elem = std::vector<ast::Expr *>();
 
     if (look(token::R_BRACKET))
-      return new ast::ListExpr(elem);
+      return new ast::ArrayExpr(elem);
     else {
       do {
         elem.push_back(this->expr());
@@ -1965,7 +2062,7 @@ ast::Expr *Parser::primary() {
     }
     if (!look(token::R_BRACKET))
       error(exp::UNEXPECTED, "expect ']' after elements");
-    return new ast::ListExpr(elem);
+    return new ast::ArrayExpr(elem);
   }
   // map expr
   if (look(token::L_BRACE)) {
@@ -1996,7 +2093,7 @@ ast::Expr *Parser::primary() {
     return new ast::MapExpr(elem);
   }
   // end
-  error(exp::INVALID_SYNTAX, "invalid expression");
+  error(exp::INVALID_SYNTAX, "invalid expression: " + look().literal);
   return nullptr;
 }
 
@@ -2106,7 +2203,7 @@ ast::Stmt *Parser::stmt() {
       if (look().kind == token::L_ARROW) {
         inherit = this->stmt();
       }
-      return new ast::WholeStmt(inherit, this->block(token::END));
+      return new ast::WholeStmt(previous(), inherit, this->block(token::END));
     }
     break;
     // if
@@ -2267,7 +2364,7 @@ ast::Stmt *Parser::stmt() {
     }
     int previous = this->position - 1;
     //
-    // Q: why can't variables on the stack be referenced
+    // [Q]: why can't variables on the stack be referenced
     //
     return new ast::UseStmt(name, &this->tokens.at(previous));
   } break;
@@ -2281,7 +2378,7 @@ ast::Stmt *Parser::stmt() {
       // no return value
       return new ast::RetStmt();
     }
-    return new ast::RetStmt(this->expr());
+    return new ast::RetStmt(this->stmt());
     break;
   // inherit for class
   case token::L_ARROW: {
@@ -2308,13 +2405,13 @@ ast::Stmt *Parser::stmt() {
   case token::L_CURVED_ARROW: // TODO: can only call method
     this->position++;
     //
-    return new ast::CallInheritStmt(this->expr());
+    return new ast::CallInheritStmt(look().line, this->expr());
     break;
   // pub
   case token::PUB:
     this->position++;
     //
-    return new ast::PubStmt;
+    return new ast::PubStmt(look().line);
     break;
   default:
     // expression statement
@@ -2388,7 +2485,7 @@ ast::Type *Parser::type() {
     if (!look(token::R_BRACKET)) {
       error(exp::UNEXPECTED, "expect ']' after left square bracket");
     }
-    return new ast::List(this->type());
+    return new ast::Array(this->type());
   }
   // T7
   if (now.kind == token::LESS) {
@@ -2423,6 +2520,267 @@ ast::Type *Parser::type() {
 }
 } // namespace parser
 
+// semantic
+namespace semantic {
+// analysis
+class Analysis {
+private:
+  int position = 0;
+  // stmts
+  std::vector<ast::Stmt *> *statements;
+
+  // return the kind of current statement
+  ast::Kind look() { return statements->at(position)->kind(); }
+
+  // return the current statement
+  ast::Stmt *now() { return statements->at(position); }
+
+  // peek next statement
+  //
+  // [Q]: how use lvalue to quote statement
+  //
+  ast::Stmt *peek() {
+    if (position + 1 >= statements->size()) {
+      return nullptr;
+    } else {
+      return statements->at(position + 1);
+    }
+  }
+
+  // throw semantic analysis exception
+  void error(exp::Kind k, std::string message, int line) {
+    throw exp::Exp(k, message, line);
+  }
+
+public:
+  explicit Analysis(std::vector<ast::Stmt *> *stmts) {
+    this->statements = stmts;
+  }
+
+  // analysis
+  void analysisAst() {
+    while (position < statements->size()) {
+      switch (look()) {
+        //
+      case ast::STMT_EXPR: {
+        ast::ExprStmt *stmt = static_cast<ast::ExprStmt *>(now());
+        ast::Expr *expr = static_cast<ast::Expr *>(stmt->expr);
+        // expression
+        this->analysisExpr(expr);
+      } break;
+        //           if (l->token.kind == token::FLOAT) {
+        //             //
+        //             // string -> float + 0.5 -> int
+        //             //
+        //             int x = ((int)(std::stof(l->token.literal) + 0.5));
+
+        //             l->token.literal = std::to_string(x);
+        //             l->token.kind = token::NUM;
+        //           }
+        //           if (l->token.kind == token::CHAR) {
+        //             //
+        //             // char -> int
+        //             //
+        //             int x = l->token.literal.data()[0];
+
+        //             l->token.literal = std::to_string(x);
+        //             l->token.kind = token::NUM;
+        //           }
+      case ast::STMT_PUB: {
+        ast::PubStmt *stmt = static_cast<ast::PubStmt *>(now());
+        ast::Stmt *next = this->peek();
+
+        if (next != nullptr) {
+          //
+          switch (next->kind()) {
+          case ast::STMT_VAR:
+          case ast::STMT_FUNC:
+          case ast::STMT_WHOLE:
+          case ast::STMT_INTERFACE:
+            break;
+          default:
+            error(exp::CANNOT_PUBLIC, "statement cannot be public", stmt->line);
+          }
+        }
+      } break;
+      case ast::STMT_WHOLE: {
+        ast::WholeStmt *stmt = static_cast<ast::WholeStmt *>(now());
+
+        if (stmt->body->block.empty()) {
+          break;
+        }
+        ast::Stmt *f = stmt->body->block.at(0); // first statement
+
+        // just a ident of expression statement
+        //
+        // enumeration
+        //
+        if (f->kind() == ast::STMT_EXPR) {
+          //
+          if (stmt->inherit != nullptr) {
+            error(exp::ENUMERATION, "enumeration type cannot be inherited",
+                  stmt->name.line);
+          }
+
+          ast::ExprStmt *expr = static_cast<ast::ExprStmt *>(f);
+          std::vector<token::Token *> fields;
+
+          for (auto &i : stmt->body->block) {
+            //
+            if (i->kind() != ast::STMT_EXPR) {
+              error(exp::ENUMERATION, "whole is an enumeration type",
+                    stmt->name.line);
+            }
+            ast::ExprStmt *expr = static_cast<ast::ExprStmt *>(i);
+            if (expr->expr->kind() != ast::EXPR_NAME) {
+              error(exp::ENUMERATION, "whole is an enumeration type",
+                    stmt->name.line);
+            }
+
+            ast::NameExpr *name = static_cast<ast::NameExpr *>(expr->expr);
+            // push to enumeration structure
+            fields.push_back(&name->token);
+          }
+          // replace new statement into vector
+          //
+          // [Q]: iterator and std::replace
+          //
+          ast::Stmt *n = new ast::EnumStmt(stmt->name, fields);
+          std::replace(std::begin(*statements), std::end(*statements), now(),
+                       n);
+
+          std::cout << "[Semantic analysis replace " << position + 1
+                    << "]: WholeStmt -> " << n->stringer() << std::endl;
+        }
+        // normal whole statement
+        // if hinder of statements include name expr to throw an error
+        else {
+          for (auto &i : stmt->body->block) {
+            if (i->kind() == ast::STMT_EXPR) {
+              error(exp::ENUMERATION,
+                    "it an whole statement but contains some other value",
+                    stmt->name.line);
+            }
+          }
+        }
+      } break;
+      case ast::STMT_CALLINHERIT: {
+        ast::CallInheritStmt *stmt = static_cast<ast::CallInheritStmt *>(now());
+
+        if (stmt->expr->kind() != ast::EXPR_CALL) {
+          error(exp::CALL_INHERIT,
+                "only methods of the parent class can be called", 2);
+        }
+      } break;
+      default:
+        break;
+      }
+      this->position++;
+    }
+  }
+
+  // expression
+  void analysisExpr(ast::Expr *expr) {
+    using namespace token;
+
+    switch (expr->kind()) {
+    case ast::EXPR_BINARY: {
+      ast::BinaryExpr *binary = static_cast<ast::BinaryExpr *>(expr);
+
+      Token l = (static_cast<ast::LiteralExpr *>(binary->left))->token;
+      Token r = (static_cast<ast::LiteralExpr *>(binary->right))->token;
+
+      switch (binary->op.kind) {
+      case ADD:    // +
+      case SUB:    // -
+      case AS_ADD: // +=
+      case AS_SUB: // -=
+        if (l.kind == NUM) {
+          //
+          if (r.kind == STR || r.kind == CHAR) {
+            error(exp::TYPE_ERROR, "unsupported operand", l.line);
+          }
+        }
+        if (l.kind == STR || l.kind == CHAR) {
+          //
+          if (r.kind == NUM) {
+            error(exp::TYPE_ERROR, "unsupported operand", l.line);
+          }
+        }
+        break;
+      case DIV:    // /
+      case AS_DIV: // /=
+        if (l.kind == STR || l.kind == CHAR || r.kind == STR ||
+            r.kind == CHAR) {
+          error(exp::TYPE_ERROR, "unsupported operand", l.line);
+        }
+        if (r.kind == NUM) {
+          // convert, keep floating point numbers
+          if (std::stof(r.literal) == 0) {
+            error(exp::DIVISION_ZERO, "division by zero", l.line);
+          }
+        }
+        // array
+        if (binary->left->kind() == ast::EXPR_ARRAY ||
+            binary->right->kind() == ast::EXPR_ARRAY) {
+          error(exp::TYPE_ERROR, "unsupported operand", l.line);
+        }
+        break;
+      case MUL: // *
+        if ((l.kind == CHAR || l.kind == STR) &&
+            (r.kind == CHAR || r.kind == STR)) {
+          error(exp::TYPE_ERROR, "unsupported operand", l.line);
+        }
+        break;
+      case GR_EQ:   // >=
+      case LE_EQ:   // <=
+      case GREATER: // >
+      case LESS: {  // <
+        if (l.kind == STR || r.kind == STR) {
+          error(exp::TYPE_ERROR, "unsupported operand", l.line);
+        }
+      } break;
+      }
+    } break;
+    case ast::EXPR_GROUP: {
+      ast::GroupExpr *group = static_cast<ast::GroupExpr *>(expr);
+      this->analysisExpr(group->expr);
+    } break;
+      //
+    case ast::EXPR_UNARY: {
+      ast::UnaryExpr *unary = static_cast<ast::UnaryExpr *>(expr);
+      this->analysisExpr(unary->expr);
+    } break;
+      //
+    case ast::EXPR_CALL: {
+      ast::CallExpr *call = static_cast<ast::CallExpr *>(expr);
+
+      for (auto i : call->arguments) {
+        this->analysisExpr(i);
+      }
+    } break;
+      //
+    case ast::EXPR_GET: {
+      ast::GetExpr *get = static_cast<ast::GetExpr *>(expr);
+      this->analysisExpr(get->expr);
+    } break;
+    //
+    case ast::EXPR_SET: {
+      ast::SetExpr *set = static_cast<ast::SetExpr *>(expr);
+      this->analysisExpr(set->expr);
+      this->analysisExpr(set->value);
+    } break;
+    //
+    case ast::EXPR_ASSIGN: {
+      ast::AssignExpr *assign = static_cast<ast::AssignExpr *>(expr);
+      this->analysisExpr(assign->expr);
+      this->analysisExpr(assign->value);
+    } break;
+    }
+  }
+};
+}; // namespace semantic
+
 // run source code
 void run(std::string source) {
   try {
@@ -2437,9 +2795,13 @@ void run(std::string source) {
 
     parser->parse();
     parser->dissembleStmts();
+
+    // semantic
+    auto semantic = new semantic::Analysis(&parser->statements);
+    semantic->analysisAst();
     //
   } catch (exp::Exp &e) {
-    std::cout << "\033[31m" << e.toString() << "\033[0m" << std::endl;
+    std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
     return;
   }
 }
