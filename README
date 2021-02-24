@@ -1,0 +1,14 @@
+The Drift Programming Language Implementation
+
+To build:
+
+    > g++ -std=c++20 drift.cc
+    > mv a.out drift
+    > export PATH=$PWD:$PATH
+
+To run:
+ 
+    > drift 		# REPL MODE
+    > drift <ft file>	# FILE MODE
+
+Have Fun!!

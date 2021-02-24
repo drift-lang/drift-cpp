@@ -1,1 +1,0 @@
-# The Drift Programming Language
