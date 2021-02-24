@@ -11,4 +11,6 @@ To run:
     > drift 		# REPL MODE
     > drift <ft file>	# FILE MODE
 
-Have Fun!!
+For documentation and project architecuture, visit the official website https://drift-lang.cc
+
+It's a toy language, Have Fun!!
