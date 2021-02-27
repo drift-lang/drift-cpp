@@ -1,0 +1,31 @@
+
+for x > y
+
+    A
+    B 
+    C 
+
+end
+
+/*
+ENTITY AT 0:
+                   0: LOAD           0 'x'
+                   1: LOAD           1 'y'
+                   2: GR
+                   3: F_JUMP         8
+                   4: LOAD           2 'A'
+                   5: LOAD           3 'B'
+                   6: LOAD           4 'C'
+                   7: JUMP           0
+                   8: RET
+CONSTANT:
+               EMPTY
+VARIABLE:
+                   0: 'x'           1: 'y'          2: 'A'          3: 'B'
+                   4: 'C'
+OFFSET:
+                   0: 0             1: 1            2: 8            3: 2
+                   4: 3             5: 4            6: 0
+TYPE:
+               EMPTY
+*/

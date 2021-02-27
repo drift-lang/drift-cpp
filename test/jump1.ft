@@ -1,0 +1,158 @@
+
+if a > b
+    N
+    O
+    P
+ef x > y
+    Q
+    R
+    S
+ef b > c
+    T
+    U
+    V
+nf
+    W
+    X
+    Y
+end
+
+if a > b
+    if a > b
+        if a > b
+            if a > b
+                HH
+            ef x > y
+                if s > k
+                    LL
+                end
+            nf
+                IO
+                if o > o
+                    OO
+                ef a > a
+                    AA
+                ef r > r
+                    RR
+                end
+            end
+        nf
+            OP
+        end
+    end
+end
+
+/*
+ENTITY AT 0:
+                   0: LOAD           0 'a'
+                   1: LOAD           1 'b'
+                   2: GR
+                   3: F_JUMP         8
+                   4: LOAD           2 'N'
+                   5: LOAD           3 'O'
+                   6: LOAD           4 'P'
+                   7: JUMP          27
+                   8: LOAD           5 'x'
+                   9: LOAD           6 'y'
+                  10: GR
+                  11: F_JUMP        16
+                  12: LOAD           7 'Q'
+                  13: LOAD           8 'R'
+                  14: LOAD           9 'S'
+                  15: JUMP          27
+                  16: LOAD           1 'b'
+                  17: LOAD          10 'c'
+                  18: GR
+                  19: F_JUMP        24
+                  20: LOAD          11 'T'
+                  21: LOAD          12 'U'
+                  22: LOAD          13 'V'
+                  23: JUMP          27
+                  24: LOAD          14 'W'
+                  25: LOAD          15 'X'
+                  26: LOAD          16 'Y'
+                  27: LOAD           0 'a'
+                  28: LOAD           1 'b'
+                  29: GR
+                  30: F_JUMP        79
+                  31: LOAD           0 'a'
+                  32: LOAD           1 'b'
+                  33: GR
+                  34: F_JUMP        78
+                  35: LOAD           0 'a'
+                  36: LOAD           1 'b'
+                  37: GR
+                  38: F_JUMP        76
+                  39: LOAD           0 'a'
+                  40: LOAD           1 'b'
+                  41: GR
+                  42: F_JUMP        45
+                  43: LOAD          17 'HH'
+                  44: JUMP          75
+                  45: LOAD           5 'x'
+                  46: LOAD           6 'y'
+                  47: GR
+                  48: F_JUMP        56
+                  49: LOAD          18 's'
+                  50: LOAD          19 'k'
+                  51: GR
+                  52: F_JUMP        55
+                  53: LOAD          20 'LL'
+                  54: JUMP          55
+                  55: JUMP          75
+                  56: LOAD          21 'IO'
+                  57: LOAD          22 'o'
+                  58: LOAD          22 'o'
+                  59: GR
+                  60: F_JUMP        63
+                  61: LOAD          23 'OO'
+                  62: JUMP          75
+                  63: LOAD           0 'a'
+                  64: LOAD           0 'a'
+                  65: GR
+                  66: F_JUMP        69
+                  67: LOAD          24 'AA'
+                  68: JUMP          75
+                  69: LOAD          25 'r'
+                  70: LOAD          25 'r'
+                  71: GR
+                  72: F_JUMP        75
+                  73: LOAD          26 'RR'
+                  74: JUMP          75
+                  75: JUMP          77
+                  76: LOAD          27 'OP'
+                  77: JUMP          78
+                  78: JUMP          79
+                  79: RET
+CONSTANT:
+               EMPTY
+VARIABLE:
+                   0: 'a'           1: 'b'          2: 'N'          3: 'O'
+                   4: 'P'           5: 'x'          6: 'y'          7: 'Q'
+                   8: 'R'           9: 'S'         10: 'c'         11: 'T'
+                  12: 'U'          13: 'V'         14: 'W'         15: 'X'
+                  16: 'Y'          17: 'HH'        18: 's'         19: 'k'
+                  20: 'LL'         21: 'IO'        22: 'o'         23: 'OO'
+                  24: 'AA'         25: 'r'         26: 'RR'        27: 'OP'
+
+OFFSET:
+                   0: 0             1: 1            2: 8            3: 2
+                   4: 3             5: 4            6: 27           7: 5
+                   8: 6             9: 16          10: 7           11: 8
+                  12: 9            13: 27          14: 1           15: 10
+                  16: 24           17: 11          18: 12          19: 13
+                  20: 27           21: 14          22: 15          23: 16
+                  24: 0            25: 1           26: 79          27: 0
+                  28: 1            29: 78          30: 0           31: 1
+                  32: 76           33: 0           34: 1           35: 45
+                  36: 17           37: 75          38: 5           39: 6
+                  40: 56           41: 18          42: 19          43: 55
+                  44: 20           45: 55          46: 75          47: 21
+                  48: 22           49: 22          50: 63          51: 23
+                  52: 75           53: 0           54: 0           55: 69
+                  56: 24           57: 75          58: 25          59: 25
+                  60: 75           61: 26          62: 75          63: 77
+                  64: 27           65: 78          66: 79
+TYPE:
+               EMPTY
+*/

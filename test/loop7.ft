@@ -1,0 +1,37 @@
+
+for x > y
+
+    out a > b
+
+    tin a > b
+
+end
+
+/*
+ENTITY AT 0:
+                   0: LOAD           0 'x'
+                   1: LOAD           1 'y'
+                   2: GR
+                   3: F_JUMP        13
+                   4: LOAD           2 'a'
+                   5: LOAD           3 'b'
+                   6: GR
+                   7: T_JUMP        13
+                   8: LOAD           2 'a'
+                   9: LOAD           3 'b'
+                  10: GR
+                  11: T_JUMP         0
+                  12: JUMP           0
+                  13: RET
+CONSTANT:
+               EMPTY
+VARIABLE:
+                   0: 'x'           1: 'y'          2: 'a'          3: 'b'
+
+OFFSET:
+                   0: 0             1: 1            2: 13           3: 2
+                   4: 3             5: 13           6: 2            7: 3
+                   8: 0             9: 0
+TYPE:
+               EMPTY
+*/

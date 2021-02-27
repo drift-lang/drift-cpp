@@ -1,0 +1,102 @@
+
+for x > y
+
+    x ++
+
+    if x > 10
+
+        if x > 50
+
+            A
+            B
+            C
+
+        ef x > 80
+
+            D
+            E
+            F
+
+        nf
+
+            H
+            I
+            J
+
+        end
+
+        K
+        L
+        M
+
+    end
+
+    N
+    O
+    P
+
+end
+
+/*
+ENTITY AT 0:
+                   0: LOAD           0 'x'
+                   1: LOAD           1 'y'
+                   2: GR
+                   3: F_JUMP        37
+                   4: LOAD           0 'x'
+                   5: INCR
+                   6: LOAD           0 'x'
+                   7: CONST          0 <Int 10>
+                   8: GR
+                   9: F_JUMP        33
+                  10: LOAD           0 'x'
+                  11: CONST          1 <Int 50>
+                  12: GR
+                  13: F_JUMP        18
+                  14: LOAD           2 'A'
+                  15: LOAD           3 'B'
+                  16: LOAD           4 'C'
+                  17: JUMP          29
+                  18: LOAD           0 'x'
+                  19: CONST          2 <Int 80>
+                  20: GR
+                  21: F_JUMP        26
+                  22: LOAD           5 'D'
+                  23: LOAD           6 'E'
+                  24: LOAD           7 'F'
+                  25: JUMP          29
+                  26: LOAD           8 'H'
+                  27: LOAD           9 'I'
+                  28: LOAD          10 'J'
+                  29: LOAD          11 'K'
+                  30: LOAD          12 'L'
+                  31: LOAD          13 'M'
+                  32: JUMP          33
+                  33: LOAD          14 'N'
+                  34: LOAD          15 'O'
+                  35: LOAD          16 'P'
+                  36: JUMP           0
+                  37: RET
+CONSTANT:
+                   0: <Int 10>
+                   1: <Int 50>
+                   2: <Int 80>
+VARIABLE:
+                   0: 'x'           1: 'y'          2: 'A'          3: 'B'
+                   4: 'C'           5: 'D'          6: 'E'          7: 'F'
+                   8: 'H'           9: 'I'         10: 'J'         11: 'K'
+                  12: 'L'          13: 'M'         14: 'N'         15: 'O'
+                  16: 'P'
+OFFSET:
+                   0: 0             1: 1            2: 37           3: 0
+                   4: 0             5: 0            6: 33           7: 0
+                   8: 1             9: 18          10: 2           11: 3
+                  12: 4            13: 29          14: 0           15: 2
+                  16: 26           17: 5           18: 6           19: 7
+                  20: 29           21: 8           22: 9           23: 10
+                  24: 11           25: 12          26: 13          27: 33
+                  28: 14           29: 15          30: 16          31: 0
+
+TYPE:
+               EMPTY
+*/

@@ -1,0 +1,38 @@
+
+do
+    J
+    K
+    L
+for a > b
+    O
+    P
+    Q
+end
+
+/*
+ENTITY AT 0:
+                   0: LOAD           0 'J'
+                   1: LOAD           1 'K'
+                   2: LOAD           2 'L'
+                   3: LOAD           3 'a'
+                   4: LOAD           4 'b'
+                   5: GR
+                   6: F_JUMP        11
+                   7: LOAD           5 'O'
+                   8: LOAD           6 'P'
+                   9: LOAD           7 'Q'
+                  10: JUMP           3
+                  11: RET
+CONSTANT:
+               EMPTY
+VARIABLE:
+                   0: 'J'           1: 'K'          2: 'L'          3: 'a'
+                   4: 'b'           5: 'O'          6: 'P'          7: 'Q'
+
+OFFSET:
+                   0: 0             1: 1            2: 2            3: 3
+                   4: 4             5: 11           6: 5            7: 6
+                   8: 7             9: 3
+TYPE:
+               EMPTY
+*/

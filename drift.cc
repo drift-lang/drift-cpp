@@ -3021,7 +3021,7 @@ namespace entity {
     void dissemble(int p) {
       std::cout << "ENTITY AT " << std::to_string(p) << ":" << std::endl;
 
-      for (auto i : offsets) std::cout << i << " " << std::endl;
+      // for (auto i : offsets) std::cout << i << " " << std::endl;
 
       for (int ip = 0, op = 0; ip < codes.size(); ip++) {
         byte::Code co = codes.at(ip);
@@ -3163,11 +3163,6 @@ namespace compiler {
     void stmt(ast::Stmt *); // statements
     // search list variable to return index
     int searchVarIndexes(std::string);
-
-    // temp offsets of loop out statement
-    std::vector<int> tempLoopOutOffs;
-    // temp offsets of loop tin statement
-    std::vector<int> tempLoopTinOffs;
 
   public:
     Compiler(std::vector<ast::Stmt *> statements) {
@@ -3534,7 +3529,7 @@ namespace compiler {
       // for (auto i : tempEfOffs) std::cout << i << std::endl;
       for (int i = 0; i < tempEfOffs.size(); i++) {
         // insertion increment successively
-        this->insertPosOffset(tempEfOffs.at(i) + i, now.codes.size());
+        this->insertPosOffset(tempEfOffs.at(i) + i);
       }
 
       this->insertPosOffset(ifOff + 1); // TO: if (JUMP)
@@ -3546,58 +3541,33 @@ namespace compiler {
       int original = now.codes.size(); // original state: for callback loops
 
       // DEAD LOOP
-      if (f->condition == nullptr) {
-        this->stmt(f->block);
-
-        // for (auto i : tempLoopOutOffs) std::cout << i << std::endl;
-        // // set where each out statement should jump
-        // for (int i = 0; i < tempLoopOutOffs.size(); i++) {
-        //   this->insertPosOffset(tempLoopOutOffs.at(i) + i,
-        //                         now.codes.size() + 1);
-        // }
-      }
+      if (f->condition == nullptr) this->stmt(f->block);
       // condition and block
       else {
         this->expr(f->condition);
         this->emitCode(byte::F_JUMP);
         int ePos = now.offsets.size(); // skip loop for false
 
-        this->stmt(f->block);
+        this->stmt(f->block); // block
 
-        // for (auto i : tempLoopOutOffs) std::cout << i << std::endl;
-        // process out statement
-        // for (int i = 0; i < tempLoopOutOffs.size(); i++) {
-        //   // after insertion it is incremented successively and inserted
-        //   again this->insertPosOffset(tempLoopOutOffs.at(i) + i + 1,
-        //                         now.codes.size() + 1);
-        // }
-        // skip loop and LOOP bytecode
+        // jump to next bytecode
         this->insertPosOffset(ePos,
                               now.codes.size() + 1); // TO: (F_JUMP)
       }
       this->emitCode(byte::JUMP); // back to original state
       this->emitOffset(original);
-
-      for (int i = 0; i < tempLoopOutOffs.size(); i++) {
-        // after insertion it is incremented successively and inserted again
-        this->insertPosOffset(tempLoopOutOffs.at(i) + i);
-      }
-
-      if (!tempLoopOutOffs.empty() && !tempLoopTinOffs.empty()) {
-        for (std::vector<int>::iterator iter = tempLoopTinOffs.begin();
-             iter != tempLoopTinOffs.end(); iter++) {
-          *iter += tempLoopOutOffs.size();
+      // replace placeholder
+      for (std::vector<int>::iterator iter = now.offsets.begin();
+           iter != now.offsets.end(); iter++) {
+        // out statement
+        if (*iter == -1) {
+          *iter = now.codes.size();
+        }
+        // tin statement
+        if (*iter == -2) {
+          *iter = original;
         }
       }
-
-      // process tin statement
-      for (int i = 0; i < tempLoopTinOffs.size(); i++) {
-        this->insertPosOffset(tempLoopTinOffs.at(i) + i, original);
-      }
-
-      // clear the temp offset of the current loop
-      this->tempLoopOutOffs.clear();
-      this->tempLoopTinOffs.clear();
     } break;
     //
     case ast::STMT_DO: {
@@ -3614,8 +3584,8 @@ namespace compiler {
 
       // jump straight out
       this->emitCode(o->expr == nullptr ? byte::JUMP : byte::T_JUMP);
-      // the position of the current out statement
-      this->tempLoopOutOffs.push_back(now.offsets.size());
+      // place holder
+      this->emitOffset(-1);
     } break;
     //
     case ast::STMT_TIN: {
@@ -3625,8 +3595,8 @@ namespace compiler {
 
       // jump straight out
       this->emitCode(t->expr == nullptr ? byte::JUMP : byte::T_JUMP);
-      // tin
-      this->tempLoopTinOffs.push_back(now.offsets.size());
+      // place holder
+      this->emitOffset(-2);
     } break;
     case ast::STMT_FUNC: {
     } break;

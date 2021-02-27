@@ -1,0 +1,43 @@
+
+for ->
+
+    x ++
+    y ++
+
+    out ->
+    out x > y
+    out (3 + 5) >= x
+
+end
+
+/*
+ENTITY AT 0:
+                   0: LOAD           0 'x'
+                   1: INCR
+                   2: LOAD           1 'y'
+                   3: INCR
+                   4: JUMP          16
+                   5: LOAD           0 'x'
+                   6: LOAD           1 'y'
+                   7: GR
+                   8: T_JUMP        16
+                   9: CONST          0 <Int 3>
+                  10: CONST          1 <Int 5>
+                  11: ADD
+                  12: LOAD           0 'x'
+                  13: GR_E
+                  14: T_JUMP        16
+                  15: JUMP           0
+                  16: RET
+CONSTANT:
+                   0: <Int 3>
+                   1: <Int 5>
+VARIABLE:
+                   0: 'x'           1: 'y'
+OFFSET:
+                   0: 0             1: 1            2: 16           3: 0
+                   4: 1             5: 16           6: 0            7: 1
+                   8: 0             9: 16          10: 0
+TYPE:
+               EMPTY
+*/
