@@ -291,6 +291,8 @@ namespace lexer {
     inline void skipWhitespace();
     // resolve to skip line comment
     inline void skipLineComment();
+    // resolve to skip block comment
+    inline void skipBlockComment();
 
   public:
     explicit Lexer(std::string source) : source(std::move(source)) {
@@ -356,6 +358,17 @@ namespace lexer {
   // resolve to skip line comment
   inline void Lexer::skipLineComment() {
     while (!isEnd() && now() != '\n') this->position++;
+  }
+
+  // resolve to skip block comment
+  inline void Lexer::skipBlockComment() {
+    while (!isEnd()) {
+      if (now() == '*' && peek() == '/') {
+        this->position += 2;
+        break;
+      }
+      this->position++;
+    }
   }
 
   // return current char is identifier
@@ -538,6 +551,11 @@ namespace lexer {
       else if (peek() == '/') {
         this->skipLineComment();
         // continue
+        return;
+      }
+      // block comment
+      else if (peek() == '*') {
+        this->skipBlockComment();
         return;
       } else
         tok.kind = token::DIV;
@@ -1283,9 +1301,14 @@ namespace ast {
   public:
     Expr *expr;
 
+    OutStmt() { this->expr = nullptr; }
+
     explicit OutStmt(Expr *e) : expr(e) {}
 
     std::string stringer() override {
+      if (expr == nullptr) {
+        return "<OutStmt {}>";
+      }
       return "<OutStmt { Expr=" + expr->stringer() + " }>";
     }
 
@@ -1297,9 +1320,14 @@ namespace ast {
   public:
     Expr *expr;
 
+    TinStmt() { this->expr = nullptr; }
+
     explicit TinStmt(Expr *e) : expr(e) {}
 
     std::string stringer() override {
+      if (expr == nullptr) {
+        return "<TinStmt {}>";
+      }
       return "<TinStmt { Expr=" + expr->stringer() + " }>";
     }
 
@@ -2203,6 +2231,10 @@ namespace parser {
     case token::OUT:
       this->position++;
       //
+      if (look(token::R_ARROW)) {
+        // no condition
+        return new ast::OutStmt();
+      }
       return new ast::OutStmt(this->expr());
       break;
       // tin in loop
@@ -2210,6 +2242,10 @@ namespace parser {
     case token::TIN:
       this->position++;
       //
+      if (look(token::R_ARROW)) {
+        // no condition
+        return new ast::TinStmt();
+      }
       return new ast::TinStmt(this->expr());
       break;
       // new <name>{K1: V1, K2, V2}
@@ -2742,6 +2778,7 @@ namespace byte {
     GET,    // GET
     SET,    // SET
     CALL,   // CALL
+    ORIG,   // ORIG
 
     B_ARR, // ARRAY
     B_TUP, // TUPLE
@@ -2776,17 +2813,19 @@ namespace byte {
 
     JUMP,   // JUMP
     F_JUMP, // F_JUMP
+    T_JUMP,
 
     RET,
   };
 
   // return a string of bytecode
   std::string codeString[len] = {
-      "CONST", "ASSIGN", "STORE",  "LOAD",  "INDEX", "GET",    "SET",    "CALL",
-      "B_ARR", "B_TUP",  "B_MAP",  "INCR",  "DECR",  "P_INCR", "P_DECR", "ADD",
-      "SUB",   "MUL",    "DIV",    "A_ADD", "A_SUB", "A_MUL",  "A_DIV",  "GR",
-      "LE",    "GR_E",   "LE_E",   "E_E",   "N_E",   "AND",    "OR",     "BANG",
-      "NOT",   "JUMP",   "F_JUMP", "RET",
+      "CONST",  "ASSIGN", "STORE", "LOAD",  "INDEX", "GET",  "SET",
+      "CALL",   "ORIG",   "B_ARR", "B_TUP", "B_MAP", "INCR", "DECR",
+      "P_INCR", "P_DECR", "ADD",   "SUB",   "MUL",   "DIV",  "A_ADD",
+      "A_SUB",  "A_MUL",  "A_DIV", "GR",    "LE",    "GR_E", "LE_E",
+      "E_E",    "N_E",    "AND",   "OR",    "BANG",  "NOT",  "JUMP",
+      "F_JUMP", "T_JUMP", "RET",
   };
 
   // compare two bytecode
@@ -2851,7 +2890,8 @@ namespace object {
     bool longer;
 
     Str(std::string v, bool longer) : value(v), longer(longer) {
-      value.pop_back(); // long character judgment end, delete judgment char
+      value.pop_back(); // long character judgment end, delete judgment
+                        // char
     }
 
     std::string stringer() override {
@@ -2981,7 +3021,7 @@ namespace entity {
     void dissemble(int p) {
       std::cout << "ENTITY AT " << std::to_string(p) << ":" << std::endl;
 
-      // for (auto i : offsets) std::cout << i << " " << std::endl;
+      for (auto i : offsets) std::cout << i << " " << std::endl;
 
       for (int ip = 0, op = 0; ip < codes.size(); ip++) {
         byte::Code co = codes.at(ip);
@@ -3020,7 +3060,8 @@ namespace entity {
           printf("%20d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
                  offsets.at(op++));
         } break;
-        case byte::F_JUMP: {
+        case byte::F_JUMP:
+        case byte::T_JUMP: {
           printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
                  offsets.at(op++));
         } break;
@@ -3050,8 +3091,16 @@ namespace entity {
         printf("%20s\n", "EMPTY");
       } else {
         for (int i = 0; i < variables.size(); i++) {
-          printf("%20d: '%s'\n", i, variables.at(i).c_str());
+          if (i % 4 == 0) {
+            printf("%20d: '%s'\t", i, variables.at(i).c_str());
+          } else {
+            printf("%5d: '%s' \t", i, variables.at(i).c_str());
+          }
+          if ((i + 1) % 4 == 0) {
+            printf("\n");
+          }
         }
+        printf("\n");
       }
 
       std::cout << "OFFSET: " << std::endl;
@@ -3059,8 +3108,16 @@ namespace entity {
         printf("%20s\n", "EMPTY");
       } else {
         for (int i = 0; i < offsets.size(); i++) {
-          printf("%20d: %d\n", i, offsets.at(i));
+          if (i % 4 == 0) {
+            printf("%20d: %d \t", i, offsets.at(i));
+          } else {
+            printf("%5d: %d  \t", i, offsets.at(i));
+          }
+          if ((i + 1) % 4 == 0) {
+            printf("\n");
+          }
         }
+        printf("\n");
       }
 
       std::cout << "TYPE: " << std::endl;
@@ -3087,8 +3144,9 @@ namespace compiler {
     inline void error(exp::Kind, std::string, int);
     // return the current statement
     ast::Stmt *look();
-
+    // currently compile entity
     entity::Entity now;
+    // offset of constant, offset of variable, offset of type
     int iConstOffset = 0, iVarOffset = 0, iTypeOffset = 0;
 
     void emitCode(byte::Code);           // push bytecode to entity
@@ -3105,6 +3163,11 @@ namespace compiler {
     void stmt(ast::Stmt *); // statements
     // search list variable to return index
     int searchVarIndexes(std::string);
+
+    // temp offsets of loop out statement
+    std::vector<int> tempLoopOutOffs;
+    // temp offsets of loop tin statement
+    std::vector<int> tempLoopTinOffs;
 
   public:
     Compiler(std::vector<ast::Stmt *> statements) {
@@ -3398,7 +3461,10 @@ namespace compiler {
     case ast::STMT_VAR: {
       ast::VarStmt *v = static_cast<ast::VarStmt *>(stmt);
 
-      if (v->expr != nullptr) this->expr(v->expr); // initial value
+      if (v->expr != nullptr)
+        this->expr(v->expr); // initial value
+      else
+        this->emitCode(byte::ORIG); // original value
 
       this->emitCode(byte::STORE);
 
@@ -3425,6 +3491,10 @@ namespace compiler {
       int ifPos = now.offsets.size();
 
       this->stmt(i->ifBranch);
+      this->emitCode(byte::JUMP); // jump out after
+
+      int ifOff = now.offsets.size(); // jump after execution if branch
+      std::vector<int> tempEfOffs;    // ef condition offsets
 
       // ef branch
       if (!i->efBranch.empty()) {
@@ -3441,20 +3511,35 @@ namespace compiler {
           this->emitCode(byte::F_JUMP);
           int efPos = now.offsets.size();
 
-          this->stmt(i.second);         // block
-          this->insertPosOffset(efPos); // TO: ef (F_JUMP)
+          this->stmt(i.second);                               // block
+          this->insertPosOffset(efPos, now.codes.size() + 1); // TO: ef (F_JUMP)
+
+          this->emitCode(byte::JUMP); // jump out after
+          tempEfOffs.push_back(now.offsets.size());
         }
-      } else {
-        // nf statements
+        // nf branch
+        if (i->nfBranch != nullptr) this->stmt(i->nfBranch);
+      }
+      // nf branch
+      else {
         if (i->nfBranch != nullptr) {
           this->insertPosOffset(ifPos); // TO: if (F_JUMP)
           this->stmt(i->nfBranch);
-          return;
+        } else {
+          // no ef and nf statement
+          this->insertPosOffset(ifPos); // TO: if (F_JUMP)
         }
-        // no ef and nf statement
-        this->insertPosOffset(ifPos); // TO: if (F_JUMP)
       }
+
+      // for (auto i : tempEfOffs) std::cout << i << std::endl;
+      for (int i = 0; i < tempEfOffs.size(); i++) {
+        // insertion increment successively
+        this->insertPosOffset(tempEfOffs.at(i) + i, now.codes.size());
+      }
+
+      this->insertPosOffset(ifOff + 1); // TO: if (JUMP)
     } break;
+    //
     case ast::STMT_FOR: {
       ast::ForStmt *f = static_cast<ast::ForStmt *>(stmt);
 
@@ -3463,28 +3548,85 @@ namespace compiler {
       // DEAD LOOP
       if (f->condition == nullptr) {
         this->stmt(f->block);
-      } else {
 
+        // for (auto i : tempLoopOutOffs) std::cout << i << std::endl;
+        // // set where each out statement should jump
+        // for (int i = 0; i < tempLoopOutOffs.size(); i++) {
+        //   this->insertPosOffset(tempLoopOutOffs.at(i) + i,
+        //                         now.codes.size() + 1);
+        // }
+      }
+      // condition and block
+      else {
         this->expr(f->condition);
         this->emitCode(byte::F_JUMP);
         int ePos = now.offsets.size(); // skip loop for false
 
         this->stmt(f->block);
+
+        // for (auto i : tempLoopOutOffs) std::cout << i << std::endl;
+        // process out statement
+        // for (int i = 0; i < tempLoopOutOffs.size(); i++) {
+        //   // after insertion it is incremented successively and inserted
+        //   again this->insertPosOffset(tempLoopOutOffs.at(i) + i + 1,
+        //                         now.codes.size() + 1);
+        // }
         // skip loop and LOOP bytecode
-        this->insertPosOffset(ePos, now.codes.size() + 1);
+        this->insertPosOffset(ePos,
+                              now.codes.size() + 1); // TO: (F_JUMP)
       }
       this->emitCode(byte::JUMP); // back to original state
       this->emitOffset(original);
+
+      for (int i = 0; i < tempLoopOutOffs.size(); i++) {
+        // after insertion it is incremented successively and inserted again
+        this->insertPosOffset(tempLoopOutOffs.at(i) + i);
+      }
+
+      if (!tempLoopOutOffs.empty() && !tempLoopTinOffs.empty()) {
+        for (std::vector<int>::iterator iter = tempLoopTinOffs.begin();
+             iter != tempLoopTinOffs.end(); iter++) {
+          *iter += tempLoopOutOffs.size();
+        }
+      }
+
+      // process tin statement
+      for (int i = 0; i < tempLoopTinOffs.size(); i++) {
+        this->insertPosOffset(tempLoopTinOffs.at(i) + i, original);
+      }
+
+      // clear the temp offset of the current loop
+      this->tempLoopOutOffs.clear();
+      this->tempLoopTinOffs.clear();
     } break;
+    //
     case ast::STMT_DO: {
       ast::DoStmt *d = static_cast<ast::DoStmt *>(stmt);
 
       this->stmt(d->block); // execute the do block first
       this->stmt(d->stmt);  // then execute loop
     } break;
+    //
     case ast::STMT_OUT: {
+      ast::OutStmt *o = static_cast<ast::OutStmt *>(stmt);
+
+      if (o->expr != nullptr) this->expr(o->expr);
+
+      // jump straight out
+      this->emitCode(o->expr == nullptr ? byte::JUMP : byte::T_JUMP);
+      // the position of the current out statement
+      this->tempLoopOutOffs.push_back(now.offsets.size());
     } break;
+    //
     case ast::STMT_TIN: {
+      ast::TinStmt *t = static_cast<ast::TinStmt *>(stmt);
+
+      if (t->expr != nullptr) this->expr(t->expr);
+
+      // jump straight out
+      this->emitCode(t->expr == nullptr ? byte::JUMP : byte::T_JUMP);
+      // tin
+      this->tempLoopTinOffs.push_back(now.offsets.size());
     } break;
     case ast::STMT_FUNC: {
     } break;
