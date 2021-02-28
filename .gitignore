@@ -1,5 +1,7 @@
 cmake-build-debug
-
+node_modules
+package-lock.json
+.clang-format
 *.exe
-
+a.out
 .idea
