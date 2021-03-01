@@ -1,0 +1,45 @@
+
+for ->
+
+    ret ->
+    ret x + y
+
+    if a > b & a > 100
+
+        ret ->
+
+    end
+
+end
+
+/*
+ENTITY AT 0:
+                   0: RET
+                   1: LOAD           0 'x'
+                   2: LOAD           1 'y'
+                   3: ADD
+                   4: RET
+                   5: LOAD           2 'a'
+                   6: LOAD           3 'b'
+                   7: GR
+                   8: LOAD           2 'a'
+                   9: CONST          0 <Int 100>
+                  10: GR
+                  11: AND
+                  12: F_JUMP        15
+                  13: RET
+                  14: JUMP          15
+                  15: JUMP           0
+                  16: RET
+CONSTANT: 
+                   0: <Int 100>
+VARIABLE: 
+                   0: 'x'	    1: 'y' 	    2: 'a' 	    3: 'b' 	
+
+OFFSET: 
+                   0: 0 	    1: 1  	    2: 2  	    3: 3  	
+                   4: 2 	    5: 0  	    6: 15  	    7: 15  	
+                   8: 0 	
+TYPE: 
+               EMPTY
+*/

@@ -1,0 +1,18 @@
+
+use std
+use http as hp
+
+/*
+ENTITY AT 0:
+                   0: USE            0 'std'
+                   1: UAS            1 'http' 2 'hp'
+                   2: RET
+CONSTANT: 
+               EMPTY
+NAME: 
+                   0: 'std'	        1: 'http' 	    2: 'hp' 	
+OFFSET: 
+                   0: 0 	        1: 1  	        2: 2  	
+TYPE: 
+               EMPTY
+*/

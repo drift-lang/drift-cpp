@@ -1,0 +1,29 @@
+
+def Color
+
+    RED
+    GREEN
+    PINK
+    WHITE
+
+end
+
+/*
+ENTITY AT 0:
+                   0: NAME           0 'RED'
+                   1: NAME           1 'GREEN'
+                   2: NAME           2 'PINK'
+                   3: NAME           3 'WHITE'
+                   4: B_ENUM         4 'Color' 4
+                   5: RET
+CONSTANT: 
+               EMPTY
+NAME: 
+                   0: 'RED'	    1: 'GREEN' 	    2: 'PINK' 	    3: 'WHITE' 	
+                   4: 'Color'	
+OFFSET: 
+                   0: 0 	    1: 1  	    2: 2  	    3: 3  	
+                   4: 4 	    5: 4  	
+TYPE: 
+               EMPTY
+*/
