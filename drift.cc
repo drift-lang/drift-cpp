@@ -2212,11 +2212,13 @@ namespace parser {
       } else {
         ast::Stmt *inherit = nullptr;
 
+        token::Token name = previous(); // name
+
         // inherit
         if (look().kind == token::L_ARROW) {
           inherit = this->stmt();
         }
-        return new ast::WholeStmt(previous(), inherit, this->block(token::END));
+        return new ast::WholeStmt(name, inherit, this->block(token::END));
       }
       break;
       // if
@@ -2752,7 +2754,7 @@ namespace semantic {
 // bytecode
 namespace byte {
   // total number of bytecodes
-  constexpr int len = 50;
+  constexpr int len = 51;
   // bytecode type
   enum Code {
     CONST,  // O
@@ -2769,7 +2771,8 @@ namespace byte {
     NEW,    // NEW
     FUNC,   // FUNC
     CHA,    // CHA
-    DEL,    // DEL
+    END,    // END
+    WHOLE,  // WHOLE
 
     PUB, // PUB
     MOD, // MOD
@@ -2780,6 +2783,7 @@ namespace byte {
     B_TUP,  // TUPLE
     B_MAP,  // MAP
     B_ENUM, // ENUM
+    B_FACE, // INTERFACE
 
     INCR,   // DECR
     DECR,   // INCR
@@ -2817,13 +2821,14 @@ namespace byte {
 
   // return a string of bytecode
   std::string codeString[len] = {
-      "CONST", "ASSIGN", "STORE", "LOAD",  "INDEX",  "GET",    "SET",
-      "CALL",  "CALL_I", "ORIG",  "NAME",  "NEW",    "FUNC",   "CHA",
-      "DEL",   "PUB",    "MOD",   "USE",   "UAS",    "B_ARR",  "B_TUP",
-      "B_MAP", "B_ENUM", "INCR",  "DECR",  "P_INCR", "P_DECR", "ADD",
-      "SUB",   "MUL",    "DIV",   "A_ADD", "A_SUB",  "A_MUL",  "A_DIV",
-      "GR",    "LE",     "GR_E",  "LE_E",  "E_E",    "N_E",    "AND",
-      "OR",    "BANG",   "NOT",   "JUMP",  "F_JUMP", "T_JUMP", "RET",
+      "CONST",  "ASSIGN", "STORE",  "LOAD",   "INDEX", "GET",   "SET",
+      "CALL",   "CALL_I", "ORIG",   "NAME",   "NEW",   "FUNC",  "CHA",
+      "END",    "WHOLE",  "PUB",    "MOD",    "USE",   "UAS",   "B_ARR",
+      "B_TUP",  "B_MAP",  "B_ENUM", "B_FACE", "INCR",  "DECR",  "P_INCR",
+      "P_DECR", "ADD",    "SUB",    "MUL",    "DIV",   "A_ADD", "A_SUB",
+      "A_MUL",  "A_DIV",  "GR",     "LE",     "GR_E",  "LE_E",  "E_E",
+      "N_E",    "AND",    "OR",     "BANG",   "NOT",   "JUMP",  "F_JUMP",
+      "T_JUMP", "RET",
   };
 
   // compare two bytecode
@@ -3013,17 +3018,33 @@ namespace entity {
     std::vector<std::string> names;          // names
     std::vector<ast::Type *> types;          // type of variables
 
-    int arguments = 0; // args for function entity
+    int args = 0;      // args for function entity
+    ast::Arg argument; // arguments
 
-    // return whether the names of an entity is contains a name
-    bool contains(std::string n) {
-      return std::find(names.begin(), names.end(), n) != names.end();
-    }
+    // interface definition
+    std::vector<std::tuple<std::string, ast::Arg, ast::Type *>> interface;
+
+    // inherit definition
+    std::vector<std::string> inherit;
 
     // output entity data
     void dissemble(int p) {
-      std::cout << "ENTITY '" + title + "' AT: " << std::to_string(p)
-                << " ARG: " << arguments << std::endl;
+      std::stringstream str;
+
+      str << "ENTITY '" + title + "' AT: " << std::to_string(p)
+          << " ARG: " << args;
+      if (argument.empty()) {
+        str << " ()";
+      } else {
+        str << " ( ";
+        for (auto i : argument) {
+          str << "K: '" << i.first->literal << "' T: " << i.second->stringer()
+              << " ";
+        }
+        str << ")";
+      }
+
+      std::cout << str.str() << std::endl;
 
       // for (auto i : offsets) std::cout << i << " " << std::endl;
 
@@ -3050,12 +3071,16 @@ namespace entity {
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  names.at(offsets.at(op)).c_str());
         } break;
+        case byte::WHOLE: {
+          printf("%20d: %s %10d '%s'\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+                 names.at(offsets.at(op)).c_str());
+        } break;
         case byte::GET:
         case byte::SET:
         case byte::MOD:
         case byte::USE:
-        case byte::CHA:
-        case byte::DEL: {
+        case byte::CHA: {
           printf("%20d: %s %12d '%s'\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  names.at(offsets.at(op)).c_str());
@@ -3159,9 +3184,53 @@ namespace entity {
           printf("%20d: %s\n", i, types.at(i)->stringer().c_str());
         }
       }
+
+      std::cout << "INTERFACE: " << std::endl;
+      if (interface.empty()) {
+        printf("%20s\n", "EMPTY");
+      } else {
+        for (int i = 0; i < interface.size(); i++) {
+          auto x = interface.at(i);
+
+          std::stringstream str;
+          ast::Arg arg = std::get<1>(x);
+
+          if (arg.empty()) {
+            str << "()";
+          } else {
+            str << "( ";
+
+            for (auto i : arg) {
+              str << "K: '" << i.first->literal
+                  << "' T: " << i.second->stringer() << " ";
+            }
+
+            str << ")";
+          }
+
+          if (std::get<2>(x) == nullptr) {
+            printf("%20d: '%s' %s %s\n", i, std::get<0>(x).c_str(),
+                   str.str().c_str(), "NONE");
+            continue;
+          }
+
+          printf("%20d: '%s' %s %s\n", i, std::get<0>(x).c_str(),
+                 str.str().c_str(), std::get<2>(x)->stringer().c_str());
+        }
+      }
+
+      std::cout << "INHERIT: " << std::endl;
+      if (inherit.empty()) {
+        printf("%20s\n", "EMPTY");
+      } else {
+        printf("%19s", " ");
+
+        for (auto i : inherit) std::cout << "'" << i << "' ";
+        std::cout << std::endl;
+      }
     }
-  };
-}; // namespace entity
+  }; // namespace entity
+};   // namespace entity
 
 // compiler
 namespace compiler {
@@ -3176,7 +3245,7 @@ namespace compiler {
     // return the current statement
     ast::Stmt *look();
     // offset of constant, offset of name, offset of type
-    int iConstOffset = 0, iNameOffset = 0, iTypeOffset = 0;
+    int icf = 0, inf = 0, itf = 0;
 
     void emitCode(byte::Code);           // push bytecode to entity
     void emitOffset(int);                // push offset to entity
@@ -3184,15 +3253,15 @@ namespace compiler {
     void emitName(std::string);          // push name to entity
     void emitType(ast::Type *);          // push names type to entity
 
-    void
-    insertPosOffset(int); // insert position with current counts of bytecode
+    // insert position with current counts of bytecode
+    void insertPosOffset(int);
     void insertPosOffset(int, int); // with custom value
 
     void expr(ast::Expr *); // expression
     void stmt(ast::Stmt *); // statements
 
-    // search list variable to return index
-    int searchVarIndexes(std::string);
+    // push interface function to entity
+    void emitInterface(std::string, ast::Arg, ast::Type *);
 
   public:
     Compiler(std::vector<ast::Stmt *> statements) {
@@ -3234,19 +3303,19 @@ namespace compiler {
   // push constant to entity
   void Compiler::emitConstant(object::Object *obj) {
     this->now->constants.push_back(obj);
-    this->emitOffset(this->iConstOffset++);
+    this->emitOffset(this->icf++);
   }
 
   // push name to entity
   void Compiler::emitName(std::string v) {
     this->now->names.push_back(v);
-    this->emitOffset(this->iNameOffset++);
+    this->emitOffset(this->inf++);
   }
 
   // push names type to entity
   void Compiler::emitType(ast::Type *t) {
     this->now->types.push_back(t);
-    this->emitOffset(this->iTypeOffset++);
+    this->emitOffset(this->itf++);
   }
 
   // insert position with current counts of bytecode
@@ -3257,6 +3326,11 @@ namespace compiler {
   // with custom value
   void Compiler::insertPosOffset(int pos, int val) {
     this->now->offsets.insert(now->offsets.begin() + pos, val);
+  }
+
+  // push interface function to entity
+  void Compiler::emitInterface(std::string name, ast::Arg arg, ast::Type *ret) {
+    this->now->interface.push_back(std::make_tuple(name, arg, ret));
   }
 
   // expression
@@ -3364,24 +3438,23 @@ namespace compiler {
 
       this->emitCode(byte::LOAD);
 
-      if (now->contains(n->token.literal)) {
-        this->emitOffset(
-            // push an existing index
-            searchVarIndexes(n->token.literal));
+      auto iter =
+          std::find(now->names.begin(), now->names.end(), n->token.literal);
+      // is names contain?
+      if (iter != now->names.end()) {
+        this->emitOffset(std::distance(now->names.begin(), iter)); // emit
+                                                                   // idexes
       } else {
-        // not exist
-        this->emitName(n->token.literal);
+        this->emitName(n->token.literal); // new name
       }
 
-      if (n->selfIncrement && n->prefix) // increment and prefix
-        this->emitCode(byte::P_INCR);
-      else if (n->selfIncrement) // increment suffix
-        this->emitCode(byte::INCR);
+      // increment and prefix
+      if (n->selfIncrement && n->prefix) this->emitCode(byte::P_INCR);
+      if (n->selfIncrement) this->emitCode(byte::INCR); // suffix
 
-      if (n->selfDecrement && n->prefix) // decrement and prefix
-        this->emitCode(byte::P_DECR);
-      else if (n->selfDecrement) // decrement suffix
-        this->emitCode(byte::DECR);
+      // decrement and prefix
+      if (n->selfDecrement && n->prefix) this->emitCode(byte::P_DECR);
+      if (n->selfDecrement) this->emitCode(byte::DECR); // suffix
     } break;
     //
     case ast::EXPR_CALL: {
@@ -3639,27 +3712,31 @@ namespace compiler {
     case ast::STMT_FUNC: {
       ast::FuncStmt *f = static_cast<ast::FuncStmt *>(stmt);
 
+      int entitiesSize = this->entities.size() - 1; // original
+
       this->entities.push_back(new entity::Entity(
           f->name.literal)); // new entity for function statement
-      this->now = this->entities.at(entities.size() - 1);
+      this->now = this->entities.back();
 
-      this->now->arguments = f->arguments.size(); // arguments
+      this->now->args = f->arguments.size(); // arguments
+      this->now->argument = f->arguments;    // fields
 
-      int x = this->iConstOffset;
-      int y = this->iNameOffset;
-      int z = this->iTypeOffset;
+      int x = this->icf;
+      int y = this->inf;
+      int z = this->itf;
 
-      this->iConstOffset = 0; // x
-      this->iNameOffset = 0;  // y
-      this->iTypeOffset = 0;  // z
+      this->icf = 0; // x
+      this->inf = 0; // y
+      this->itf = 0; // z
 
       this->stmt(f->block);
 
-      this->iConstOffset = x;
-      this->iNameOffset = y;
-      this->iTypeOffset = z;
+      this->icf = x;
+      this->inf = y;
+      this->itf = z;
 
-      this->now = this->entities.at(0); // restore to main entity
+      // if more than one it points to the last one
+      this->now = this->entities.at(entitiesSize); // restore to main entity
 
       // TO main ENTITY
       this->emitCode(byte::FUNC);
@@ -3667,6 +3744,35 @@ namespace compiler {
     } break;
     //
     case ast::STMT_WHOLE: {
+      ast::WholeStmt *w = static_cast<ast::WholeStmt *>(stmt);
+
+      int entitiesSize = this->entities.size() - 1; // original
+
+      this->entities.push_back(new entity::Entity(
+          w->name.literal)); // new entity for whole statement
+      this->now = this->entities.back();
+
+      int x = this->icf;
+      int y = this->inf;
+      int z = this->itf;
+
+      this->icf = 0; // x
+      this->inf = 0; // y
+      this->itf = 0; // z
+
+      this->stmt(w->body);
+      if (w->inherit != nullptr) this->stmt(w->inherit);
+
+      this->icf = x;
+      this->inf = y;
+      this->itf = z;
+
+      // if more than one it points to the last one
+      this->now = this->entities.at(entitiesSize); // restore to main entity
+
+      // TO main ENTITY
+      this->emitCode(byte::WHOLE);
+      this->emitName(w->name.literal);
     } break;
     //
     case ast::STMT_AND: {
@@ -3677,8 +3783,8 @@ namespace compiler {
 
       this->stmt(a->block);
 
-      this->emitCode(byte::DEL);
-      this->emitName(a->name.literal); // DELETE
+      this->emitCode(byte::END);
+      this->emitName(a->name.literal); // END
     } break;
     //
     case ast::STMT_MOD: {
@@ -3724,6 +3830,12 @@ namespace compiler {
     } break;
     //
     case ast::STMT_INHERIT: {
+      ast::InheritStmt *i = static_cast<ast::InheritStmt *>(stmt);
+      std::vector<std::string> inherit;
+
+      for (auto i : i->names) inherit.push_back(i->literal);
+
+      this->now->inherit = inherit;
     } break;
     //
     case ast::STMT_CALLINHERIT: {
@@ -3740,6 +3852,9 @@ namespace compiler {
     } break;
     //
     case ast::STMT_INTERFACE: {
+      ast::InterfaceStmt *i = static_cast<ast::InterfaceStmt *>(stmt);
+
+      this->emitInterface(i->name.literal, i->arguments, i->ret);
     } break;
     //
     case ast::STMT_PUB: {
@@ -3753,13 +3868,23 @@ namespace compiler {
       break;
     }
   }
-
-  // search list names to return index
-  int Compiler::searchVarIndexes(std::string name) {
-    return std::distance(now->names.begin(),
-                         std::find(now->names.begin(), now->names.end(), name));
-  }
 }; // namespace compiler
+
+// virtual machine
+namespace vm {
+  // structure
+  class vm {
+  private:
+    // entity vector
+    std::vector<entity::Entity> entities;
+
+  public:
+    explicit vm(std::vector<entity::Entity> e) : entities(e) {}
+
+    // execute main entity
+    void execute();
+  };
+} // namespace vm
 
 // DEBUG to output tokens and statements
 bool DEBUG = false;

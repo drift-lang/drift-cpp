@@ -1,0 +1,20 @@
+
+<- a
+<- a + b + c
+
+/*
+ENTITY 'main' AT: 0 ARG: 0 ()
+                   0: RET
+CONSTANT: 
+               EMPTY
+NAME: 
+               EMPTY
+OFFSET: 
+               EMPTY
+TYPE: 
+               EMPTY
+INTERFACE: 
+               EMPTY
+INHERIT: 
+                  'a' 'b' 'c' 
+*/

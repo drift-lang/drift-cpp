@@ -1,0 +1,98 @@
+
+def Foo <- Op + Bin
+
+    def () *bar
+
+    def x: int
+
+    def x: str = "HELLO!!"
+
+    // COLOR
+
+    def (x: int, y: int) max -> int
+        if x > y
+            ret x
+        nf
+            ret y
+        end
+    end
+
+    pub def (x: bool) *what -> bool
+
+end
+
+def x: Foo = new Foo
+def x: Foo = new Foo{x: 45}
+
+/*
+ENTITY 'main' AT: 0 ARG: 0 ()
+                   0: WHOLE          0 'Foo'
+                   1: NEW            1 'Foo' 0
+                   2: STORE          2 'x' 0 <User Name='Foo' >
+                   3: NAME           3 'x'
+                   4: CONST          0 <Int 45>
+                   5: NEW            4 'Foo' 2
+                   6: STORE          5 'x' 1 <User Name='Foo' >
+                   7: RET
+CONSTANT: 
+                   0: <Int 45>
+NAME: 
+                   0: 'Foo'	    1: 'Foo' 	    2: 'x' 	    3: 'x' 	
+                   4: 'Foo'	    5: 'x' 	
+OFFSET: 
+                   0: 0 	    1: 1  	    2: 0  	    3: 2  	
+                   4: 0 	    5: 3  	    6: 0  	    7: 4  	
+                   8: 2 	    9: 5  	   10: 1  	
+TYPE: 
+                   0: <User Name='Foo' >
+                   1: <User Name='Foo' >
+INTERFACE: 
+               EMPTY
+INHERIT: 
+               EMPTY
+ENTITY 'Foo' AT: 1 ARG: 0 ()
+                   0: ORIG
+                   1: STORE          0 'x' 0 <Int>
+                   2: CONST          0 <Str "HELLO!!">
+                   3: STORE          1 'x' 1 <Str>
+                   4: FUNC           2 'max'
+                   5: PUB
+CONSTANT: 
+                   0: <Str "HELLO!!">
+NAME: 
+                   0: 'x'	    1: 'x' 	    2: 'max' 	
+OFFSET: 
+                   0: 0 	    1: 0  	    2: 0  	    3: 1  	
+                   4: 1 	    5: 2  	
+TYPE: 
+                   0: <Int>
+                   1: <Str>
+INTERFACE: 
+                   0: 'bar' () NONE
+                   1: 'what' ( K: 'x' T: <Bool> ) <Bool>
+INHERIT: 
+                   'Op' 'Bin' 
+ENTITY 'max' AT: 2 ARG: 2 ( K: 'x' T: <Int> K: 'y' T: <Int> )
+                   0: LOAD           0 'x'
+                   1: LOAD           1 'y'
+                   2: GR
+                   3: F_JUMP         7
+                   4: LOAD           0 'x'
+                   5: RET
+                   6: JUMP           9
+                   7: LOAD           1 'y'
+                   8: RET
+CONSTANT: 
+               EMPTY
+NAME: 
+                   0: 'x'	    1: 'y' 	
+OFFSET: 
+                   0: 0 	    1: 1  	    2: 7  	    3: 0  	
+                   4: 9 	    5: 1  	
+TYPE: 
+               EMPTY
+INTERFACE: 
+               EMPTY
+INHERIT: 
+               EMPTY
+*/
