@@ -2501,18 +2501,6 @@ namespace semantic {
     // return the current statement
     inline ast::Stmt *now() { return statements->at(position); }
 
-    // // peek next statement
-    // //
-    // // [Q]: how use lvalue to quote statement
-    // //
-    // ast::Stmt *peek() {
-    //   if (position + 1 >= statements->size()) {
-    //     return nullptr;
-    //   } else {
-    //     return statements->at(position + 1);
-    //   }
-    // }
-
     // throw semantic analysis exception
     void error(exp::Kind k, std::string message, int line) {
       throw exp::Exp(k, message, line);
@@ -2521,116 +2509,110 @@ namespace semantic {
   public:
     explicit Analysis(std::vector<ast::Stmt *> *stmts) {
       this->statements = stmts;
+
+      while (position < statements->size()) {
+        this->analysisStmt(now());
+        this->position++;
+      }
     }
 
-    // analysis
-    void analysisAst() {
-      while (position < statements->size()) {
-        switch (look()) {
-        //
-        case ast::STMT_EXPR: {
-          ast::ExprStmt *stmt = static_cast<ast::ExprStmt *>(now());
-          ast::Expr *expr = static_cast<ast::Expr *>(stmt->expr);
-          // expression
-          this->analysisExpr(expr);
-        } break;
-        //
-        case ast::STMT_PUB: {
-          ast::PubStmt *stmt = static_cast<ast::PubStmt *>(now());
+    // statement
+    void analysisStmt(ast::Stmt *stmt) {
+      switch (stmt->kind()) {
+      case ast::STMT_EXPR: {
+        ast::ExprStmt *e = static_cast<ast::ExprStmt *>(stmt);
+        ast::Expr *expr = static_cast<ast::Expr *>(e->expr);
+        // expression
+        this->analysisExpr(expr);
+      } break;
+      //
+      case ast::STMT_PUB: {
+        ast::PubStmt *p = static_cast<ast::PubStmt *>(stmt);
 
-          switch (stmt->stmt->kind()) {
-          case ast::STMT_VAR:
-          case ast::STMT_FUNC:
-          case ast::STMT_WHOLE:
-          case ast::STMT_INTERFACE:
-            break;
-          default:
-            error(exp::CANNOT_PUBLIC, "statement cannot be public", stmt->line);
-          }
-        } break;
-        //
-        case ast::STMT_WHOLE: {
-          ast::WholeStmt *stmt = static_cast<ast::WholeStmt *>(now());
-
-          if (stmt->body->block.empty()) {
-            break;
-          }
-          ast::Stmt *f = stmt->body->block.at(0); // first statement
-
-          // just a ident of expression statement
-          //
-          // enumeration
-          //
-          if (f->kind() == ast::STMT_EXPR) {
-            //
-            if (stmt->inherit != nullptr) {
-              error(exp::ENUMERATION, "enumeration type cannot be inherited",
-                    stmt->name.line);
-            }
-
-            ast::ExprStmt *expr = static_cast<ast::ExprStmt *>(f);
-            std::vector<token::Token *> fields;
-
-            for (auto &i : stmt->body->block) {
-              //
-              if (i->kind() != ast::STMT_EXPR) {
-                error(exp::ENUMERATION, "whole is an enumeration type",
-                      stmt->name.line);
-              }
-              ast::ExprStmt *pStmt = static_cast<ast::ExprStmt *>(i);
-              if (pStmt->expr->kind() != ast::EXPR_NAME) {
-                error(exp::ENUMERATION, "whole is an enumeration type",
-                      stmt->name.line);
-              }
-
-              ast::NameExpr *name = static_cast<ast::NameExpr *>(pStmt->expr);
-              // push to enumeration
-              // structure
-              fields.push_back(&name->token);
-            }
-            // replace new statement into
-            // vector
-            //
-            // [Q]: iterator and
-            // std::replace
-            //
-            ast::Stmt *n = new ast::EnumStmt(stmt->name, fields);
-            std::replace(std::begin(*statements), std::end(*statements), now(),
-                         n);
-
-            std::cout << "\033[33m[Semantic "
-                         "analysis replace "
-                      << position + 1 << "]\033[0m: WholeStmt -> "
-                      << n->stringer() << std::endl;
-          }
-          // normal whole statement
-          // if hinder of statements include name
-          // expr to throw an error
-          else {
-            for (auto &i : stmt->body->block) {
-              if (i->kind() == ast::STMT_EXPR) {
-                error(exp::ENUMERATION,
-                      "it an whole statement but contains some "
-                      "other value",
-                      stmt->name.line);
-              }
-            }
-          }
-        } break;
-        //
-        case ast::STMT_CALLINHERIT: {
-          ast::CallInheritStmt *stmt =
-              static_cast<ast::CallInheritStmt *>(now());
-
-          if (stmt->expr->kind() != ast::EXPR_CALL) {
-            error(exp::CALL_INHERIT,
-                  "only methods of the parent class can be called", 2);
-          }
-        } break;
-        default:
+        switch (p->stmt->kind()) {
+        case ast::STMT_VAR:       // defintin
+        case ast::STMT_FUNC:      // function
+        case ast::STMT_WHOLE:     // whole
+        case ast::STMT_INTERFACE: // interface
           break;
+        default:
+          error(exp::CANNOT_PUBLIC, "statement cannot be public", p->line);
         }
-        this->position++;
+
+        // if its whole statement and must to analysis body
+        // for example it contains a new whole statement inside
+        if (p->stmt->kind() == ast::STMT_WHOLE) this->analysisStmt(p->stmt);
+      } break;
+      //
+      case ast::STMT_WHOLE: {
+        ast::WholeStmt *w = static_cast<ast::WholeStmt *>(stmt);
+
+        if (w->body->block.empty()) break;
+
+        ast::Stmt *f = w->body->block.at(0); // first statement
+
+        // just a ident of expression statement
+        //
+        // enumeration
+        //
+        if (f->kind() == ast::STMT_EXPR) {
+          //
+          if (w->inherit != nullptr) {
+            error(exp::ENUMERATION, "enumeration type cannot be inherited",
+                  w->name.line);
+          }
+
+          ast::ExprStmt *expr = static_cast<ast::ExprStmt *>(f);
+          std::vector<token::Token *> fields;
+
+          for (auto &i : w->body->block) {
+            //
+            if (i->kind() != ast::STMT_EXPR) {
+              error(exp::ENUMERATION, "whole is an enumeration type",
+                    w->name.line);
+            }
+            ast::ExprStmt *pStmt = static_cast<ast::ExprStmt *>(i);
+            if (pStmt->expr->kind() != ast::EXPR_NAME) {
+              error(exp::ENUMERATION, "whole is an enumeration type",
+                    w->name.line);
+            }
+
+            ast::NameExpr *name = static_cast<ast::NameExpr *>(pStmt->expr);
+            // push to enumeration
+            // structure
+            fields.push_back(&name->token);
+          }
+          // replace new statement into
+          ast::Stmt *n = new ast::EnumStmt(w->name, fields);
+          std::replace(std::begin(*statements), std::end(*statements), now(),
+                       n);
+          std::cout << "\033[33m[Semantic analysis replace " << position + 1
+                    << "]\033[0m: WholeStmt -> " << n->stringer() << std::endl;
+        }
+        // normal whole statement if hinder of statements include name expr to
+        // throw an error
+        else {
+          for (auto &i : w->body->block) {
+            if (i->kind() == ast::STMT_EXPR) {
+              error(exp::ENUMERATION,
+                    "it an whole statement but contains some other value",
+                    w->name.line);
+            }
+          }
+        }
+      } break;
+      //
+      case ast::STMT_CALLINHERIT: {
+        ast::CallInheritStmt *c = static_cast<ast::CallInheritStmt *>(stmt);
+
+        if (c->expr->kind() != ast::EXPR_CALL) {
+          error(exp::CALL_INHERIT,
+                "only methods of the parent class can be called", 2);
+        }
+      } break;
+      //
+      default:
+        break;
       }
     }
 
@@ -2748,8 +2730,8 @@ namespace semantic {
         break;
       }
     }
-  };
-}; // namespace semantic
+  }; // namespace semantic
+};   // namespace semantic
 
 // bytecode
 namespace byte {
@@ -3004,233 +2986,233 @@ namespace object {
   };
 }; // namespace object
 
-// entity
-namespace entity {
-  // entity structure
-  struct Entity {
-    std::string title; // TITLE FOR ENTITY
+// entity structure
+struct Entity {
+  std::string title; // TITLE FOR ENTITY
 
-    explicit Entity(std::string title) : title(title) {} // TO title
+  explicit Entity(std::string title) : title(title) {} // TO title
 
-    std::vector<byte::Code> codes;           // bytecodes
-    std::vector<int> offsets;                // offset of bytecode
-    std::vector<object::Object *> constants; // constant
-    std::vector<std::string> names;          // names
-    std::vector<ast::Type *> types;          // type of variables
+  std::vector<byte::Code> codes;           // bytecodes
+  std::vector<int> offsets;                // offset of bytecode
+  std::vector<object::Object *> constants; // constant
+  std::vector<std::string> names;          // names
+  std::vector<ast::Type *> types;          // type of variables
 
-    int args = 0;      // args for function entity
-    ast::Arg argument; // arguments
+  int args = 0;             // args for function entity
+  ast::Arg argument;        // arguments
+  ast::Type *ret = nullptr; // return type
 
-    // interface definition
-    std::vector<std::tuple<std::string, ast::Arg, ast::Type *>> interface;
+  // interface definition
+  std::vector<std::tuple<std::string, ast::Arg, ast::Type *>> interface;
 
-    // inherit definition
-    std::vector<std::string> inherit;
+  // inherit definition
+  std::vector<std::string> inherit;
 
-    // output entity data
-    void dissemble(int p) {
-      std::stringstream str;
+  // output entity data
+  void dissemble(int p) {
+    std::stringstream str;
 
-      str << "ENTITY '" + title + "' AT: " << std::to_string(p)
-          << " ARG: " << args;
-      if (argument.empty()) {
-        str << " ()";
-      } else {
-        str << " ( ";
-        for (auto i : argument) {
-          str << "K: '" << i.first->literal << "' T: " << i.second->stringer()
-              << " ";
-        }
-        str << ")";
+    str << "ENTITY '" + title + "' AT: " << std::to_string(p)
+        << " ARG: " << args;
+    if (argument.empty()) {
+      str << " ()";
+    } else {
+      str << " ( ";
+      for (auto i : argument) {
+        str << "K: '" << i.first->literal << "' T: " << i.second->stringer()
+            << " ";
       }
+      str << ")";
+    }
 
-      std::cout << str.str() << std::endl;
+    str << " " << ((ret == nullptr) ? "NONE" : ret->stringer());
 
-      // for (auto i : offsets) std::cout << i << " " << std::endl;
+    std::cout << str.str() << std::endl;
 
-      for (int ip = 0, op = 0; ip < codes.size(); ip++) {
-        byte::Code co = codes.at(ip);
+    // for (auto i : offsets) std::cout << i << " " << std::endl;
 
-        switch (co) {
-        case byte::CONST: {
-          printf("%20d: %s %10d %s\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 constants.at(offsets.at(op))->stringer().c_str());
-        } break;
-        case byte::STORE: {
-          printf("%20d: %s %10d '%s' %d %s\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
-                 types.at(offsets.at(op + 1))->stringer().c_str());
-          op += 2;
-        } break;
-        case byte::LOAD:
-        case byte::NAME:
-        case byte::FUNC: {
-          printf("%20d: %s %11d '%s'\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 names.at(offsets.at(op)).c_str());
-        } break;
-        case byte::WHOLE: {
-          printf("%20d: %s %10d '%s'\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 names.at(offsets.at(op)).c_str());
-        } break;
-        case byte::GET:
-        case byte::SET:
-        case byte::MOD:
-        case byte::USE:
-        case byte::CHA: {
-          printf("%20d: %s %12d '%s'\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 names.at(offsets.at(op)).c_str());
-        } break;
-        case byte::CALL: {
-          printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::CALL_I: {
-          printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::B_ARR:
-        case byte::B_TUP:
-        case byte::B_MAP: {
-          printf("%20d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::F_JUMP:
-        case byte::T_JUMP: {
-          printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::JUMP: {
-          printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::NEW: {
-          printf("%20d: %s %12d '%s' %d\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
-          op += 2;
-        } break;
-        case byte::B_ENUM: {
-          printf("%20d: %s %9d '%s' %d\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
-          op += 2;
-        } break;
-        case byte::UAS: {
-          printf("%20d: %s %12d '%s' %d '%s'\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
-                 names.at(offsets.at(op + 1)).c_str());
-          op += 2;
-        } break;
-        default:
-          printf("%20d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
-          break;
-        }
-      }
+    for (int ip = 0, op = 0; ip < codes.size(); ip++) {
+      byte::Code co = codes.at(ip);
 
-      std::cout << "CONSTANT: " << std::endl;
-      if (constants.empty()) {
-        printf("%20s\n", "EMPTY");
-      } else {
-        for (int i = 0; i < constants.size(); i++) {
-          printf("%20d: %s\n", i, constants.at(i)->stringer().c_str());
-        }
-      }
-
-      std::cout << "NAME: " << std::endl;
-      if (names.empty()) {
-        printf("%20s\n", "EMPTY");
-      } else {
-        for (int i = 0; i < names.size(); i++) {
-          if (i % 4 == 0) {
-            printf("%20d: '%s'\t", i, names.at(i).c_str());
-          } else {
-            printf("%5d: '%s' \t", i, names.at(i).c_str());
-          }
-          if ((i + 1) % 4 == 0) {
-            printf("\n");
-          }
-        }
-        printf("\n");
-      }
-
-      std::cout << "OFFSET: " << std::endl;
-      if (offsets.empty()) {
-        printf("%20s\n", "EMPTY");
-      } else {
-        for (int i = 0; i < offsets.size(); i++) {
-          if (i % 4 == 0) {
-            printf("%20d: %d \t", i, offsets.at(i));
-          } else {
-            printf("%5d: %d  \t", i, offsets.at(i));
-          }
-          if ((i + 1) % 4 == 0) {
-            printf("\n");
-          }
-        }
-        printf("\n");
-      }
-
-      std::cout << "TYPE: " << std::endl;
-      if (types.empty()) {
-        printf("%20s\n", "EMPTY");
-      } else {
-        for (int i = 0; i < types.size(); i++) {
-          printf("%20d: %s\n", i, types.at(i)->stringer().c_str());
-        }
-      }
-
-      std::cout << "INTERFACE: " << std::endl;
-      if (interface.empty()) {
-        printf("%20s\n", "EMPTY");
-      } else {
-        for (int i = 0; i < interface.size(); i++) {
-          auto x = interface.at(i);
-
-          std::stringstream str;
-          ast::Arg arg = std::get<1>(x);
-
-          if (arg.empty()) {
-            str << "()";
-          } else {
-            str << "( ";
-
-            for (auto i : arg) {
-              str << "K: '" << i.first->literal
-                  << "' T: " << i.second->stringer() << " ";
-            }
-
-            str << ")";
-          }
-
-          if (std::get<2>(x) == nullptr) {
-            printf("%20d: '%s' %s %s\n", i, std::get<0>(x).c_str(),
-                   str.str().c_str(), "NONE");
-            continue;
-          }
-
-          printf("%20d: '%s' %s %s\n", i, std::get<0>(x).c_str(),
-                 str.str().c_str(), std::get<2>(x)->stringer().c_str());
-        }
-      }
-
-      std::cout << "INHERIT: " << std::endl;
-      if (inherit.empty()) {
-        printf("%20s\n", "EMPTY");
-      } else {
-        printf("%19s", " ");
-
-        for (auto i : inherit) std::cout << "'" << i << "' ";
-        std::cout << std::endl;
+      switch (co) {
+      case byte::CONST: {
+        printf("%20d: %s %10d %s\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++),
+               constants.at(offsets.at(op))->stringer().c_str());
+      } break;
+      case byte::STORE: {
+        printf("%20d: %s %10d '%s' %d %s\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+               names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
+               types.at(offsets.at(op + 1))->stringer().c_str());
+        op += 2;
+      } break;
+      case byte::LOAD:
+      case byte::NAME:
+      case byte::FUNC: {
+        printf("%20d: %s %11d '%s'\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+               names.at(offsets.at(op)).c_str());
+      } break;
+      case byte::WHOLE: {
+        printf("%20d: %s %10d '%s'\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+               names.at(offsets.at(op)).c_str());
+      } break;
+      case byte::GET:
+      case byte::SET:
+      case byte::MOD:
+      case byte::USE:
+      case byte::CHA: {
+        printf("%20d: %s %12d '%s'\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+               names.at(offsets.at(op)).c_str());
+      } break;
+      case byte::CALL: {
+        printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::CALL_I: {
+        printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::B_ARR:
+      case byte::B_TUP:
+      case byte::B_MAP: {
+        printf("%20d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::F_JUMP:
+      case byte::T_JUMP: {
+        printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::JUMP: {
+        printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::NEW: {
+        printf("%20d: %s %12d '%s' %d\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+               names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
+        op += 2;
+      } break;
+      case byte::B_ENUM: {
+        printf("%20d: %s %9d '%s' %d\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+               names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
+        op += 2;
+      } break;
+      case byte::UAS: {
+        printf("%20d: %s %12d '%s' %d '%s'\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+               names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
+               names.at(offsets.at(op + 1)).c_str());
+        op += 2;
+      } break;
+      default:
+        printf("%20d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
+        break;
       }
     }
-  }; // namespace entity
-};   // namespace entity
+
+    std::cout << "CONSTANT: " << std::endl;
+    if (constants.empty()) {
+      printf("%20s\n", "EMPTY");
+    } else {
+      for (int i = 0; i < constants.size(); i++) {
+        printf("%20d: %s\n", i, constants.at(i)->stringer().c_str());
+      }
+    }
+
+    std::cout << "NAME: " << std::endl;
+    if (names.empty()) {
+      printf("%20s\n", "EMPTY");
+    } else {
+      for (int i = 0; i < names.size(); i++) {
+        if (i % 4 == 0) {
+          printf("%20d: '%s'\t", i, names.at(i).c_str());
+        } else {
+          printf("%5d: '%s' \t", i, names.at(i).c_str());
+        }
+        if ((i + 1) % 4 == 0) {
+          printf("\n");
+        }
+      }
+      printf("\n");
+    }
+
+    std::cout << "OFFSET: " << std::endl;
+    if (offsets.empty()) {
+      printf("%20s\n", "EMPTY");
+    } else {
+      for (int i = 0; i < offsets.size(); i++) {
+        if (i % 4 == 0) {
+          printf("%20d: %d \t", i, offsets.at(i));
+        } else {
+          printf("%5d: %d  \t", i, offsets.at(i));
+        }
+        if ((i + 1) % 4 == 0) {
+          printf("\n");
+        }
+      }
+      printf("\n");
+    }
+
+    std::cout << "TYPE: " << std::endl;
+    if (types.empty()) {
+      printf("%20s\n", "EMPTY");
+    } else {
+      for (int i = 0; i < types.size(); i++) {
+        printf("%20d: %s\n", i, types.at(i)->stringer().c_str());
+      }
+    }
+
+    std::cout << "INTERFACE: " << std::endl;
+    if (interface.empty()) {
+      printf("%20s\n", "EMPTY");
+    } else {
+      for (int i = 0; i < interface.size(); i++) {
+        auto x = interface.at(i);
+
+        std::stringstream str;
+        ast::Arg arg = std::get<1>(x);
+
+        if (arg.empty()) {
+          str << "()";
+        } else {
+          str << "( ";
+
+          for (auto i : arg) {
+            str << "K: '" << i.first->literal << "' T: " << i.second->stringer()
+                << " ";
+          }
+
+          str << ")";
+        }
+
+        if (std::get<2>(x) == nullptr) {
+          printf("%20d: '%s' %s %s\n", i, std::get<0>(x).c_str(),
+                 str.str().c_str(), "NONE");
+          continue;
+        }
+
+        printf("%20d: '%s' %s %s\n", i, std::get<0>(x).c_str(),
+               str.str().c_str(), std::get<2>(x)->stringer().c_str());
+      }
+    }
+
+    std::cout << "INHERIT: " << std::endl;
+    if (inherit.empty()) {
+      printf("%20s\n", "EMPTY");
+    } else {
+      printf("%19s", " ");
+
+      for (auto i : inherit) std::cout << "'" << i << "' ";
+      std::cout << std::endl;
+    }
+  }
+}; // namespace entity
 
 // compiler
 namespace compiler {
@@ -3269,12 +3251,12 @@ namespace compiler {
     }
 
     // entities of compiled
-    std::vector<entity::Entity *> entities = {new entity::Entity("main")};
+    std::vector<Entity *> entities = {new Entity("main")};
     // compile statements to entities
     void compile();
 
     // currently compile entity
-    entity::Entity *now = entities.at(0);
+    Entity *now = entities.at(0);
   };
 
   // throw an exception
@@ -3308,8 +3290,17 @@ namespace compiler {
 
   // push name to entity
   void Compiler::emitName(std::string v) {
-    this->now->names.push_back(v);
-    this->emitOffset(this->inf++);
+    std::vector<std::string>::iterator iter =
+        std::find(now->names.begin(), now->names.end(), v);
+    if (iter != now->names.end()) {
+      // found
+      this->emitOffset(
+          std::distance(now->names.begin(), iter)); // only push offset
+    } else {
+      // not found
+      this->now->names.push_back(v); // push new name
+      this->emitOffset(this->inf++); // push new offset
+    }
   }
 
   // push names type to entity
@@ -3437,16 +3428,7 @@ namespace compiler {
       ast::NameExpr *n = static_cast<ast::NameExpr *>(expr);
 
       this->emitCode(byte::LOAD);
-
-      auto iter =
-          std::find(now->names.begin(), now->names.end(), n->token.literal);
-      // is names contain?
-      if (iter != now->names.end()) {
-        this->emitOffset(std::distance(now->names.begin(), iter)); // emit
-                                                                   // idexes
-      } else {
-        this->emitName(n->token.literal); // new name
-      }
+      this->emitName(n->token.literal); // new name
 
       // increment and prefix
       if (n->selfIncrement && n->prefix) this->emitCode(byte::P_INCR);
@@ -3575,8 +3557,9 @@ namespace compiler {
         this->emitCode(byte::ORIG); // original value
 
       this->emitCode(byte::STORE);
-      this->emitName(v->name.literal); // name
-      this->emitType(v->T);            // type
+      this->emitName(v->name.literal);
+
+      this->emitType(v->T); // type
     } break;
     //
     case ast::STMT_BLOCK: {
@@ -3714,8 +3697,8 @@ namespace compiler {
 
       int entitiesSize = this->entities.size() - 1; // original
 
-      this->entities.push_back(new entity::Entity(
-          f->name.literal)); // new entity for function statement
+      this->entities.push_back(
+          new Entity(f->name.literal)); // new entity for function statement
       this->now = this->entities.back();
 
       this->now->args = f->arguments.size(); // arguments
@@ -3748,8 +3731,8 @@ namespace compiler {
 
       int entitiesSize = this->entities.size() - 1; // original
 
-      this->entities.push_back(new entity::Entity(
-          w->name.literal)); // new entity for whole statement
+      this->entities.push_back(
+          new Entity(w->name.literal)); // new entity for whole statement
       this->now = this->entities.back();
 
       int x = this->icf;
@@ -3799,10 +3782,12 @@ namespace compiler {
 
       if (u->as != nullptr) {
         this->emitCode(byte::UAS);
+
         this->emitName(u->name.literal); // name
         this->emitName(u->as->literal);  // alias
       } else {
         this->emitCode(byte::USE);
+
         this->emitName(u->name.literal);
       }
     } break;
@@ -3870,20 +3855,47 @@ namespace compiler {
   }
 }; // namespace compiler
 
+struct Table {
+  std::map<std::string, object::Object *> symbols;
+
+  object::Object *lookUp(std::string name) {
+    if (symbols.count(name) == 0) return nullptr;
+    return symbols.at(name);
+  }
+
+  void clear() { symbols.clear(); }
+  bool empty() { return symbols.empty(); }
+};
+
+// frame structure
+struct Frame {
+  Entity *entity; // ENTITY
+
+  Table local;                     // local names
+  std::stack<object::Object> data; // data stack
+
+  explicit Frame(Entity *e) : entity(e) {}
+};
+
 // virtual machine
 namespace vm {
   // structure
   class vm {
   private:
-    // entity vector
-    std::vector<entity::Entity> entities;
+    std::vector<Frame *> frames;
 
   public:
-    explicit vm(std::vector<entity::Entity> e) : entities(e) {}
+    explicit vm(std::vector<Entity *> entities) {
+      for (auto i : entities) {
+        frames.push_back(new Frame(i));
+      }
+    }
 
     // execute main entity
     void execute();
   };
+
+  void vm::execute() {}
 } // namespace vm
 
 // DEBUG to output tokens and statements
@@ -3906,8 +3918,6 @@ void run(std::string source) {
 
     // semantic
     auto semantic = new semantic::Analysis(&parser->statements);
-    semantic->analysisAst();
-
     // compiler
     auto compiler = new compiler::Compiler(parser->statements);
     compiler->compile();
@@ -3915,6 +3925,9 @@ void run(std::string source) {
     for (int i = 0; i < compiler->entities.size(); i++) {
       compiler->entities[i]->dissemble(i);
     }
+
+    // vm
+    auto vm = new vm::vm(compiler->entities);
     //
   } catch (exp::Exp &e) {
     std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
@@ -3943,7 +3956,7 @@ void runFile(const char *path) {
 void repl() {
   char *line = (char *)malloc(1024);
   std::cout << "\n"
-            << "Drift 0.0.1 (REPL Mode, Feb 20 2021, 15:42)"
+            << "Drift 0.0.1 (REPL Mode, " << __DATE__ << ", " << __TIME__ << ")"
             << "\n"
             << std::endl;
 
