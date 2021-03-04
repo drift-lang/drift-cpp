@@ -1,0 +1,22 @@
+
+def () foo -> int ret 123 end
+
+def x: int = 45
+
+/*
+ENTITY 'main': 
+                   0: FUNC           0 <Func 'foo'>
+                   1: CONST          1 <Int 45>
+                   2: STORE          0 'x' 0 <Int>
+                   3: RET
+CONSTANT: 
+                   0: <Func 'foo'>
+                   1: <Int 45>
+NAME: 
+                   0: 'x'	
+OFFSET: 
+                   0: 0 	    1: 1  	    2: 0  	    3: 0  	
+
+TYPE: 
+                   0: <Int>
+*/

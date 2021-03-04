@@ -4,7 +4,7 @@
 <~ foo(x, "OK", 3.5)
 
 /*
-ENTITY AT 0:
+ENTITY 'main': 
                    0: LOAD           0 'foo'
                    1: CALL_I         0
                    2: LOAD           0 'foo'

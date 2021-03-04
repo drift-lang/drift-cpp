@@ -9,27 +9,29 @@ def a: Foo = new Foo {x: 12, y: 67}
 def b: Bar = new Bar
 
 /*
-ENTITY AT 0:
-                   0: NAME           0 'x'
-                   1: CONST          0 <Int 12>
-                   2: NAME           1 'y'
-                   3: CONST          1 <Int 67>
-                   4: NEW            2 'Foo' 4
-                   5: STORE          3 'a' 0 <User Name='Foo' >
-                   6: NEW            4 'Bar' 0
-                   7: STORE          5 'b' 1 <User Name='Bar' >
-                   8: RET
+ENTITY 'main': 
+                   0: WHOLE          0 <Whole 'Foo'>
+                   1: NAME           0 'x'
+                   2: CONST          1 <Int 12>
+                   3: NAME           1 'y'
+                   4: CONST          2 <Int 67>
+                   5: NEW            2 'Foo' 4
+                   6: STORE          3 'a' 0 <User Name='Foo' >
+                   7: NEW            4 'Bar' 0
+                   8: STORE          5 'b' 1 <User Name='Bar' >
+                   9: RET
 CONSTANT: 
-                   0: <Int 12>
-                   1: <Int 67>
+                   0: <Whole 'Foo'>
+                   1: <Int 12>
+                   2: <Int 67>
 NAME: 
                    0: 'x'	    1: 'y' 	    2: 'Foo' 	    3: 'a' 	
                    4: 'Bar'	    5: 'b' 	
 OFFSET: 
                    0: 0 	    1: 0  	    2: 1  	    3: 1  	
-                   4: 2 	    5: 4  	    6: 3  	    7: 0  	
-                   8: 4 	    9: 0  	   10: 5  	   11: 1  	
-
+                   4: 2 	    5: 2  	    6: 4  	    7: 3  	
+                   8: 0 	    9: 4  	   10: 0  	   11: 5  	
+                  12: 1 	
 TYPE: 
                    0: <User Name='Foo' >
                    1: <User Name='Bar' >

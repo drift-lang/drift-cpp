@@ -13,7 +13,7 @@ for ->
 end
 
 /*
-ENTITY AT 0:
+ENTITY 'main': 
                    0: RET
                    1: LOAD           0 'x'
                    2: LOAD           1 'y'
@@ -33,7 +33,7 @@ ENTITY AT 0:
                   16: RET
 CONSTANT: 
                    0: <Int 100>
-VARIABLE: 
+NAME: 
                    0: 'x'	    1: 'y' 	    2: 'a' 	    3: 'b' 	
 
 OFFSET: 

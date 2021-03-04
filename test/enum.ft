@@ -9,21 +9,16 @@ def Color
 end
 
 /*
-ENTITY AT 0:
-                   0: NAME           0 'RED'
-                   1: NAME           1 'GREEN'
-                   2: NAME           2 'PINK'
-                   3: NAME           3 'WHITE'
-                   4: B_ENUM         4 'Color' 4
-                   5: RET
+[Semantic analysis replace 1]: WholeStmt -> <EnumStmt { Name='Color' Fields=(RED GREEN PINK WHITE) }>
+ENTITY 'main': 
+                   0: ENUM           0 <Enum 'Color'>
+                   1: RET
 CONSTANT: 
-               EMPTY
+                   0: <Enum 'Color'>
 NAME: 
-                   0: 'RED'	    1: 'GREEN' 	    2: 'PINK' 	    3: 'WHITE' 	
-                   4: 'Color'	
+               EMPTY
 OFFSET: 
-                   0: 0 	    1: 1  	    2: 2  	    3: 3  	
-                   4: 4 	    5: 4  	
+                   0: 0 	
 TYPE: 
                EMPTY
 */

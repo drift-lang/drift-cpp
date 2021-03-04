@@ -5,7 +5,7 @@ def () *foo -> int
 def (x + y + z: int, x: str) *foo -> bool
 
 /*
-ENTITY 'main' AT: 0 ARG: 0 ()
+ENTITY 'main': 
                    0: RET
 CONSTANT: 
                EMPTY
@@ -14,11 +14,5 @@ NAME:
 OFFSET: 
                EMPTY
 TYPE: 
-               EMPTY
-INTERFACE: 
-                   0: 'foo' () NONE
-                   1: 'foo' () <Int>
-                   2: 'foo' ( K: 'x' T: <Int> K: 'y' T: <Int> K: 'z' T: <Int> ) <Bool>
-INHERIT: 
                EMPTY
 */

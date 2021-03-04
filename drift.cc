@@ -503,111 +503,87 @@ namespace lexer {
     tok.line = this->line;
 
     switch (now()) {
-    case '(':
-      tok.kind = token::L_PAREN;
-      break;
-    case ')':
-      tok.kind = token::R_PAREN;
-      break;
-    case '{':
-      tok.kind = token::L_BRACE;
-      break;
-    case '}':
-      tok.kind = token::R_BRACE;
-      break;
-    case '[':
-      tok.kind = token::L_BRACKET;
-      break;
-    case ']':
-      tok.kind = token::R_BRACKET;
-      break;
-    case ':':
-      tok.kind = token::COLON;
-      break;
-    case '+':
-      if (peekEmit(&tok, '=', token::AS_ADD, "+=")) break;
-      if (peekEmit(&tok, '+', token::PLUS, "++"))
+      case '(': tok.kind = token::L_PAREN; break;
+      case ')': tok.kind = token::R_PAREN; break;
+      case '{': tok.kind = token::L_BRACE; break;
+      case '}': tok.kind = token::R_BRACE; break;
+      case '[': tok.kind = token::L_BRACKET; break;
+      case ']': tok.kind = token::R_BRACKET; break;
+      case ':': tok.kind = token::COLON; break;
+      case '+':
+        if (peekEmit(&tok, '=', token::AS_ADD, "+=")) break;
+        if (peekEmit(&tok, '+', token::PLUS, "++"))
+          break;
+        else
+          tok.kind = token::ADD;
         break;
-      else
-        tok.kind = token::ADD;
-      break;
-    case '-':
-      if (peekEmit(&tok, '>', token::R_ARROW, "->")) break;
-      if (peekEmit(&tok, '-', token::MINUS, "--")) break;
-      if (peekEmit(&tok, '=', token::AS_SUB, "-="))
+      case '-':
+        if (peekEmit(&tok, '>', token::R_ARROW, "->")) break;
+        if (peekEmit(&tok, '-', token::MINUS, "--")) break;
+        if (peekEmit(&tok, '=', token::AS_SUB, "-="))
+          break;
+        else
+          tok.kind = token::SUB;
         break;
-      else
-        tok.kind = token::SUB;
-      break;
-    case '*':
-      if (peekEmit(&tok, '=', token::AS_MUL, "*="))
+      case '*':
+        if (peekEmit(&tok, '=', token::AS_MUL, "*="))
+          break;
+        else
+          tok.kind = token::MUL;
         break;
-      else
-        tok.kind = token::MUL;
-      break;
-    case '/':
-      if (peekEmit(&tok, '=', token::AS_DIV, "/=")) break;
-      // to resolve skip comment
-      else if (peek() == '/') {
-        this->skipLineComment();
-        // continue
-        return;
-      }
-      // block comment
-      else if (peek() == '*') {
-        this->skipBlockComment();
-        return;
-      } else
-        tok.kind = token::DIV;
-      break;
-    case '$':
-      tok.kind = token::DOLLAR;
-      break;
-    case '.':
-      tok.kind = token::DOT;
-      break;
-    case ',':
-      tok.kind = token::COMMA;
-      break;
-    case '>':
-      if (peekEmit(&tok, '=', token::GR_EQ, ">="))
+      case '/':
+        if (peekEmit(&tok, '=', token::AS_DIV, "/=")) break;
+        // to resolve skip comment
+        else if (peek() == '/') {
+          this->skipLineComment();
+          // continue
+          return;
+        }
+        // block comment
+        else if (peek() == '*') {
+          this->skipBlockComment();
+          return;
+        } else
+          tok.kind = token::DIV;
         break;
-      else
-        tok.kind = token::GREATER;
-      break;
-    case '<':
-      if (peekEmit(&tok, '=', token::LE_EQ, "<=")) break;
-      if (peekEmit(&tok, '-', token::L_ARROW, "<-")) break;
-      if (peekEmit(&tok, '~', token::L_CURVED_ARROW, "<~"))
+      case '$': tok.kind = token::DOLLAR; break;
+      case '.': tok.kind = token::DOT; break;
+      case ',': tok.kind = token::COMMA; break;
+      case '>':
+        if (peekEmit(&tok, '=', token::GR_EQ, ">="))
+          break;
+        else
+          tok.kind = token::GREATER;
         break;
-      else
-        tok.kind = token::LESS;
-      break;
-    case '&':
-      tok.kind = token::ADDR;
-      break;
-    case '|':
-      tok.kind = token::OR;
-      break;
-    case '!':
-      if (peekEmit(&tok, '=', token::BANG_EQ, "!="))
+      case '<':
+        if (peekEmit(&tok, '=', token::LE_EQ, "<=")) break;
+        if (peekEmit(&tok, '-', token::L_ARROW, "<-")) break;
+        if (peekEmit(&tok, '~', token::L_CURVED_ARROW, "<~"))
+          break;
+        else
+          tok.kind = token::LESS;
         break;
-      else
-        tok.kind = token::BANG;
-      break;
-    case '=':
-      if (peekEmit(&tok, '=', token::EQ_EQ, "=="))
+      case '&': tok.kind = token::ADDR; break;
+      case '|': tok.kind = token::OR; break;
+      case '!':
+        if (peekEmit(&tok, '=', token::BANG_EQ, "!="))
+          break;
+        else
+          tok.kind = token::BANG;
         break;
-      else
-        tok.kind = token::EQ;
-      break;
-    case '_':
-      tok.kind = token::UNDERLINE;
-      break;
-      break;
-    default:
-      // what
-      throw exp::Exp(exp::UNKNOWN_SYMBOL, "unknown symbol", this->line);
+      case '=':
+        if (peekEmit(&tok, '=', token::EQ_EQ, "=="))
+          break;
+        else
+          tok.kind = token::EQ;
+        break;
+      case '_':
+        tok.kind = token::UNDERLINE;
+        break;
+        break;
+      default:
+        // what
+        throw exp::Exp(exp::UNKNOWN_SYMBOL, "unknown symbol", this->line);
     }
     // skip current single symbol
     this->position++;
@@ -1643,7 +1619,12 @@ namespace ast {
         str << "()";
       else {
         str << "(";
-        for (auto &i : field) str << i->literal << " ";
+        for (auto iter = field.begin(); iter != field.end();) {
+          str << (*iter)->literal;
+          if (++iter != field.end()) {
+            str << " ";
+          }
+        }
         str << ")";
       }
 
@@ -2109,284 +2090,284 @@ namespace parser {
   //  statement
   ast::Stmt *Parser::stmt() {
     switch (this->look().kind) {
-    // definition statement
-    case token::DEF:
-      this->position++;
-      // variable
-      if (look(token::IDENT) && look().kind == token::COLON) {
-        token::Token name = previous();
-        this->position++; // skip colon symbol
+      // definition statement
+      case token::DEF:
+        this->position++;
+        // variable
+        if (look(token::IDENT) && look().kind == token::COLON) {
+          token::Token name = previous();
+          this->position++; // skip colon symbol
 
-        ast::Type *T = this->type();
+          ast::Type *T = this->type();
 
-        // value of variable
-        if (look(token::EQ))
-          // there is an initial value
-          return new ast::VarStmt(name, T, this->expr());
-        else
-          return new ast::VarStmt(name, T);
-      }
-      // function or interface
-      else if (look(token::L_PAREN)) {
-        // arguments
-        //
-        // <[ [token] ], Expr>
-        ast::Arg args;
-        // name
-        token::Token name;
-        // return
-        ast::Type *ret = nullptr;
-        // cache multiple parameters
-        std::vector<token::Token *> temp;
-        //
-        bool interfaceStmt = false;
+          // value of variable
+          if (look(token::EQ))
+            // there is an initial value
+            return new ast::VarStmt(name, T, this->expr());
+          else
+            return new ast::VarStmt(name, T);
+        }
+        // function or interface
+        else if (look(token::L_PAREN)) {
+          // arguments
+          //
+          // <[ [token] ], Expr>
+          ast::Arg args;
+          // name
+          token::Token name;
+          // return
+          ast::Type *ret = nullptr;
+          // cache multiple parameters
+          std::vector<token::Token *> temp;
+          //
+          bool interfaceStmt = false;
 
-        while (!look(token::R_PAREN)) {
-          if (!look(token::IDENT)) {
-            error(exp::UNEXPECTED, "argument name muse be an identifier");
-          }
-          // K
-          token::Token *K = look(true); // address of token
-          // handle multiparameter
-          while (look(token::ADD)) {
+          while (!look(token::R_PAREN)) {
             if (!look(token::IDENT)) {
               error(exp::UNEXPECTED, "argument name muse be an identifier");
+            }
+            // K
+            token::Token *K = look(true); // address of token
+            // handle multiparameter
+            while (look(token::ADD)) {
+              if (!look(token::IDENT)) {
+                error(exp::UNEXPECTED, "argument name muse be an identifier");
+              } else {
+                temp.push_back(K); // previous,
+                // left of the
+                // plus sign
+                temp.push_back(look(true)); // address
+                                            // of token
+              }
+            }
+            if (!look(token::COLON)) {
+              error(exp::UNEXPECTED, "expect ':' after parameter name");
+            }
+            // handle multiparameter
+            if (temp.empty()) {
+              // no
+              args.insert(std::make_pair(K, this->type()));
             } else {
-              temp.push_back(K); // previous,
-              // left of the
-              // plus sign
-              temp.push_back(look(true)); // address
-                                          // of token
-            }
-          }
-          if (!look(token::COLON)) {
-            error(exp::UNEXPECTED, "expect ':' after parameter name");
-          }
-          // handle multiparameter
-          if (temp.empty()) {
-            // no
-            args.insert(std::make_pair(K, this->type()));
-          } else {
-            // multip
-            ast::Type *T = this->type();
+              // multip
+              ast::Type *T = this->type();
 
-            for (auto i : temp) {
-              args.insert(std::make_pair(i, T));
+              for (auto i : temp) {
+                args.insert(std::make_pair(i, T));
+              }
+            }
+            if (look(token::COMMA)) {
+              continue;
             }
           }
-          if (look(token::COMMA)) {
-            continue;
+          // function
+          if (look(token::IDENT)) {
+            name = previous();
           }
-        }
-        // function
-        if (look(token::IDENT)) {
-          name = previous();
-        }
-        // interface
-        else if (look(token::MUL)) {
-          name = look(); // name of interface
-          //
-          this->position++; // skip name of
           // interface
+          else if (look(token::MUL)) {
+            name = look(); // name of interface
+            //
+            this->position++; // skip name of
+            // interface
+            //
+            // current parsing interface statement
+            interfaceStmt = true;
+          }
+          // error
+          else {
+            error(exp::UNEXPECTED,
+                  "expect '*' to interface or identifier to function");
+          }
+          // return value
+          if (look(token::R_ARROW)) {
+            ret = this->type();
+          }
+
+          if (interfaceStmt)
+            return new ast::InterfaceStmt(args, name, ret);
+          else
+            return new ast::FuncStmt(args, name, ret, this->block(token::END));
           //
-          // current parsing interface statement
-          interfaceStmt = true;
-        }
-        // error
-        else {
-          error(exp::UNEXPECTED,
-                "expect '*' to interface or identifier to function");
-        }
-        // return value
-        if (look(token::R_ARROW)) {
-          ret = this->type();
-        }
+          break;
+          // whole
+        } else {
+          ast::Stmt *inherit = nullptr;
 
-        if (interfaceStmt)
-          return new ast::InterfaceStmt(args, name, ret);
-        else
-          return new ast::FuncStmt(args, name, ret, this->block(token::END));
-        //
+          token::Token name = previous(); // name
+
+          // inherit
+          if (look().kind == token::L_ARROW) {
+            inherit = this->stmt();
+          }
+          return new ast::WholeStmt(name, inherit, this->block(token::END));
+        }
         break;
-        // whole
-      } else {
-        ast::Stmt *inherit = nullptr;
-
-        token::Token name = previous(); // name
-
-        // inherit
-        if (look().kind == token::L_ARROW) {
-          inherit = this->stmt();
-        }
-        return new ast::WholeStmt(name, inherit, this->block(token::END));
-      }
-      break;
-      // if
-    case token::IF: {
-      this->position++;
-      // if condition
-      ast::Expr *condition = this->expr();
-      // if then branch
-      ast::BlockStmt *thenBranch =
-          this->block(token::EF, token::END, token::NF);
-
-      std::map<ast::Expr *, ast::BlockStmt *> elem;
-
-      while (previous().kind == token::EF) {
-        ast::Expr *efCondition = this->expr();
-        ast::BlockStmt *efBranch =
+        // if
+      case token::IF: {
+        this->position++;
+        // if condition
+        ast::Expr *condition = this->expr();
+        // if then branch
+        ast::BlockStmt *thenBranch =
             this->block(token::EF, token::END, token::NF);
+
+        std::map<ast::Expr *, ast::BlockStmt *> elem;
+
+        while (previous().kind == token::EF) {
+          ast::Expr *efCondition = this->expr();
+          ast::BlockStmt *efBranch =
+              this->block(token::EF, token::END, token::NF);
+          //
+          elem.insert(std::make_pair(efCondition, efBranch));
+        }
+
+        ast::BlockStmt *nfBranch = nullptr;
+
+        if (previous().kind == token::NF) {
+          nfBranch = this->block(token::END);
+        }
+        return new ast::IfStmt(condition, thenBranch, elem, nfBranch);
+      } break;
+        // loop
+      case token::FOR: {
+        this->position++;
+        // dead loop
+        if (look(token::R_ARROW))
+          return new ast::ForStmt(nullptr, this->block(token::END));
+        // for condition
+        ast::Expr *condition = this->expr();
+        ast::BlockStmt *block = this->block(token::END);
         //
-        elem.insert(std::make_pair(efCondition, efBranch));
-      }
+        return new ast::ForStmt(condition, block);
+      } break;
+        // do loop
+      case token::DO: {
+        this->position++;
+        // block
+        ast::BlockStmt *block = this->block(token::FOR);
+        // go back to the position of the `for` keyword
+        this->position--;
+        ast::Stmt *stmt = this->stmt();
+        //
+        return new ast::DoStmt(block, stmt);
+      } break;
+        // out in loop
+        // out <expr>
+      case token::OUT:
+        this->position++;
+        //
+        if (look(token::R_ARROW)) {
+          // no condition
+          return new ast::OutStmt();
+        }
+        return new ast::OutStmt(this->expr());
+        break;
+        // tin in loop
+        // tin <expr>
+      case token::TIN:
+        this->position++;
+        //
+        if (look(token::R_ARROW)) {
+          // no condition
+          return new ast::TinStmt();
+        }
+        return new ast::TinStmt(this->expr());
+        // and
+      case token::AND: {
+        this->position++;
 
-      ast::BlockStmt *nfBranch = nullptr;
+        if (!look(token::R_ARROW)) {
+          error(exp::UNEXPECTED, "expect '->' after and keyword");
+        }
+        if (!look(token::IDENT)) {
+          error(exp::UNEXPECTED, "alias must be an identifier");
+        }
+        // name
+        token::Token alias = previous();
+        // block
+        ast::BlockStmt *stmt = this->block(token::END);
+        //
+        return new ast::AndStmt(alias, stmt);
+      } break;
+        // mod
+      case token::MOD:
+        this->position++;
+        //
+        if (!look(token::IDENT)) {
+          error(exp::UNEXPECTED, "module name must be an identifier");
+        }
+        return new ast::ModStmt(previous());
+        break;
+        // use
+      case token::USE: {
+        this->position++;
 
-      if (previous().kind == token::NF) {
-        nfBranch = this->block(token::END);
-      }
-      return new ast::IfStmt(condition, thenBranch, elem, nfBranch);
-    } break;
-      // loop
-    case token::FOR: {
-      this->position++;
-      // dead loop
-      if (look(token::R_ARROW))
-        return new ast::ForStmt(nullptr, this->block(token::END));
-      // for condition
-      ast::Expr *condition = this->expr();
-      ast::BlockStmt *block = this->block(token::END);
-      //
-      return new ast::ForStmt(condition, block);
-    } break;
-      // do loop
-    case token::DO: {
-      this->position++;
-      // block
-      ast::BlockStmt *block = this->block(token::FOR);
-      // go back to the position of the `for` keyword
-      this->position--;
-      ast::Stmt *stmt = this->stmt();
-      //
-      return new ast::DoStmt(block, stmt);
-    } break;
-      // out in loop
-      // out <expr>
-    case token::OUT:
-      this->position++;
-      //
-      if (look(token::R_ARROW)) {
-        // no condition
-        return new ast::OutStmt();
-      }
-      return new ast::OutStmt(this->expr());
-      break;
-      // tin in loop
-      // tin <expr>
-    case token::TIN:
-      this->position++;
-      //
-      if (look(token::R_ARROW)) {
-        // no condition
-        return new ast::TinStmt();
-      }
-      return new ast::TinStmt(this->expr());
-      // and
-    case token::AND: {
-      this->position++;
+        if (!look(token::IDENT)) {
+          error(exp::UNEXPECTED, "use of module name must be an identifier");
+        }
+        // name
+        token::Token name = previous();
+        // no alias
+        if (!look(token::AS)) {
+          return new ast::UseStmt(name);
+        }
+        if (!look(token::IDENT)) {
+          error(exp::UNEXPECTED, "alias of module name must be an identifier");
+        }
+        int previous = this->position - 1;
+        //
+        // [Q]: why can't variables on the stack be referenced
+        //
+        return new ast::UseStmt(name, &this->tokens.at(previous));
+      } break;
+        // return
+        // ret <expr>
+        // ret ->
+      case token::RET:
+        this->position++;
+        //
+        if (look(token::R_ARROW)) {
+          // no return value
+          return new ast::RetStmt();
+        }
+        return new ast::RetStmt(this->stmt());
+        break;
+        // inherit for class
+      case token::L_ARROW: {
+        this->position++;
 
-      if (!look(token::R_ARROW)) {
-        error(exp::UNEXPECTED, "expect '->' after and keyword");
-      }
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "alias must be an identifier");
-      }
-      // name
-      token::Token alias = previous();
-      // block
-      ast::BlockStmt *stmt = this->block(token::END);
-      //
-      return new ast::AndStmt(alias, stmt);
-    } break;
-      // mod
-    case token::MOD:
-      this->position++;
-      //
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "module name must be an identifier");
-      }
-      return new ast::ModStmt(previous());
-      break;
-      // use
-    case token::USE: {
-      this->position++;
-
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "use of module name must be an identifier");
-      }
-      // name
-      token::Token name = previous();
-      // no alias
-      if (!look(token::AS)) {
-        return new ast::UseStmt(name);
-      }
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "alias of module name must be an identifier");
-      }
-      int previous = this->position - 1;
-      //
-      // [Q]: why can't variables on the stack be referenced
-      //
-      return new ast::UseStmt(name, &this->tokens.at(previous));
-    } break;
-      // return
-      // ret <expr>
-      // ret ->
-    case token::RET:
-      this->position++;
-      //
-      if (look(token::R_ARROW)) {
-        // no return value
-        return new ast::RetStmt();
-      }
-      return new ast::RetStmt(this->stmt());
-      break;
-      // inherit for class
-    case token::L_ARROW: {
-      this->position++;
-
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "inheritance name must be an indentifier");
-      }
-      std::vector<token::Token *> names;
-      // single
-      names.push_back(look(true)); // address of token
-
-      while (look(token::ADD)) {
         if (!look(token::IDENT)) {
           error(exp::UNEXPECTED, "inheritance name must be an indentifier");
         }
-        names.push_back(look(true)); // address
-      }
+        std::vector<token::Token *> names;
+        // single
+        names.push_back(look(true)); // address of token
 
-      return new ast::InheritStmt(names);
-    } break;
-      // call of super class
-      // <~ expr
-    case token::L_CURVED_ARROW: // TODO: can only call method
-      this->position++;
-      //
-      return new ast::CallInheritStmt(look().line, this->expr());
-      break;
-      // pub
-    case token::PUB:
-      this->position++;
-      //
-      return new ast::PubStmt(look().line, this->stmt());
-      break;
-    default:
-      // expression statement
-      return new ast::ExprStmt(this->expr());
+        while (look(token::ADD)) {
+          if (!look(token::IDENT)) {
+            error(exp::UNEXPECTED, "inheritance name must be an indentifier");
+          }
+          names.push_back(look(true)); // address
+        }
+
+        return new ast::InheritStmt(names);
+      } break;
+        // call of super class
+        // <~ expr
+      case token::L_CURVED_ARROW: // TODO: can only call method
+        this->position++;
+        //
+        return new ast::CallInheritStmt(look().line, this->expr());
+        break;
+        // pub
+      case token::PUB:
+        this->position++;
+        //
+        return new ast::PubStmt(look().line, this->stmt());
+        break;
+      default:
+        // expression statement
+        return new ast::ExprStmt(this->expr());
     }
     // end
     error(exp::INVALID_SYNTAX, "invalid statement");
@@ -2519,100 +2500,100 @@ namespace semantic {
     // statement
     void analysisStmt(ast::Stmt *stmt) {
       switch (stmt->kind()) {
-      case ast::STMT_EXPR: {
-        ast::ExprStmt *e = static_cast<ast::ExprStmt *>(stmt);
-        ast::Expr *expr = static_cast<ast::Expr *>(e->expr);
-        // expression
-        this->analysisExpr(expr);
-      } break;
-      //
-      case ast::STMT_PUB: {
-        ast::PubStmt *p = static_cast<ast::PubStmt *>(stmt);
-
-        switch (p->stmt->kind()) {
-        case ast::STMT_VAR:       // defintin
-        case ast::STMT_FUNC:      // function
-        case ast::STMT_WHOLE:     // whole
-        case ast::STMT_INTERFACE: // interface
-          break;
-        default:
-          error(exp::CANNOT_PUBLIC, "statement cannot be public", p->line);
-        }
-
-        // if its whole statement and must to analysis body
-        // for example it contains a new whole statement inside
-        if (p->stmt->kind() == ast::STMT_WHOLE) this->analysisStmt(p->stmt);
-      } break;
-      //
-      case ast::STMT_WHOLE: {
-        ast::WholeStmt *w = static_cast<ast::WholeStmt *>(stmt);
-
-        if (w->body->block.empty()) break;
-
-        ast::Stmt *f = w->body->block.at(0); // first statement
-
-        // just a ident of expression statement
+        case ast::STMT_EXPR: {
+          ast::ExprStmt *e = static_cast<ast::ExprStmt *>(stmt);
+          ast::Expr *expr = static_cast<ast::Expr *>(e->expr);
+          // expression
+          this->analysisExpr(expr);
+        } break;
         //
-        // enumeration
+        case ast::STMT_PUB: {
+          ast::PubStmt *p = static_cast<ast::PubStmt *>(stmt);
+
+          switch (p->stmt->kind()) {
+            case ast::STMT_VAR:       // defintin
+            case ast::STMT_FUNC:      // function
+            case ast::STMT_WHOLE:     // whole
+            case ast::STMT_INTERFACE: // interface
+              break;
+            default:
+              error(exp::CANNOT_PUBLIC, "statement cannot be public", p->line);
+          }
+
+          // if its whole statement and must to analysis body
+          // for example it contains a new whole statement inside
+          if (p->stmt->kind() == ast::STMT_WHOLE) this->analysisStmt(p->stmt);
+        } break;
         //
-        if (f->kind() == ast::STMT_EXPR) {
+        case ast::STMT_WHOLE: {
+          ast::WholeStmt *w = static_cast<ast::WholeStmt *>(stmt);
+
+          if (w->body->block.empty()) break;
+
+          ast::Stmt *f = w->body->block.at(0); // first statement
+
+          // just a ident of expression statement
           //
-          if (w->inherit != nullptr) {
-            error(exp::ENUMERATION, "enumeration type cannot be inherited",
-                  w->name.line);
-          }
-
-          ast::ExprStmt *expr = static_cast<ast::ExprStmt *>(f);
-          std::vector<token::Token *> fields;
-
-          for (auto &i : w->body->block) {
+          // enumeration
+          //
+          if (f->kind() == ast::STMT_EXPR) {
             //
-            if (i->kind() != ast::STMT_EXPR) {
-              error(exp::ENUMERATION, "whole is an enumeration type",
-                    w->name.line);
-            }
-            ast::ExprStmt *pStmt = static_cast<ast::ExprStmt *>(i);
-            if (pStmt->expr->kind() != ast::EXPR_NAME) {
-              error(exp::ENUMERATION, "whole is an enumeration type",
+            if (w->inherit != nullptr) {
+              error(exp::ENUMERATION, "enumeration type cannot be inherited",
                     w->name.line);
             }
 
-            ast::NameExpr *name = static_cast<ast::NameExpr *>(pStmt->expr);
-            // push to enumeration
-            // structure
-            fields.push_back(&name->token);
+            ast::ExprStmt *expr = static_cast<ast::ExprStmt *>(f);
+            std::vector<token::Token *> fields;
+
+            for (auto &i : w->body->block) {
+              //
+              if (i->kind() != ast::STMT_EXPR) {
+                error(exp::ENUMERATION, "whole is an enumeration type",
+                      w->name.line);
+              }
+              ast::ExprStmt *pStmt = static_cast<ast::ExprStmt *>(i);
+              if (pStmt->expr->kind() != ast::EXPR_NAME) {
+                error(exp::ENUMERATION, "whole is an enumeration type",
+                      w->name.line);
+              }
+
+              ast::NameExpr *name = static_cast<ast::NameExpr *>(pStmt->expr);
+              // push to enumeration
+              // structure
+              fields.push_back(&name->token);
+            }
+            // replace new statement into
+            ast::Stmt *n = new ast::EnumStmt(w->name, fields);
+            std::replace(std::begin(*statements), std::end(*statements), now(),
+                         n);
+            std::cout << "\033[33m[Semantic analysis replace " << position + 1
+                      << "]\033[0m: WholeStmt -> " << n->stringer()
+                      << std::endl;
           }
-          // replace new statement into
-          ast::Stmt *n = new ast::EnumStmt(w->name, fields);
-          std::replace(std::begin(*statements), std::end(*statements), now(),
-                       n);
-          std::cout << "\033[33m[Semantic analysis replace " << position + 1
-                    << "]\033[0m: WholeStmt -> " << n->stringer() << std::endl;
-        }
-        // normal whole statement if hinder of statements include name expr to
-        // throw an error
-        else {
-          for (auto &i : w->body->block) {
-            if (i->kind() == ast::STMT_EXPR) {
-              error(exp::ENUMERATION,
-                    "it an whole statement but contains some other value",
-                    w->name.line);
+          // normal whole statement if hinder of statements include name expr
+          // to throw an error
+          else {
+            for (auto &i : w->body->block) {
+              if (i->kind() == ast::STMT_EXPR) {
+                error(exp::ENUMERATION,
+                      "it an whole statement but contains some other value",
+                      w->name.line);
+              }
             }
           }
-        }
-      } break;
-      //
-      case ast::STMT_CALLINHERIT: {
-        ast::CallInheritStmt *c = static_cast<ast::CallInheritStmt *>(stmt);
+        } break;
+        //
+        case ast::STMT_CALLINHERIT: {
+          ast::CallInheritStmt *c = static_cast<ast::CallInheritStmt *>(stmt);
 
-        if (c->expr->kind() != ast::EXPR_CALL) {
-          error(exp::CALL_INHERIT,
-                "only methods of the parent class can be called", 2);
-        }
-      } break;
-      //
-      default:
-        break;
+          if (c->expr->kind() != ast::EXPR_CALL) {
+            error(exp::CALL_INHERIT,
+                  "only methods of the parent class can be called", 2);
+          }
+        } break;
+        //
+        default: break;
       }
     }
 
@@ -2621,117 +2602,117 @@ namespace semantic {
       using namespace token;
 
       switch (expr->kind()) {
-      case ast::EXPR_BINARY: {
-        ast::BinaryExpr *binary = static_cast<ast::BinaryExpr *>(expr);
+        case ast::EXPR_BINARY: {
+          ast::BinaryExpr *binary = static_cast<ast::BinaryExpr *>(expr);
 
-        if (binary->left->kind() != ast::EXPR_LITERAL) {
-          this->analysisExpr(binary->left);
-          break;
-        }
-        if (binary->right->kind() != ast::EXPR_LITERAL) {
-          this->analysisExpr(binary->right);
-          break;
-        }
+          if (binary->left->kind() != ast::EXPR_LITERAL) {
+            this->analysisExpr(binary->left);
+            break;
+          }
+          if (binary->right->kind() != ast::EXPR_LITERAL) {
+            this->analysisExpr(binary->right);
+            break;
+          }
 
-        Token l = (static_cast<ast::LiteralExpr *>(binary->left))->token;
-        Token r = (static_cast<ast::LiteralExpr *>(binary->right))->token;
+          Token l = (static_cast<ast::LiteralExpr *>(binary->left))->token;
+          Token r = (static_cast<ast::LiteralExpr *>(binary->right))->token;
 
-        switch (binary->op.kind) {
-        case ADD:    // +
-        case SUB:    // -
-        case AS_ADD: // +=
-        case AS_SUB: // -=
-          if (l.kind == NUM) {
-            //
-            if (r.kind == STR || r.kind == CHAR) {
-              error(exp::TYPE_ERROR, "unsupported operand", l.line);
-            }
-          }
-          if (l.kind == STR || l.kind == CHAR) {
-            //
-            if (r.kind == NUM) {
-              error(exp::TYPE_ERROR, "unsupported operand", l.line);
-            }
-          }
-          break;
-        case DIV:    // /
-        case AS_DIV: // /=
-          if (l.kind == STR || l.kind == CHAR || r.kind == STR ||
-              r.kind == CHAR) {
-            error(exp::TYPE_ERROR, "unsupported operand", l.line);
-          }
-          if (r.kind == NUM) {
-            // convert, keep floating point
-            // numbers
-            if (std::stof(r.literal) == 0) {
-              error(exp::DIVISION_ZERO, "division by zero", l.line);
-            }
-          }
-          // array
-          if (binary->left->kind() == ast::EXPR_ARRAY ||
-              binary->right->kind() == ast::EXPR_ARRAY) {
-            error(exp::TYPE_ERROR, "unsupported operand", l.line);
-          }
-          break;
-        case MUL: // *
-          if ((l.kind == CHAR || l.kind == STR) &&
-              (r.kind == CHAR || r.kind == STR)) {
-            error(exp::TYPE_ERROR, "unsupported operand", l.line);
-          }
-          break;
-        case GR_EQ:   // >=
-        case LE_EQ:   // <=
-        case GREATER: // >
-        case LESS: {  // <
-          if (l.kind == STR || r.kind == STR) {
-            error(exp::TYPE_ERROR, "unsupported operand", l.line);
+          switch (binary->op.kind) {
+            case ADD:    // +
+            case SUB:    // -
+            case AS_ADD: // +=
+            case AS_SUB: // -=
+              if (l.kind == NUM) {
+                //
+                if (r.kind == STR || r.kind == CHAR) {
+                  error(exp::TYPE_ERROR, "unsupported operand", l.line);
+                }
+              }
+              if (l.kind == STR || l.kind == CHAR) {
+                //
+                if (r.kind == NUM) {
+                  error(exp::TYPE_ERROR, "unsupported operand", l.line);
+                }
+              }
+              break;
+            case DIV:    // /
+            case AS_DIV: // /=
+              if (l.kind == STR || l.kind == CHAR || r.kind == STR ||
+                  r.kind == CHAR) {
+                error(exp::TYPE_ERROR, "unsupported operand", l.line);
+              }
+              if (r.kind == NUM) {
+                // convert, keep floating point
+                // numbers
+                if (std::stof(r.literal) == 0) {
+                  error(exp::DIVISION_ZERO, "division by zero", l.line);
+                }
+              }
+              // array
+              if (binary->left->kind() == ast::EXPR_ARRAY ||
+                  binary->right->kind() == ast::EXPR_ARRAY) {
+                error(exp::TYPE_ERROR, "unsupported operand", l.line);
+              }
+              break;
+            case MUL: // *
+              if ((l.kind == CHAR || l.kind == STR) &&
+                  (r.kind == CHAR || r.kind == STR)) {
+                error(exp::TYPE_ERROR, "unsupported operand", l.line);
+              }
+              break;
+            case GR_EQ:   // >=
+            case LE_EQ:   // <=
+            case GREATER: // >
+            case LESS: {  // <
+              if (l.kind == STR || r.kind == STR) {
+                error(exp::TYPE_ERROR, "unsupported operand", l.line);
+              }
+            } break;
+            default: break;
           }
         } break;
-        default:
-          break;
-        }
-      } break;
-      case ast::EXPR_GROUP: {
-        ast::GroupExpr *group = static_cast<ast::GroupExpr *>(expr);
-        this->analysisExpr(group->expr);
-      } break;
-        //
-      case ast::EXPR_UNARY: {
-        ast::UnaryExpr *unary = static_cast<ast::UnaryExpr *>(expr);
-        this->analysisExpr(unary->expr);
-      } break;
-        //
-      case ast::EXPR_CALL: {
-        ast::CallExpr *call = static_cast<ast::CallExpr *>(expr);
+        case ast::EXPR_GROUP: {
+          ast::GroupExpr *group = static_cast<ast::GroupExpr *>(expr);
+          this->analysisExpr(group->expr);
+        } break;
+          //
+        case ast::EXPR_UNARY: {
+          ast::UnaryExpr *unary = static_cast<ast::UnaryExpr *>(expr);
+          this->analysisExpr(unary->expr);
+        } break;
+          //
+        case ast::EXPR_CALL: {
+          ast::CallExpr *call = static_cast<ast::CallExpr *>(expr);
 
-        for (auto i : call->arguments) {
-          this->analysisExpr(i);
-        }
-      } break;
+          for (auto i : call->arguments) {
+            this->analysisExpr(i);
+          }
+        } break;
+          //
+        case ast::EXPR_GET: {
+          ast::GetExpr *get = static_cast<ast::GetExpr *>(expr);
+          this->analysisExpr(get->expr);
+        } break;
+          //
+        case ast::EXPR_SET: {
+          ast::SetExpr *set = static_cast<ast::SetExpr *>(expr);
+          this->analysisExpr(set->expr);
+          this->analysisExpr(set->value);
+        } break;
+          //
+        case ast::EXPR_ASSIGN: {
+          ast::AssignExpr *assign = static_cast<ast::AssignExpr *>(expr);
+          this->analysisExpr(assign->expr);
+          this->analysisExpr(assign->value);
+        } break;
         //
-      case ast::EXPR_GET: {
-        ast::GetExpr *get = static_cast<ast::GetExpr *>(expr);
-        this->analysisExpr(get->expr);
-      } break;
-        //
-      case ast::EXPR_SET: {
-        ast::SetExpr *set = static_cast<ast::SetExpr *>(expr);
-        this->analysisExpr(set->expr);
-        this->analysisExpr(set->value);
-      } break;
-        //
-      case ast::EXPR_ASSIGN: {
-        ast::AssignExpr *assign = static_cast<ast::AssignExpr *>(expr);
-        this->analysisExpr(assign->expr);
-        this->analysisExpr(assign->value);
-      } break;
-      //
-      default:
-        break;
+        default: break;
       }
     }
   }; // namespace semantic
 };   // namespace semantic
+
+struct Entity;
 
 // bytecode
 namespace byte {
@@ -2755,17 +2736,16 @@ namespace byte {
     CHA,    // CHA
     END,    // END
     WHOLE,  // WHOLE
+    ENUM,   // ENUM
 
     PUB, // PUB
     MOD, // MOD
     USE, // USE
     UAS, // UAS
 
-    B_ARR,  // ARRAY
-    B_TUP,  // TUPLE
-    B_MAP,  // MAP
-    B_ENUM, // ENUM
-    B_FACE, // INTERFACE
+    B_ARR, // ARRAY
+    B_TUP, // TUPLE
+    B_MAP, // MAP
 
     INCR,   // DECR
     DECR,   // INCR
@@ -2803,14 +2783,14 @@ namespace byte {
 
   // return a string of bytecode
   std::string codeString[len] = {
-      "CONST",  "ASSIGN", "STORE",  "LOAD",   "INDEX", "GET",   "SET",
-      "CALL",   "CALL_I", "ORIG",   "NAME",   "NEW",   "FUNC",  "CHA",
-      "END",    "WHOLE",  "PUB",    "MOD",    "USE",   "UAS",   "B_ARR",
-      "B_TUP",  "B_MAP",  "B_ENUM", "B_FACE", "INCR",  "DECR",  "P_INCR",
-      "P_DECR", "ADD",    "SUB",    "MUL",    "DIV",   "A_ADD", "A_SUB",
-      "A_MUL",  "A_DIV",  "GR",     "LE",     "GR_E",  "LE_E",  "E_E",
-      "N_E",    "AND",    "OR",     "BANG",   "NOT",   "JUMP",  "F_JUMP",
-      "T_JUMP", "RET",
+      "CONST", "ASSIGN", "STORE", "LOAD", "INDEX", "GET",    "SET",
+      "CALL",  "CALL_I", "ORIG",  "NAME", "NEW",   "FUNC",   "CHA",
+      "END",   "WHOLE",  "ENUM",  "PUB",  "MOD",   "USE",    "UAS",
+      "B_ARR", "B_TUP",  "B_MAP", "INCR", "DECR",  "P_INCR", "P_DECR",
+      "ADD",   "SUB",    "MUL",   "DIV",  "A_ADD", "A_SUB",  "A_MUL",
+      "A_DIV", "GR",     "LE",    "GR_E", "LE_E",  "E_E",    "N_E",
+      "AND",   "OR",     "BANG",  "NOT",  "JUMP",  "F_JUMP", "T_JUMP",
+      "RET",
   };
 
   // compare two bytecode
@@ -2829,6 +2809,9 @@ namespace object {
     ARRAY,
     TUPLE,
     MAP,
+    ENUM,
+    FUNC,
+    WHOLE
   };
 
   // object abstract
@@ -2926,22 +2909,7 @@ namespace object {
 
     Array(std::vector<object::Object *> v) : elements(v) {}
 
-    std::string stringer() override {
-      if (elements.empty()) return "<Array ()>";
-
-      std::stringstream str;
-      str << "<Array (";
-
-      for (int i = 0; i < elements.size(); i++) {
-        str << elements[i]->stringer();
-        if (i + 1 != elements.size()) {
-          str << ", ";
-        }
-      }
-
-      str << ")>";
-      return str.str();
-    }
+    std::string stringer() override { return "<Array>"; }
 
     Kind kind() override { return ARRAY; }
   };
@@ -2953,22 +2921,7 @@ namespace object {
 
     Tuple(std::vector<object::Object *> v) : elements(v) {}
 
-    std::string stringer() override {
-      if (elements.empty()) return "<Tuple ()>";
-
-      std::stringstream str;
-      str << "<Tuple (";
-
-      for (int i = 0; i < elements.size(); i++) {
-        str << elements[i]->stringer();
-        if (i + 1 != elements.size()) {
-          str << ", ";
-        }
-      }
-
-      str << ")>";
-      return str.str();
-    }
+    std::string stringer() override { return "<Tuple>"; }
 
     Kind kind() override { return TUPLE; }
   };
@@ -2984,12 +2937,57 @@ namespace object {
 
     Kind kind() override { return MAP; }
   };
+
+  // ENUM
+  class Enum : public Object {
+  public:
+    std::string name;
+    std::map<int, std::string> elements;
+
+    std::string stringer() override { return "<Enum '" + name + "'>"; }
+
+    Kind kind() override { return ENUM; }
+  };
+
+  // FUNC
+  class Func : public Object {
+  public:
+    std::string name; // function name
+
+    ast::Arg arguments; // function args
+    ast::Type *ret;     // function return
+
+    Entity *entity; // function entity
+
+    std::string stringer() override { return "<Func '" + name + "'>"; }
+
+    Kind kind() override { return FUNC; }
+  };
+
+  // WHOLE
+  class Whole : public Object {
+  public:
+    std::string name; // whole name
+
+    Entity *entity; // whole entity
+
+    // interface definition
+    std::vector<std::tuple<std::string, ast::Arg, ast::Type *>> interface;
+
+    // inherit definition
+    std::vector<std::string> inherit;
+
+    std::string stringer() override { return "<Whole '" + name + "'>"; }
+
+    Kind kind() override { return WHOLE; }
+  };
 }; // namespace object
 
 // entity structure
 struct Entity {
-  std::string title; // TITLE FOR ENTITY
+  std::string title = ""; // TITLE FOR ENTITY
 
+  explicit Entity() {}
   explicit Entity(std::string title) : title(title) {} // TO title
 
   std::vector<byte::Code> codes;           // bytecodes
@@ -2998,121 +2996,91 @@ struct Entity {
   std::vector<std::string> names;          // names
   std::vector<ast::Type *> types;          // type of variables
 
-  int args = 0;             // args for function entity
-  ast::Arg argument;        // arguments
-  ast::Type *ret = nullptr; // return type
-
-  // interface definition
-  std::vector<std::tuple<std::string, ast::Arg, ast::Type *>> interface;
-
-  // inherit definition
-  std::vector<std::string> inherit;
-
   // output entity data
-  void dissemble(int p) {
-    std::stringstream str;
-
-    str << "ENTITY '" + title + "' AT: " << std::to_string(p)
-        << " ARG: " << args;
-    if (argument.empty()) {
-      str << " ()";
-    } else {
-      str << " ( ";
-      for (auto i : argument) {
-        str << "K: '" << i.first->literal << "' T: " << i.second->stringer()
-            << " ";
-      }
-      str << ")";
-    }
-
-    str << " " << ((ret == nullptr) ? "NONE" : ret->stringer());
-
-    std::cout << str.str() << std::endl;
-
-    // for (auto i : offsets) std::cout << i << " " << std::endl;
+  void dissemble() {
+    std::cout << "ENTITY '" << title << "': " << std::endl;
 
     for (int ip = 0, op = 0; ip < codes.size(); ip++) {
       byte::Code co = codes.at(ip);
 
       switch (co) {
-      case byte::CONST: {
-        printf("%20d: %s %10d %s\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++),
-               constants.at(offsets.at(op))->stringer().c_str());
-      } break;
-      case byte::STORE: {
-        printf("%20d: %s %10d '%s' %d %s\n", ip,
-               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-               names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
-               types.at(offsets.at(op + 1))->stringer().c_str());
-        op += 2;
-      } break;
-      case byte::LOAD:
-      case byte::NAME:
-      case byte::FUNC: {
-        printf("%20d: %s %11d '%s'\n", ip,
-               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-               names.at(offsets.at(op)).c_str());
-      } break;
-      case byte::WHOLE: {
-        printf("%20d: %s %10d '%s'\n", ip,
-               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-               names.at(offsets.at(op)).c_str());
-      } break;
-      case byte::GET:
-      case byte::SET:
-      case byte::MOD:
-      case byte::USE:
-      case byte::CHA: {
-        printf("%20d: %s %12d '%s'\n", ip,
-               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-               names.at(offsets.at(op)).c_str());
-      } break;
-      case byte::CALL: {
-        printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
-      } break;
-      case byte::CALL_I: {
-        printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
-      } break;
-      case byte::B_ARR:
-      case byte::B_TUP:
-      case byte::B_MAP: {
-        printf("%20d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
-      } break;
-      case byte::F_JUMP:
-      case byte::T_JUMP: {
-        printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
-      } break;
-      case byte::JUMP: {
-        printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
-      } break;
-      case byte::NEW: {
-        printf("%20d: %s %12d '%s' %d\n", ip,
-               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-               names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
-        op += 2;
-      } break;
-      case byte::B_ENUM: {
-        printf("%20d: %s %9d '%s' %d\n", ip,
-               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-               names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
-        op += 2;
-      } break;
-      case byte::UAS: {
-        printf("%20d: %s %12d '%s' %d '%s'\n", ip,
-               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-               names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
-               names.at(offsets.at(op + 1)).c_str());
-        op += 2;
-      } break;
-      default:
-        printf("%20d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
-        break;
+        case byte::CONST: {
+          printf("%20d: %s %10d %s\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+                 constants.at(offsets.at(op))->stringer().c_str());
+        } break;
+        case byte::STORE: {
+          printf("%20d: %s %10d '%s' %d %s\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
+                 types.at(offsets.at(op + 1))->stringer().c_str());
+          op += 2;
+        } break;
+        case byte::LOAD:
+        case byte::NAME: {
+          printf("%20d: %s %11d '%s'\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+                 names.at(offsets.at(op)).c_str());
+        } break;
+        case byte::FUNC:
+        case byte::ENUM: {
+          printf("%20d: %s %11d %s\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+                 constants.at(offsets.at(op))->stringer().c_str());
+        } break;
+        case byte::WHOLE: {
+          printf("%20d: %s %10d %s\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+                 constants.at(offsets.at(op))->stringer().c_str());
+        } break;
+        case byte::GET:
+        case byte::SET:
+        case byte::MOD:
+        case byte::USE:
+        case byte::CHA: {
+          printf("%20d: %s %12d '%s'\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+                 names.at(offsets.at(op)).c_str());
+        } break;
+        case byte::CALL: {
+          printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+                 offsets.at(op++));
+        } break;
+        case byte::CALL_I: {
+          printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+                 offsets.at(op++));
+        } break;
+        case byte::B_ARR:
+        case byte::B_TUP:
+        case byte::B_MAP: {
+          printf("%20d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+                 offsets.at(op++));
+        } break;
+        case byte::F_JUMP:
+        case byte::T_JUMP: {
+          printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+                 offsets.at(op++));
+        } break;
+        case byte::JUMP: {
+          printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+                 offsets.at(op++));
+        } break;
+        case byte::NEW: {
+          printf("%20d: %s %12d '%s' %d\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
+          op += 2;
+        } break;
+        case byte::UAS: {
+          printf("%20d: %s %12d '%s' %d '%s'\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
+                 names.at(offsets.at(op + 1)).c_str());
+          op += 2;
+        } break;
+        default:
+          printf("%20d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
+          break;
       }
     }
 
@@ -3167,50 +3135,6 @@ struct Entity {
         printf("%20d: %s\n", i, types.at(i)->stringer().c_str());
       }
     }
-
-    std::cout << "INTERFACE: " << std::endl;
-    if (interface.empty()) {
-      printf("%20s\n", "EMPTY");
-    } else {
-      for (int i = 0; i < interface.size(); i++) {
-        auto x = interface.at(i);
-
-        std::stringstream str;
-        ast::Arg arg = std::get<1>(x);
-
-        if (arg.empty()) {
-          str << "()";
-        } else {
-          str << "( ";
-
-          for (auto i : arg) {
-            str << "K: '" << i.first->literal << "' T: " << i.second->stringer()
-                << " ";
-          }
-
-          str << ")";
-        }
-
-        if (std::get<2>(x) == nullptr) {
-          printf("%20d: '%s' %s %s\n", i, std::get<0>(x).c_str(),
-                 str.str().c_str(), "NONE");
-          continue;
-        }
-
-        printf("%20d: '%s' %s %s\n", i, std::get<0>(x).c_str(),
-               str.str().c_str(), std::get<2>(x)->stringer().c_str());
-      }
-    }
-
-    std::cout << "INHERIT: " << std::endl;
-    if (inherit.empty()) {
-      printf("%20s\n", "EMPTY");
-    } else {
-      printf("%19s", " ");
-
-      for (auto i : inherit) std::cout << "'" << i << "' ";
-      std::cout << std::endl;
-    }
   }
 }; // namespace entity
 
@@ -3242,13 +3166,8 @@ namespace compiler {
     void expr(ast::Expr *); // expression
     void stmt(ast::Stmt *); // statements
 
-    // push interface function to entity
-    void emitInterface(std::string, ast::Arg, ast::Type *);
-
   public:
-    Compiler(std::vector<ast::Stmt *> statements) {
-      this->statements = statements;
-    }
+    Compiler(std::vector<ast::Stmt *> statements) : statements(statements) {}
 
     // entities of compiled
     std::vector<Entity *> entities = {new Entity("main")};
@@ -3319,538 +3238,515 @@ namespace compiler {
     this->now->offsets.insert(now->offsets.begin() + pos, val);
   }
 
-  // push interface function to entity
-  void Compiler::emitInterface(std::string name, ast::Arg arg, ast::Type *ret) {
-    this->now->interface.push_back(std::make_tuple(name, arg, ret));
-  }
-
   // expression
   void Compiler::expr(ast::Expr *expr) {
     switch (expr->kind()) {
-    case ast::EXPR_LITERAL: {
-      ast::LiteralExpr *l = static_cast<ast::LiteralExpr *>(expr);
-      token::Token tok = l->token;
+      case ast::EXPR_LITERAL: {
+        ast::LiteralExpr *l = static_cast<ast::LiteralExpr *>(expr);
+        token::Token tok = l->token;
 
-      if (tok.kind == token::NUM) {
-        this->emitConstant(new object::Int(std::stoi(tok.literal)));
-      }
-      if (tok.kind == token::FLOAT) {
-        this->emitConstant(new object::Float(std::stof(tok.literal)));
-      }
-      if (tok.kind == token::STR) {
-        this->emitConstant(
-            // judge long characters at here
-            new object::Str(tok.literal, tok.literal.back() == '`'));
-      }
-      if (tok.kind == token::CHAR) {
-        this->emitConstant(new object::Char(tok.literal.at(0)));
-      }
-      this->emitCode(byte::CONST);
-    } break;
-    case ast::EXPR_BINARY: {
-      ast::BinaryExpr *b = static_cast<ast::BinaryExpr *>(expr);
+        if (tok.kind == token::NUM) {
+          this->emitConstant(new object::Int(std::stoi(tok.literal)));
+        }
+        if (tok.kind == token::FLOAT) {
+          this->emitConstant(new object::Float(std::stof(tok.literal)));
+        }
+        if (tok.kind == token::STR) {
+          this->emitConstant(
+              // judge long characters at here
+              new object::Str(tok.literal, tok.literal.back() == '`'));
+        }
+        if (tok.kind == token::CHAR) {
+          this->emitConstant(new object::Char(tok.literal.at(0)));
+        }
+        this->emitCode(byte::CONST);
+      } break;
+      case ast::EXPR_BINARY: {
+        ast::BinaryExpr *b = static_cast<ast::BinaryExpr *>(expr);
 
-      this->expr(b->left);
-      this->expr(b->right);
+        this->expr(b->left);
+        this->expr(b->right);
 
-      switch (b->op.kind) {
-      case token::ADD:
-        this->emitCode(byte::ADD); // +
-        break;
-      case token::SUB:
-        this->emitCode(byte::SUB); // -
-        break;
-      case token::MUL:
-        this->emitCode(byte::MUL); // *
-        break;
-      case token::DIV:
-        this->emitCode(byte::DIV); // /
-        break;
-      case token::AS_ADD:
-        this->emitCode(byte::A_ADD); // +=
-        break;
-      case token::AS_SUB:
-        this->emitCode(byte::A_SUB); // -=
-        break;
-      case token::AS_MUL:
-        this->emitCode(byte::A_MUL); // *=
-        break;
-      case token::AS_DIV:
-        this->emitCode(byte::A_DIV); // /=
-        break;
-      case token::GREATER:
-        this->emitCode(byte::GR); // >
-        break;
-      case token::LESS:
-        this->emitCode(byte::LE); // <
-        break;
-      case token::GR_EQ:
-        this->emitCode(byte::GR_E); // >=
-        break;
-      case token::LE_EQ:
-        this->emitCode(byte::LE_E); // <=
-        break;
-      case token::EQ_EQ:
-        this->emitCode(byte::E_E); // ==
-        break;
-      case token::BANG_EQ:
-        this->emitCode(byte::N_E); // !=
-        break;
-      case token::ADDR:
-        this->emitCode(byte::AND); // &
-        break;
-      case token::OR:
-        this->emitCode(byte::OR); // |
-        break;
-      }
-    } break;
-    //
-    case ast::EXPR_GROUP: {
-      ast::GroupExpr *g = static_cast<ast::GroupExpr *>(expr);
+        switch (b->op.kind) {
+          case token::ADD: this->emitCode(byte::ADD); break;
+          case token::SUB: this->emitCode(byte::SUB); break;
+          case token::MUL: this->emitCode(byte::MUL); break;
+          case token::DIV: this->emitCode(byte::DIV); break;
 
-      this->expr(g->expr);
-    } break;
-    //
-    case ast::EXPR_UNARY: {
-      ast::UnaryExpr *u = static_cast<ast::UnaryExpr *>(expr);
+          case token::AS_ADD: this->emitCode(byte::A_ADD); break;
+          case token::AS_SUB: this->emitCode(byte::A_SUB); break;
+          case token::AS_MUL: this->emitCode(byte::A_MUL); break;
+          case token::AS_DIV: this->emitCode(byte::A_DIV); break;
 
-      this->expr(u->expr);
+          case token::GREATER: this->emitCode(byte::GR); break;
+          case token::LESS: this->emitCode(byte::LE); break;
+          case token::GR_EQ: this->emitCode(byte::GR_E); break;
+          case token::LE_EQ: this->emitCode(byte::LE_E); break;
+          case token::EQ_EQ: this->emitCode(byte::E_E); break;
+          case token::BANG_EQ: this->emitCode(byte::N_E); break;
+          case token::ADDR: this->emitCode(byte::AND); break;
+          case token::OR: this->emitCode(byte::OR); break;
+        }
+      } break;
+      //
+      case ast::EXPR_GROUP: {
+        ast::GroupExpr *g = static_cast<ast::GroupExpr *>(expr);
 
-      if (u->token.kind == token::BANG) {
-        this->emitCode(byte::BANG);
-      }
-      if (u->token.kind == token::SUB) {
-        this->emitCode(byte::NOT);
-      }
-    } break;
-    //
-    case ast::EXPR_NAME: {
-      ast::NameExpr *n = static_cast<ast::NameExpr *>(expr);
+        this->expr(g->expr);
+      } break;
+      //
+      case ast::EXPR_UNARY: {
+        ast::UnaryExpr *u = static_cast<ast::UnaryExpr *>(expr);
 
-      this->emitCode(byte::LOAD);
-      this->emitName(n->token.literal); // new name
+        this->expr(u->expr);
 
-      // increment and prefix
-      if (n->selfIncrement && n->prefix) this->emitCode(byte::P_INCR);
-      if (n->selfIncrement) this->emitCode(byte::INCR); // suffix
+        if (u->token.kind == token::BANG) {
+          this->emitCode(byte::BANG);
+        }
+        if (u->token.kind == token::SUB) {
+          this->emitCode(byte::NOT);
+        }
+      } break;
+      //
+      case ast::EXPR_NAME: {
+        ast::NameExpr *n = static_cast<ast::NameExpr *>(expr);
 
-      // decrement and prefix
-      if (n->selfDecrement && n->prefix) this->emitCode(byte::P_DECR);
-      if (n->selfDecrement) this->emitCode(byte::DECR); // suffix
-    } break;
-    //
-    case ast::EXPR_CALL: {
-      ast::CallExpr *c = static_cast<ast::CallExpr *>(expr);
+        this->emitCode(byte::LOAD);
+        this->emitName(n->token.literal); // new name
 
-      this->expr(c->callee);
+        // increment and prefix
+        if (n->selfIncrement && n->prefix) this->emitCode(byte::P_INCR);
+        if (n->selfIncrement) this->emitCode(byte::INCR); // suffix
 
-      for (int i = c->arguments.size(); i > 0; i--)
-        this->expr(c->arguments.at(i - 1)); // arguments
+        // decrement and prefix
+        if (n->selfDecrement && n->prefix) this->emitCode(byte::P_DECR);
+        if (n->selfDecrement) this->emitCode(byte::DECR); // suffix
+      } break;
+      //
+      case ast::EXPR_CALL: {
+        ast::CallExpr *c = static_cast<ast::CallExpr *>(expr);
 
-      this->emitCode(byte::CALL);
-      this->emitOffset(c->arguments.size());
-    } break;
-    //
-    case ast::EXPR_GET: {
-      ast::GetExpr *g = static_cast<ast::GetExpr *>(expr);
+        this->expr(c->callee);
 
-      this->expr(g->expr);
+        for (int i = c->arguments.size(); i > 0; i--)
+          this->expr(c->arguments.at(i - 1)); // arguments
 
-      this->emitCode(byte::GET);
-      this->emitName(g->name.literal); // name
-    } break;
-    //
-    case ast::EXPR_SET: {
-      ast::SetExpr *s = static_cast<ast::SetExpr *>(expr);
+        this->emitCode(byte::CALL);
+        this->emitOffset(c->arguments.size());
+      } break;
+      //
+      case ast::EXPR_GET: {
+        ast::GetExpr *g = static_cast<ast::GetExpr *>(expr);
 
-      this->expr(s->value); // right expression
-      this->expr(s->expr);  // left expression
+        this->expr(g->expr);
 
-      this->emitCode(byte::SET);
-      this->emitName(s->name.literal); // name
-    } break;
-    //
-    case ast::EXPR_ASSIGN: {
-      ast::AssignExpr *a = static_cast<ast::AssignExpr *>(expr);
+        this->emitCode(byte::GET);
+        this->emitName(g->name.literal); // name
+      } break;
+      //
+      case ast::EXPR_SET: {
+        ast::SetExpr *s = static_cast<ast::SetExpr *>(expr);
 
-      this->expr(a->value); // right expression
-      this->expr(a->expr);
+        this->expr(s->value); // right expression
+        this->expr(s->expr);  // left expression
 
-      this->emitCode(byte::ASSIGN);
-    } break;
-    //
-    case ast::EXPR_ARRAY: {
-      ast::ArrayExpr *a = static_cast<ast::ArrayExpr *>(expr);
+        this->emitCode(byte::SET);
+        this->emitName(s->name.literal); // name
+      } break;
+      //
+      case ast::EXPR_ASSIGN: {
+        ast::AssignExpr *a = static_cast<ast::AssignExpr *>(expr);
 
-      // push elements from right to left
-      for (int i = a->elements.size(); i > 0; i--)
-        this->expr(a->elements.at(i - 1));
+        this->expr(a->value); // right expression
+        this->expr(a->expr);
 
-      this->emitCode(byte::B_ARR);
-      this->emitOffset(a->elements.size()); // length
-    } break;
-    //
-    case ast::EXPR_TUPLE: {
-      ast::TupleExpr *t = static_cast<ast::TupleExpr *>(expr);
+        this->emitCode(byte::ASSIGN);
+      } break;
+      //
+      case ast::EXPR_ARRAY: {
+        ast::ArrayExpr *a = static_cast<ast::ArrayExpr *>(expr);
 
-      for (int i = t->elements.size(); i > 0; i--)
-        this->expr(t->elements.at(i - 1));
+        // push elements from right to left
+        for (int i = a->elements.size(); i > 0; i--)
+          this->expr(a->elements.at(i - 1));
 
-      this->emitCode(byte::B_TUP);
-      this->emitOffset(t->elements.size()); // length
-    } break;
-    //
-    case ast::EXPR_MAP: {
-      ast::MapExpr *m = static_cast<ast::MapExpr *>(expr);
+        this->emitCode(byte::B_ARR);
+        this->emitOffset(a->elements.size()); // length
+      } break;
+      //
+      case ast::EXPR_TUPLE: {
+        ast::TupleExpr *t = static_cast<ast::TupleExpr *>(expr);
 
-      for (std::map<ast::Expr *, ast::Expr *>::reverse_iterator iter =
-               m->elements.rbegin();
-           iter != m->elements.rend(); iter++) {
-        //  from right to left by iterator
-        this->expr(iter->first);
-        this->expr(iter->second);
-      }
+        for (int i = t->elements.size(); i > 0; i--)
+          this->expr(t->elements.at(i - 1));
 
-      this->emitCode(byte::B_MAP);
-      this->emitOffset(m->elements.size() * 2); // length
-    } break;
-    //
-    case ast::EXPR_INDEX: {
-      ast::IndexExpr *i = static_cast<ast::IndexExpr *>(expr);
+        this->emitCode(byte::B_TUP);
+        this->emitOffset(t->elements.size()); // length
+      } break;
+      //
+      case ast::EXPR_MAP: {
+        ast::MapExpr *m = static_cast<ast::MapExpr *>(expr);
 
-      this->expr(i->right);
-      this->expr(i->left);
+        for (std::map<ast::Expr *, ast::Expr *>::reverse_iterator iter =
+                 m->elements.rbegin();
+             iter != m->elements.rend(); iter++) {
+          //  from right to left by iterator
+          this->expr(iter->first);
+          this->expr(iter->second);
+        }
 
-      this->emitCode(byte::INDEX);
-    } break;
-    //
-    case ast::EXPR_NEW: {
-      ast::NewExpr *n = static_cast<ast::NewExpr *>(expr);
+        this->emitCode(byte::B_MAP);
+        this->emitOffset(m->elements.size() * 2); // length
+      } break;
+      //
+      case ast::EXPR_INDEX: {
+        ast::IndexExpr *i = static_cast<ast::IndexExpr *>(expr);
 
-      for (auto i : n->builder) {
-        this->emitCode(byte::NAME);
-        this->emitName(i.first->literal); // K
+        this->expr(i->right);
+        this->expr(i->left);
 
-        this->expr(i.second); // V
-      }
+        this->emitCode(byte::INDEX);
+      } break;
+      //
+      case ast::EXPR_NEW: {
+        ast::NewExpr *n = static_cast<ast::NewExpr *>(expr);
 
-      this->emitCode(byte::NEW);
-      this->emitName(n->name.literal);         // name
-      this->emitOffset(n->builder.size() * 2); // fields
-    } break;
+        for (auto i : n->builder) {
+          this->emitCode(byte::NAME);
+          this->emitName(i.first->literal); // K
+
+          this->expr(i.second); // V
+        }
+
+        this->emitCode(byte::NEW);
+        this->emitName(n->name.literal);         // name
+        this->emitOffset(n->builder.size() * 2); // fields
+      } break;
     }
   }
 
   // statements
   void Compiler::stmt(ast::Stmt *stmt) {
     switch (stmt->kind()) {
-    case ast::STMT_EXPR:
-      this->expr(static_cast<ast::ExprStmt *>(stmt)->expr); // expression
-      break;
-    //
-    case ast::STMT_VAR: {
-      ast::VarStmt *v = static_cast<ast::VarStmt *>(stmt);
+      case ast::STMT_EXPR:
+        this->expr(static_cast<ast::ExprStmt *>(stmt)->expr); // expression
+        break;
+      //
+      case ast::STMT_VAR: {
+        ast::VarStmt *v = static_cast<ast::VarStmt *>(stmt);
 
-      if (v->expr != nullptr)
-        this->expr(v->expr); // initial value
-      else
-        this->emitCode(byte::ORIG); // original value
+        if (v->expr != nullptr)
+          this->expr(v->expr); // initial value
+        else
+          this->emitCode(byte::ORIG); // original value
 
-      this->emitCode(byte::STORE);
-      this->emitName(v->name.literal);
+        this->emitCode(byte::STORE);
+        this->emitName(v->name.literal);
 
-      this->emitType(v->T); // type
-    } break;
-    //
-    case ast::STMT_BLOCK: {
-      ast::BlockStmt *b = static_cast<ast::BlockStmt *>(stmt);
+        this->emitType(v->T); // type
+      } break;
+      //
+      case ast::STMT_BLOCK: {
+        ast::BlockStmt *b = static_cast<ast::BlockStmt *>(stmt);
 
-      for (auto i : b->block) this->stmt(i);
-    } break;
-    //
-    case ast::STMT_IF: {
-      ast::IfStmt *i = static_cast<ast::IfStmt *>(stmt);
-      /**
-       * Moisture regain algorithm
-       */
-      this->expr(i->condition);
-      this->emitCode(byte::F_JUMP);
-      int ifPos = now->offsets.size();
+        for (auto i : b->block) this->stmt(i);
+      } break;
+      //
+      case ast::STMT_IF: {
+        ast::IfStmt *i = static_cast<ast::IfStmt *>(stmt);
+        /**
+         * Moisture regain algorithm
+         */
+        this->expr(i->condition);
+        this->emitCode(byte::F_JUMP);
+        int ifPos = now->offsets.size();
 
-      this->stmt(i->ifBranch);
-      this->emitCode(byte::JUMP); // jump out after
+        this->stmt(i->ifBranch);
+        this->emitCode(byte::JUMP); // jump out after
 
-      int ifOff = now->offsets.size(); // jump after execution if branch
-      std::vector<int> tempEfOffs;     // ef condition offsets
+        int ifOff = now->offsets.size(); // jump after execution if branch
+        std::vector<int> tempEfOffs;     // ef condition offsets
 
-      // ef branch
-      if (!i->efBranch.empty()) {
-        bool firstStmt = true;
+        // ef branch
+        if (!i->efBranch.empty()) {
+          bool firstStmt = true;
 
-        for (auto i : i->efBranch) {
-          // if jump to the first ef
-          if (firstStmt) {
-            this->insertPosOffset(ifPos); // TO: if (F_JUMP)
-            firstStmt = false;
+          for (auto i : i->efBranch) {
+            // if jump to the first ef
+            if (firstStmt) {
+              this->insertPosOffset(ifPos); // TO: if (F_JUMP)
+              firstStmt = false;
+            }
+
+            this->expr(i.first); // condition
+            this->emitCode(byte::F_JUMP);
+            int efPos = now->offsets.size();
+
+            this->stmt(i.second); // block
+            this->insertPosOffset(efPos,
+                                  now->codes.size() + 1); // TO: ef (F_JUMP)
+
+            this->emitCode(byte::JUMP); // jump out after
+            tempEfOffs.push_back(now->offsets.size());
           }
-
-          this->expr(i.first); // condition
-          this->emitCode(byte::F_JUMP);
-          int efPos = now->offsets.size();
-
-          this->stmt(i.second); // block
-          this->insertPosOffset(efPos,
-                                now->codes.size() + 1); // TO: ef (F_JUMP)
-
-          this->emitCode(byte::JUMP); // jump out after
-          tempEfOffs.push_back(now->offsets.size());
+          // nf branch
+          if (i->nfBranch != nullptr) this->stmt(i->nfBranch);
         }
         // nf branch
-        if (i->nfBranch != nullptr) this->stmt(i->nfBranch);
-      }
-      // nf branch
-      else {
-        if (i->nfBranch != nullptr) {
-          this->insertPosOffset(ifPos); // TO: if (F_JUMP)
-          this->stmt(i->nfBranch);
+        else {
+          if (i->nfBranch != nullptr) {
+            this->insertPosOffset(ifPos); // TO: if (F_JUMP)
+            this->stmt(i->nfBranch);
+          } else {
+            // no ef and nf statement
+            this->insertPosOffset(ifPos); // TO: if (F_JUMP)
+          }
+        }
+
+        // for (auto i : tempEfOffs) std::cout << i << std::endl;
+        for (int i = 0; i < tempEfOffs.size(); i++) {
+          // insertion increment successively
+          this->insertPosOffset(tempEfOffs.at(i) + i);
+        }
+
+        this->insertPosOffset(ifOff + 1); // TO: if (JUMP)
+      } break;
+      //
+      case ast::STMT_FOR: {
+        ast::ForStmt *f = static_cast<ast::ForStmt *>(stmt);
+
+        int original = now->codes.size(); // original state: for callback loops
+
+        // DEAD LOOP
+        if (f->condition == nullptr) this->stmt(f->block);
+        // condition and block
+        else {
+          this->expr(f->condition);
+          this->emitCode(byte::F_JUMP);
+          int ePos = now->offsets.size(); // skip loop for false
+
+          this->stmt(f->block); // block
+
+          // jump to next bytecode
+          this->insertPosOffset(ePos,
+                                now->codes.size() + 1); // TO: (F_JUMP)
+        }
+        this->emitCode(byte::JUMP); // back to original state
+        this->emitOffset(original);
+        // replace placeholder
+        for (std::vector<int>::iterator iter = now->offsets.begin();
+             iter != now->offsets.end(); iter++) {
+          // out statement
+          if (*iter == -1) {
+            *iter = now->codes.size();
+          }
+          // tin statement
+          if (*iter == -2) {
+            *iter = original;
+          }
+        }
+      } break;
+      //
+      case ast::STMT_DO: {
+        ast::DoStmt *d = static_cast<ast::DoStmt *>(stmt);
+
+        this->stmt(d->block); // execute the do block first
+        this->stmt(d->stmt);  // then execute loop
+      } break;
+      //
+      case ast::STMT_OUT: {
+        ast::OutStmt *o = static_cast<ast::OutStmt *>(stmt);
+
+        if (o->expr != nullptr) this->expr(o->expr);
+
+        // jump straight out
+        this->emitCode(o->expr == nullptr ? byte::JUMP : byte::T_JUMP);
+        // place holder
+        this->emitOffset(-1);
+      } break;
+      //
+      case ast::STMT_TIN: {
+        ast::TinStmt *t = static_cast<ast::TinStmt *>(stmt);
+
+        if (t->expr != nullptr) this->expr(t->expr);
+
+        // jump straight out
+        this->emitCode(t->expr == nullptr ? byte::JUMP : byte::T_JUMP);
+        // place holder
+        this->emitOffset(-2);
+      } break;
+      //
+      case ast::STMT_FUNC: {
+        ast::FuncStmt *f = static_cast<ast::FuncStmt *>(stmt);
+
+        int entitiesSize = this->entities.size() - 1; // original
+
+        this->entities.push_back(
+            new Entity(f->name.literal)); // new entity for function statement
+        this->now = this->entities.back();
+
+        object::Func *obj = new object::Func;
+
+        obj->name = f->name.literal;   // function name
+        obj->arguments = f->arguments; // function arguments
+        obj->ret = f->ret;             // function return
+
+        int x = this->icf;
+        int y = this->inf;
+        int z = this->itf;
+
+        this->icf = 0; // x
+        this->inf = 0; // y
+        this->itf = 0; // z
+
+        this->stmt(f->block);
+
+        this->icf = x;
+        this->inf = y;
+        this->itf = z;
+
+        obj->entity = this->now; // function entity
+
+        // if more than one it points to the last one
+        this->now = this->entities.at(entitiesSize); // restore to main entity
+
+        // TO main ENTITY
+        this->emitCode(byte::FUNC);
+        this->emitConstant(obj); // push to constant object
+      } break;
+      //
+      case ast::STMT_WHOLE: {
+        ast::WholeStmt *w = static_cast<ast::WholeStmt *>(stmt);
+
+        int entitiesSize = this->entities.size() - 1; // original
+
+        this->entities.push_back(
+            new Entity(w->name.literal)); // new entity for whole statement
+        this->now = this->entities.back();
+
+        object::Whole *obj = new object::Whole;
+
+        obj->name = w->name.literal; // whole name
+
+        // whole inherit
+        if (w->inherit != nullptr) {
+          ast::InheritStmt *i = static_cast<ast::InheritStmt *>(w->inherit);
+          for (auto iter : i->names) {
+            obj->inherit.push_back(iter->literal);
+          }
+        }
+
+        int x = this->icf;
+        int y = this->inf;
+        int z = this->itf;
+
+        this->icf = 0; // x
+        this->inf = 0; // y
+        this->itf = 0; // z
+
+        // block statement
+        for (auto i : w->body->block) {
+          // interface definition
+          if (i->kind() == ast::STMT_INTERFACE) {
+            ast::InterfaceStmt *inter = static_cast<ast::InterfaceStmt *>(i);
+            obj->interface.push_back(std::make_tuple(
+                inter->name.literal, inter->arguments, inter->ret));
+            continue;
+          }
+          this->stmt(i);
+        }
+
+        this->icf = x;
+        this->inf = y;
+        this->itf = z;
+
+        obj->entity = this->now; // whole entity
+
+        // if more than one it points to the last one
+        this->now = this->entities.at(entitiesSize); // restore to main entity
+
+        // TO main ENTITY
+        this->emitCode(byte::WHOLE);
+        this->emitConstant(obj); // push to constant object
+      } break;
+      //
+      case ast::STMT_AND: {
+        ast::AndStmt *a = static_cast<ast::AndStmt *>(stmt);
+
+        this->emitCode(byte::CHA);
+        this->emitName(a->name.literal); // STORE
+
+        this->stmt(a->block);
+
+        this->emitCode(byte::END);
+        this->emitName(a->name.literal); // END
+      } break;
+      //
+      case ast::STMT_MOD: {
+        ast::ModStmt *m = static_cast<ast::ModStmt *>(stmt);
+
+        this->emitCode(byte::MOD);
+        this->emitName(m->name.literal);
+      } break;
+      //
+      case ast::STMT_USE: {
+        ast::UseStmt *u = static_cast<ast::UseStmt *>(stmt);
+
+        if (u->as != nullptr) {
+          this->emitCode(byte::UAS);
+
+          this->emitName(u->name.literal); // name
+          this->emitName(u->as->literal);  // alias
         } else {
-          // no ef and nf statement
-          this->insertPosOffset(ifPos); // TO: if (F_JUMP)
+          this->emitCode(byte::USE);
+
+          this->emitName(u->name.literal);
         }
-      }
+      } break;
+      //
+      case ast::STMT_RET: {
+        ast::RetStmt *r = static_cast<ast::RetStmt *>(stmt);
 
-      // for (auto i : tempEfOffs) std::cout << i << std::endl;
-      for (int i = 0; i < tempEfOffs.size(); i++) {
-        // insertion increment successively
-        this->insertPosOffset(tempEfOffs.at(i) + i);
-      }
+        if (r->stmt != nullptr) this->stmt(r->stmt);
 
-      this->insertPosOffset(ifOff + 1); // TO: if (JUMP)
-    } break;
-    //
-    case ast::STMT_FOR: {
-      ast::ForStmt *f = static_cast<ast::ForStmt *>(stmt);
+        this->emitCode(byte::RET);
+      } break;
+      //
+      case ast::STMT_ENUM: {
+        ast::EnumStmt *e = static_cast<ast::EnumStmt *>(stmt);
 
-      int original = now->codes.size(); // original state: for callback loops
+        object::Enum *obj = new object::Enum;
+        obj->name = e->name.literal;
 
-      // DEAD LOOP
-      if (f->condition == nullptr) this->stmt(f->block);
-      // condition and block
-      else {
-        this->expr(f->condition);
-        this->emitCode(byte::F_JUMP);
-        int ePos = now->offsets.size(); // skip loop for false
-
-        this->stmt(f->block); // block
-
-        // jump to next bytecode
-        this->insertPosOffset(ePos,
-                              now->codes.size() + 1); // TO: (F_JUMP)
-      }
-      this->emitCode(byte::JUMP); // back to original state
-      this->emitOffset(original);
-      // replace placeholder
-      for (std::vector<int>::iterator iter = now->offsets.begin();
-           iter != now->offsets.end(); iter++) {
-        // out statement
-        if (*iter == -1) {
-          *iter = now->codes.size();
+        for (int i = 0; i < e->field.size(); i++) {
+          obj->elements.insert(std::make_pair(i, e->field.at(i)->literal));
         }
-        // tin statement
-        if (*iter == -2) {
-          *iter = original;
-        }
-      }
-    } break;
-    //
-    case ast::STMT_DO: {
-      ast::DoStmt *d = static_cast<ast::DoStmt *>(stmt);
 
-      this->stmt(d->block); // execute the do block first
-      this->stmt(d->stmt);  // then execute loop
-    } break;
-    //
-    case ast::STMT_OUT: {
-      ast::OutStmt *o = static_cast<ast::OutStmt *>(stmt);
+        this->emitCode(byte::ENUM);
+        this->emitConstant(obj); // push to constant object
+      } break;
+      //
+      case ast::STMT_CALLINHERIT: {
+        ast::CallInheritStmt *c = static_cast<ast::CallInheritStmt *>(stmt);
+        ast::CallExpr *e = static_cast<ast::CallExpr *>(c->expr);
 
-      if (o->expr != nullptr) this->expr(o->expr);
+        this->expr(e->callee);
 
-      // jump straight out
-      this->emitCode(o->expr == nullptr ? byte::JUMP : byte::T_JUMP);
-      // place holder
-      this->emitOffset(-1);
-    } break;
-    //
-    case ast::STMT_TIN: {
-      ast::TinStmt *t = static_cast<ast::TinStmt *>(stmt);
+        for (int i = e->arguments.size(); i > 0; i--)
+          this->expr(e->arguments.at(i - 1));
 
-      if (t->expr != nullptr) this->expr(t->expr);
+        this->emitCode(byte::CALL_I);
+        this->emitOffset(e->arguments.size()); // length
+      } break;
+      //
+      case ast::STMT_PUB: {
+        ast::PubStmt *p = static_cast<ast::PubStmt *>(stmt);
 
-      // jump straight out
-      this->emitCode(t->expr == nullptr ? byte::JUMP : byte::T_JUMP);
-      // place holder
-      this->emitOffset(-2);
-    } break;
-    //
-    case ast::STMT_FUNC: {
-      ast::FuncStmt *f = static_cast<ast::FuncStmt *>(stmt);
-
-      int entitiesSize = this->entities.size() - 1; // original
-
-      this->entities.push_back(
-          new Entity(f->name.literal)); // new entity for function statement
-      this->now = this->entities.back();
-
-      this->now->args = f->arguments.size(); // arguments
-      this->now->argument = f->arguments;    // fields
-
-      int x = this->icf;
-      int y = this->inf;
-      int z = this->itf;
-
-      this->icf = 0; // x
-      this->inf = 0; // y
-      this->itf = 0; // z
-
-      this->stmt(f->block);
-
-      this->icf = x;
-      this->inf = y;
-      this->itf = z;
-
-      // if more than one it points to the last one
-      this->now = this->entities.at(entitiesSize); // restore to main entity
-
-      // TO main ENTITY
-      this->emitCode(byte::FUNC);
-      this->emitName(f->name.literal);
-    } break;
-    //
-    case ast::STMT_WHOLE: {
-      ast::WholeStmt *w = static_cast<ast::WholeStmt *>(stmt);
-
-      int entitiesSize = this->entities.size() - 1; // original
-
-      this->entities.push_back(
-          new Entity(w->name.literal)); // new entity for whole statement
-      this->now = this->entities.back();
-
-      int x = this->icf;
-      int y = this->inf;
-      int z = this->itf;
-
-      this->icf = 0; // x
-      this->inf = 0; // y
-      this->itf = 0; // z
-
-      this->stmt(w->body);
-      if (w->inherit != nullptr) this->stmt(w->inherit);
-
-      this->icf = x;
-      this->inf = y;
-      this->itf = z;
-
-      // if more than one it points to the last one
-      this->now = this->entities.at(entitiesSize); // restore to main entity
-
-      // TO main ENTITY
-      this->emitCode(byte::WHOLE);
-      this->emitName(w->name.literal);
-    } break;
-    //
-    case ast::STMT_AND: {
-      ast::AndStmt *a = static_cast<ast::AndStmt *>(stmt);
-
-      this->emitCode(byte::CHA);
-      this->emitName(a->name.literal); // STORE
-
-      this->stmt(a->block);
-
-      this->emitCode(byte::END);
-      this->emitName(a->name.literal); // END
-    } break;
-    //
-    case ast::STMT_MOD: {
-      ast::ModStmt *m = static_cast<ast::ModStmt *>(stmt);
-
-      this->emitCode(byte::MOD);
-      this->emitName(m->name.literal);
-    } break;
-    //
-    case ast::STMT_USE: {
-      ast::UseStmt *u = static_cast<ast::UseStmt *>(stmt);
-
-      if (u->as != nullptr) {
-        this->emitCode(byte::UAS);
-
-        this->emitName(u->name.literal); // name
-        this->emitName(u->as->literal);  // alias
-      } else {
-        this->emitCode(byte::USE);
-
-        this->emitName(u->name.literal);
-      }
-    } break;
-    //
-    case ast::STMT_RET: {
-      ast::RetStmt *r = static_cast<ast::RetStmt *>(stmt);
-
-      if (r->stmt != nullptr) this->stmt(r->stmt);
-
-      this->emitCode(byte::RET);
-    } break;
-    //
-    case ast::STMT_ENUM: {
-      ast::EnumStmt *e = static_cast<ast::EnumStmt *>(stmt);
-
-      for (auto i : e->field) {
-        this->emitCode(byte::NAME);
-        this->emitName(i->literal);
-      }
-
-      this->emitCode(byte::B_ENUM); // B_ENUM <name> <size>
-
-      this->emitName(e->name.literal);   // name
-      this->emitOffset(e->field.size()); // length
-    } break;
-    //
-    case ast::STMT_INHERIT: {
-      ast::InheritStmt *i = static_cast<ast::InheritStmt *>(stmt);
-      std::vector<std::string> inherit;
-
-      for (auto i : i->names) inherit.push_back(i->literal);
-
-      this->now->inherit = inherit;
-    } break;
-    //
-    case ast::STMT_CALLINHERIT: {
-      ast::CallInheritStmt *c = static_cast<ast::CallInheritStmt *>(stmt);
-      ast::CallExpr *e = static_cast<ast::CallExpr *>(c->expr);
-
-      this->expr(e->callee);
-
-      for (int i = e->arguments.size(); i > 0; i--)
-        this->expr(e->arguments.at(i - 1));
-
-      this->emitCode(byte::CALL_I);
-      this->emitOffset(e->arguments.size()); // length
-    } break;
-    //
-    case ast::STMT_INTERFACE: {
-      ast::InterfaceStmt *i = static_cast<ast::InterfaceStmt *>(stmt);
-
-      this->emitInterface(i->name.literal, i->arguments, i->ret);
-    } break;
-    //
-    case ast::STMT_PUB: {
-      ast::PubStmt *p = static_cast<ast::PubStmt *>(stmt);
-
-      this->stmt(p->stmt);
-      this->emitCode(byte::PUB);
-    } break;
-    //
-    default:
-      break;
+        this->stmt(p->stmt);
+        this->emitCode(byte::PUB);
+      } break;
+      //
+      default: break;
     }
   }
 }; // namespace compiler
@@ -3867,35 +3763,119 @@ struct Table {
   bool empty() { return symbols.empty(); }
 };
 
+template <class T> class Stack {
+private:
+  int capacity = 4, count = 0;
+
+  T *elements;
+
+public:
+  explicit Stack() { this->elements = new T[capacity]; }
+
+  ~Stack() { delete[] elements; }
+
+  void push(T t) {
+    if (count + 1 > capacity) {
+      this->capacity = capacity * 2;
+      this->elements = (T *)realloc(this->elements, sizeof(T) * capacity);
+    }
+    this->elements[count++] = t;
+  }
+
+  T pop() { return this->elements[--count]; }
+
+  int len() { return count; }
+};
+
 // frame structure
 struct Frame {
   Entity *entity; // ENTITY
 
-  Table local;                     // local names
-  std::stack<object::Object> data; // data stack
+  Table local;                  // local names
+  Stack<object::Object *> data; // data stack
 
   explicit Frame(Entity *e) : entity(e) {}
 };
 
-// virtual machine
+/**
+ * VIRTUAL MACHINE
+ *
+ * ENTITY:
+ *          BYTE, CONSTANT, NAME, TYPE, OFFSET
+ *
+ * OBJECT:
+ *          INT, FLOAT, STR, CHAR, BOOL, ARRAY, TUPLE, MAP, ENUM, FUNC, WHOLE
+ *
+ * FRAME:
+ *          (ENTITY, TABLE(K TO OBJECT), DATA STACK)
+ */
 namespace vm {
   // structure
   class vm {
   private:
-    std::vector<Frame *> frames;
+    std::vector<Frame *> frames; // execute frames
+    // top frame
+    Frame *top();
+    // push object to the current frame
+    void pushData(object::Object *);
+    // pop the top of data stack
+    object::Object *popData();
+    // emit new name of table to the current frame
+    void emitTable(std::string, object::Object *);
+    // look up a name
+    object::Object *lookUp(std::string);
+    // first to end iterator
+    object::Object *retConstant();
 
   public:
-    explicit vm(std::vector<Entity *> entities) {
-      for (auto i : entities) {
-        frames.push_back(new Frame(i));
-      }
+    explicit vm(Entity *main) {
+      // to main frame as main frame
+      this->frames.push_back(new Frame(main));
     }
 
-    // execute main entity
-    void execute();
+    void evaluate(); // evaluate the top of frame
   };
 
-  void vm::execute() {}
+  // top frame
+  Frame *vm::top() { return frames.back(); }
+
+  // push object to the current frame
+  void vm::pushData(object::Object *obj) { top()->data.push(obj); }
+
+  // pop the top of data stack
+  object::Object *vm::popData() { return top()->data.pop(); }
+
+  // emit new name of table to the current frame
+  void vm::emitTable(std::string name, object::Object *obj) {
+    top()->local.symbols.insert(std::make_pair(name, obj));
+  }
+
+  // look up a name
+  object::Object *vm::lookUp(std::string n) { return top()->local.lookUp(n); }
+
+  // first to end constant iterator for current frame's entity
+  object::Object *vm::retConstant() {
+    static int op = 0;
+    return top()->entity->constants.at(top()->entity->offsets.at(op++));
+  }
+
+  void vm::evaluate() {
+    for (int ip = 0; ip < top()->entity->codes.size(); ip++) {
+
+      // bytecode
+      byte::Code co = top()->entity->codes.at(ip);
+
+      switch (co) {
+        case byte::CONST: this->pushData(this->retConstant()); break;
+        case byte::ADD: {
+          std::cout << top()->data.len() << std::endl;
+        } break;
+        case byte::RET: {
+          std::cout << "== END EVALUATE!! ==" << std::endl;
+        }
+      }
+    }
+  }
 } // namespace vm
 
 // DEBUG to output tokens and statements
@@ -3922,12 +3902,10 @@ void run(std::string source) {
     auto compiler = new compiler::Compiler(parser->statements);
     compiler->compile();
 
-    for (int i = 0; i < compiler->entities.size(); i++) {
-      compiler->entities[i]->dissemble(i);
-    }
+    for (auto i : compiler->entities) i->dissemble();
 
     // vm
-    auto vm = new vm::vm(compiler->entities);
+    (new vm::vm(compiler->entities[0]))->evaluate();
     //
   } catch (exp::Exp &e) {
     std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
@@ -3956,7 +3934,7 @@ void runFile(const char *path) {
 void repl() {
   char *line = (char *)malloc(1024);
   std::cout << "\n"
-            << "Drift 0.0.1 (REPL Mode, " << __DATE__ << ", " << __TIME__ << ")"
+            << "Drift 0.0.1 (REPL Mode, Feb 18 2021, 15:43:31)"
             << "\n"
             << std::endl;
 

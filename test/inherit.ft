@@ -3,7 +3,7 @@
 <- a + b + c
 
 /*
-ENTITY 'main' AT: 0 ARG: 0 ()
+ENTITY 'main': 
                    0: RET
 CONSTANT: 
                EMPTY
@@ -13,8 +13,4 @@ OFFSET:
                EMPTY
 TYPE: 
                EMPTY
-INTERFACE: 
-               EMPTY
-INHERIT: 
-                  'a' 'b' 'c' 
 */
