@@ -1,4 +1,6 @@
 
 // VIRTUAL MACHINE TEST
 
-1 + 2 * 4
+def x: int = 1 + 2 * 4
+
+x

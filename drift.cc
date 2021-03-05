@@ -202,16 +202,15 @@ namespace exp {
     CANNOT_PUBLIC, // can not to public
     ENUMERATION,   // whole body not definition of enum
     CALL_INHERIT,  // can only be with call expr
-    // COMPILER
-    COMPILE_ERROR,
+    //
+    RUNTIME_ERROR,
   };
 
   //  return a string of exception type
   std::string kindString[len] = {
       "UNKNOWN_SYMBOL", "CHARACTER_EXP", "STRING_EXP",   "UNEXPECTED",
       "INVALID_SYNTAX", "INCREMENT_OP",  "TYPE_ERROR",   "DIVISION_ZERO",
-      "CANNOT_PUBLIC",  "ENUMERATION",   "CALL_INHERIT",
-  };
+      "CANNOT_PUBLIC",  "ENUMERATION",   "CALL_INHERIT", "RUNTIME_ERROR"};
 
   // exception structure
   class Exp : public std::exception {
@@ -2618,10 +2617,8 @@ namespace semantic {
           Token r = (static_cast<ast::LiteralExpr *>(binary->right))->token;
 
           switch (binary->op.kind) {
-            case ADD:    // +
-            case SUB:    // -
-            case AS_ADD: // +=
-            case AS_SUB: // -=
+            case ADD: // +
+            case SUB: // -
               if (l.kind == NUM) {
                 //
                 if (r.kind == STR || r.kind == CHAR) {
@@ -2635,8 +2632,15 @@ namespace semantic {
                 }
               }
               break;
-            case DIV:    // /
+            case AS_ADD: // +=
+            case AS_SUB: // -=
+            case AS_MUL: // *=
             case AS_DIV: // /=
+              if (binary->left->kind() != ast::EXPR_NAME) {
+                error(exp::TYPE_ERROR, "unsupported operand", l.line);
+              }
+              break;
+            case DIV: // /
               if (l.kind == STR || l.kind == CHAR || r.kind == STR ||
                   r.kind == CHAR) {
                 error(exp::TYPE_ERROR, "unsupported operand", l.line);
@@ -2717,7 +2721,7 @@ struct Entity;
 // bytecode
 namespace byte {
   // total number of bytecodes
-  constexpr int len = 51;
+  constexpr int len = 50;
   // bytecode type
   enum Code {
     CONST,  // O
@@ -2855,7 +2859,9 @@ namespace object {
   class Str : public Object {
   public:
     std::string value;
-    bool longer;
+    bool longer = false;
+
+    Str(std::string v) : value(v) {}
 
     Str(std::string v, bool longer) : value(v), longer(longer) {
       value.pop_back(); // long character judgment end, delete judgment
@@ -3009,6 +3015,11 @@ struct Entity {
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  constants.at(offsets.at(op))->stringer().c_str());
         } break;
+        case byte::ASSIGN: {
+          printf("%20d: %s %9d '%s'\n", ip,
+                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+                 names.at(offsets.at(op)).c_str());
+        } break;
         case byte::STORE: {
           printf("%20d: %s %10d '%s' %d %s\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
@@ -3146,8 +3157,6 @@ namespace compiler {
     int position = 0;
     // after semantic analysis
     std::vector<ast::Stmt *> statements;
-    // throw an exception
-    inline void error(exp::Kind, std::string, int);
     // return the current statement
     ast::Stmt *look();
     // offset of constant, offset of name, offset of type
@@ -3177,11 +3186,6 @@ namespace compiler {
     // currently compile entity
     Entity *now = entities.at(0);
   };
-
-  // throw an exception
-  inline void Compiler::error(exp::Kind k, std::string message, int line) {
-    throw exp::Exp(k, message, line);
-  }
 
   // return the current statement
   ast::Stmt *Compiler::look() { return this->statements.at(this->position); }
@@ -3287,6 +3291,14 @@ namespace compiler {
           case token::ADDR: this->emitCode(byte::AND); break;
           case token::OR: this->emitCode(byte::OR); break;
         }
+
+        if (b->op.kind == token::AS_ADD || b->op.kind == token::AS_SUB ||
+            b->op.kind == token::AS_MUL || b->op.kind == token::AS_DIV) {
+          ast::NameExpr *n = static_cast<ast::NameExpr *>(b->left);
+
+          this->emitName(n->token.literal);
+          this->emitCode(byte::ASSIGN);
+        }
       } break;
       //
       case ast::EXPR_GROUP: {
@@ -3358,9 +3370,9 @@ namespace compiler {
         ast::AssignExpr *a = static_cast<ast::AssignExpr *>(expr);
 
         this->expr(a->value); // right expression
-        this->expr(a->expr);
 
         this->emitCode(byte::ASSIGN);
+        this->emitName(static_cast<ast::NameExpr *>(a->expr)->token.literal);
       } break;
       //
       case ast::EXPR_ARRAY: {
@@ -3784,7 +3796,15 @@ public:
 
   T pop() { return this->elements[--count]; }
 
+  T top() { return this->elements[count]; }
+
   int len() { return count; }
+
+  bool empty() { return count == 0; }
+
+  std::string stringer() {
+    return "<Stack count = " + std::to_string(count) + ">";
+  }
 };
 
 // frame structure
@@ -3826,6 +3846,12 @@ namespace vm {
     object::Object *lookUp(std::string);
     // first to end iterator
     object::Object *retConstant();
+    // first to end iterator
+    ast::Type *retType();
+    // first to end iterator
+    std::string retName();
+
+    int op = 0; // offset pointer
 
   public:
     explicit vm(Entity *main) {
@@ -3855,26 +3881,238 @@ namespace vm {
 
   // first to end constant iterator for current frame's entity
   object::Object *vm::retConstant() {
-    static int op = 0;
     return top()->entity->constants.at(top()->entity->offsets.at(op++));
   }
 
+  // first to end
+  ast::Type *vm::retType() {
+    return top()->entity->types.at(top()->entity->offsets.at(op++));
+  }
+
+  // first to end
+  std::string vm::retName() {
+    return top()->entity->names.at(top()->entity->offsets.at(op++));
+  }
+
+  // throw an exception
+  void error(std::string message) {
+    throw exp::Exp(exp::RUNTIME_ERROR, message, -1);
+  }
+
   void vm::evaluate() {
+
+#define BINARY_OP(T, L, OP, R) this->pushData(new T(L OP R));
+
     for (int ip = 0; ip < top()->entity->codes.size(); ip++) {
 
       // bytecode
       byte::Code co = top()->entity->codes.at(ip);
 
       switch (co) {
-        case byte::CONST: this->pushData(this->retConstant()); break;
-        case byte::ADD: {
-          std::cout << top()->data.len() << std::endl;
-        } break;
+
+        case byte::CONST:
+          this->pushData(this->retConstant());
+          if (op != 0) this->op++;
+          break;
+
+        case byte::ADD:
+        case byte::A_ADD: {
+          object::Object *y = this->popData();
+          object::Object *x = this->popData();
+
+          if (x->kind() == object::INT) {
+            switch (y->kind()) {
+              case object::INT: {
+                BINARY_OP(object::Int, static_cast<object::Int *>(x)->value, +,
+                          static_cast<object::Int *>(y)->value);
+                break;
+              }
+              case object::FLOAT: {
+                BINARY_OP(object::Float, static_cast<object::Int *>(x)->value,
+                          +, static_cast<object::Float *>(y)->value);
+                break;
+              }
+            }
+          }
+          if (x->kind() == object::FLOAT) {
+            switch (y->kind()) {
+              case object::INT: {
+                BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
+                          +, static_cast<object::Int *>(y)->value);
+                break;
+              }
+              case object::FLOAT: {
+                BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
+                          +, static_cast<object::Float *>(y)->value);
+                break;
+              }
+            }
+          }
+          if (x->kind() == object::STR && y->kind() == object::STR) {
+            object::Str *l = static_cast<object::Str *>(x);
+            object::Str *r = static_cast<object::Str *>(y);
+
+            if (l->longer || r->longer) {
+              error("cannot plus two long string literal");
+            }
+
+            this->pushData(new object::Str(l->value + r->value));
+          }
+          break;
+        }
+        case byte::SUB:
+        case byte::A_SUB: {
+          object::Object *y = this->popData();
+          object::Object *x = this->popData();
+
+          if (x->kind() == object::INT) {
+            switch (y->kind()) {
+              case object::INT: {
+                BINARY_OP(object::Int, static_cast<object::Int *>(x)->value, -,
+                          static_cast<object::Int *>(y)->value);
+                break;
+              }
+              case object::FLOAT: {
+                BINARY_OP(object::Float, static_cast<object::Int *>(x)->value,
+                          -, static_cast<object::Float *>(y)->value);
+                break;
+              }
+            }
+          }
+          if (x->kind() == object::FLOAT) {
+            switch (y->kind()) {
+              case object::INT: {
+                BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
+                          -, static_cast<object::Int *>(y)->value);
+                break;
+              }
+              case object::FLOAT: {
+                BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
+                          -, static_cast<object::Float *>(y)->value);
+                break;
+              }
+            }
+          }
+          break;
+        }
+        case byte::MUL:
+        case byte::A_MUL: {
+          object::Object *y = this->popData();
+          object::Object *x = this->popData();
+
+          if (x->kind() == object::INT) {
+            switch (y->kind()) {
+              case object::INT: {
+                BINARY_OP(object::Int, static_cast<object::Int *>(x)->value, *,
+                          static_cast<object::Int *>(y)->value);
+                break;
+              }
+              case object::FLOAT: {
+                BINARY_OP(object::Float,
+                          static_cast<object::Int *>(x)->value, *,
+                          static_cast<object::Float *>(y)->value);
+                break;
+              }
+            }
+          }
+          if (x->kind() == object::FLOAT) {
+            switch (y->kind()) {
+              case object::INT: {
+                BINARY_OP(object::Float,
+                          static_cast<object::Float *>(x)->value, *,
+                          static_cast<object::Int *>(y)->value);
+                break;
+              }
+              case object::FLOAT: {
+                BINARY_OP(object::Float,
+                          static_cast<object::Float *>(x)->value, *,
+                          static_cast<object::Float *>(y)->value);
+                break;
+              }
+            }
+          }
+          break;
+        }
+        case byte::DIV:
+        case byte::A_DIV: {
+          object::Object *y = this->popData();
+          object::Object *x = this->popData();
+
+          if (x->kind() == object::INT) {
+            switch (y->kind()) {
+              case object::INT: {
+                if (static_cast<object::Int *>(y)->value == 0)
+                  error("division by zero");
+                BINARY_OP(object::Int, static_cast<object::Int *>(x)->value, /,
+                          static_cast<object::Int *>(y)->value);
+                break;
+              }
+              case object::FLOAT: {
+                if (static_cast<object::Float *>(y)->value == 0)
+                  error("division by zero");
+                BINARY_OP(object::Float, static_cast<object::Int *>(x)->value,
+                          /, static_cast<object::Float *>(y)->value);
+                break;
+              }
+            }
+          }
+          if (x->kind() == object::FLOAT) {
+            switch (y->kind()) {
+              case object::INT: {
+                if (static_cast<object::Int *>(y)->value == 0)
+                  error("division by zero");
+                BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
+                          /, static_cast<object::Int *>(y)->value);
+                break;
+              }
+              case object::FLOAT: {
+                if (static_cast<object::Float *>(y)->value == 0)
+                  error("division by zero");
+                BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
+                          /, static_cast<object::Float *>(y)->value);
+                break;
+              }
+            }
+          }
+          break;
+        }
+
+        case byte::STORE: {
+          std::cout << op << std::endl;
+
+          object::Object *obj = this->popData();
+          ast::Type *type = this->retType();
+          std::string name = this->retName();
+
+          if (type->kind() == ast::T_INT && obj->kind() != object::INT) {
+            error("type error");
+          }
+
+          top()->local.symbols[name] = obj; // store to table
+          break;
+        }
+
+        case byte::LOAD: {
+          std::string name = this->retName();
+          object::Object *obj = top()->local.lookUp(name);
+
+          if (obj == nullptr) error("not defined name '" + name + "'");
+
+          this->pushData(obj);
+          break;
+        }
+
         case byte::RET: {
+          std::cout << top()->data.stringer() << std::endl;
+
+          while (!top()->data.empty()) {
+            std::cout << top()->data.pop()->stringer() << std::endl;
+          }
           std::cout << "== END EVALUATE!! ==" << std::endl;
         }
       }
     }
+#undef BINARY_OP
   }
 } // namespace vm
 
