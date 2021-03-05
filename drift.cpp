@@ -9,7 +9,7 @@
 //
 //          https://github.com/bingxio/drift
 //
-//          https://www.drift-lang.org/
+//          https://www.drift-lang.fun/
 //
 
 #include <algorithm>
@@ -22,6 +22,11 @@
 #include <vector>
 
 #include <cstring>
+
+// DEBUG to output tokens and statements
+bool DEBUG = false;
+// repl mode
+bool REPL = false;
 
 // tokens
 namespace token {
@@ -2872,7 +2877,7 @@ namespace object {
       if (longer) {
         return "<Str LONGER>";
       }
-      return "<Str \"" + value + "\">";
+      return "<Str \"" + value + "\" >";
     }
 
     Kind kind() override { return STR; }
@@ -2913,9 +2918,20 @@ namespace object {
   public:
     std::vector<object::Object *> elements;
 
-    Array(std::vector<object::Object *> v) : elements(v) {}
+    std::string stringer() override {
+      std::stringstream str;
 
-    std::string stringer() override { return "<Array>"; }
+      str << "<Array [";
+      for (auto iter = elements.begin(); iter != elements.end();) {
+        str << (*iter)->stringer();
+        if (++iter != elements.end()) {
+          str << ", ";
+        }
+      }
+
+      str << "]>";
+      return str.str();
+    }
 
     Kind kind() override { return ARRAY; }
   };
@@ -2925,9 +2941,20 @@ namespace object {
   public:
     std::vector<object::Object *> elements;
 
-    Tuple(std::vector<object::Object *> v) : elements(v) {}
+    std::string stringer() override {
+      std::stringstream str;
 
-    std::string stringer() override { return "<Tuple>"; }
+      str << "<Tuple (";
+      for (auto iter = elements.begin(); iter != elements.end();) {
+        str << (*iter)->stringer();
+        if (++iter != elements.end()) {
+          str << ", ";
+        }
+      }
+
+      str << ")>";
+      return str.str();
+    }
 
     Kind kind() override { return TUPLE; }
   };
@@ -2935,11 +2962,24 @@ namespace object {
   // MAP
   class Map : public Object {
   public:
-    std::map<std::string, object::Object *> value;
+    std::map<object::Object *, object::Object *> value;
 
-    Map(std::map<std::string, object::Object *> v) : value(v) {}
+    std::string stringer() override {
+      if (value.empty()) return "<Map {}>";
 
-    std::string stringer() override { return "<Map>"; }
+      std::stringstream str;
+      str << "<Map {";
+      for (auto iter = value.begin(); iter != value.end();) {
+        str << "K: " << iter->first->stringer()
+            << " V: " << iter->second->stringer();
+        if (++iter != value.end()) {
+          str << ", ";
+        }
+      }
+
+      str << "}>";
+      return str.str();
+    }
 
     Kind kind() override { return MAP; }
   };
@@ -3001,6 +3041,7 @@ struct Entity {
   std::vector<object::Object *> constants; // constant
   std::vector<std::string> names;          // names
   std::vector<ast::Type *> types;          // type of variables
+  // std::vector<int> lineno;                 // lineno of each bytecode
 
   // output entity data
   void dissemble() {
@@ -3120,6 +3161,23 @@ struct Entity {
       }
       printf("\n");
     }
+
+    // std::cout << "LINENO: " << std::endl;
+    // if (lineno.empty()) {
+    //   printf("%20s\n", "EMPTY");
+    // } else {
+    //   for (int i = 0; i < lineno.size(); i++) {
+    //     if (i % 4 == 0) {
+    //       printf("%20d: '%d'\t", i, lineno.at(i));
+    //     } else {
+    //       printf("%5d: '%d' \t", i, lineno.at(i));
+    //     }
+    //     if ((i + 1) % 4 == 0) {
+    //       printf("\n");
+    //     }
+    //   }
+    //   printf("\n");
+    // }
 
     std::cout << "OFFSET: " << std::endl;
     if (offsets.empty()) {
@@ -3763,18 +3821,6 @@ namespace compiler {
   }
 }; // namespace compiler
 
-struct Table {
-  std::map<std::string, object::Object *> symbols;
-
-  object::Object *lookUp(std::string name) {
-    if (symbols.count(name) == 0) return nullptr;
-    return symbols.at(name);
-  }
-
-  void clear() { symbols.clear(); }
-  bool empty() { return symbols.empty(); }
-};
-
 template <class T> class Stack {
 private:
   int capacity = 4, count = 0;
@@ -3807,16 +3853,6 @@ public:
   }
 };
 
-// frame structure
-struct Frame {
-  Entity *entity; // ENTITY
-
-  Table local;                  // local names
-  Stack<object::Object *> data; // data stack
-
-  explicit Frame(Entity *e) : entity(e) {}
-};
-
 /**
  * VIRTUAL MACHINE
  *
@@ -3834,15 +3870,13 @@ namespace vm {
   class vm {
   private:
     std::vector<Frame *> frames; // execute frames
-    // top frame
-    Frame *top();
     // push object to the current frame
     void pushData(object::Object *);
     // pop the top of data stack
     object::Object *popData();
     // emit new name of table to the current frame
     void emitTable(std::string, object::Object *);
-    // look up a name
+    // look up a name from current top frame
     object::Object *lookUp(std::string);
     // first to end iterator
     object::Object *retConstant();
@@ -3850,14 +3884,24 @@ namespace vm {
     ast::Type *retType();
     // first to end iterator
     std::string retName();
+    // first to end iterator
+    int retOffset();
+    // are the comparison types the same
+    void typeChecker(ast::Type *, object::Object *);
 
     int op = 0; // offset pointer
 
   public:
     explicit vm(Entity *main) {
-      // to main frame as main frame
+      // to main frame as main
       this->frames.push_back(new Frame(main));
     }
+
+    // top frame
+    Frame *top();
+
+    // repl mode to clean pointer for offset
+    void clean() { this->op = 0; }
 
     void evaluate(); // evaluate the top of frame
   };
@@ -3881,22 +3925,70 @@ namespace vm {
 
   // first to end constant iterator for current frame's entity
   object::Object *vm::retConstant() {
-    return top()->entity->constants.at(top()->entity->offsets.at(op++));
+    return top()->entity->constants.at(top()->entity->offsets.at(op));
   }
 
   // first to end
   ast::Type *vm::retType() {
-    return top()->entity->types.at(top()->entity->offsets.at(op++));
+    return top()->entity->types.at(top()->entity->offsets.at(op));
   }
 
   // first to end
   std::string vm::retName() {
-    return top()->entity->names.at(top()->entity->offsets.at(op++));
+    return top()->entity->names.at(top()->entity->offsets.at(op));
   }
+
+  // first to end
+  int vm::retOffset() { return top()->entity->offsets.at(op); }
 
   // throw an exception
   void error(std::string message) {
     throw exp::Exp(exp::RUNTIME_ERROR, message, -1);
+  }
+
+  // are the comparison types the same
+  void vm::typeChecker(ast::Type *x, object::Object *y) {
+    // base type error
+    if (
+        // int
+        (x->kind() == ast::T_INT && y->kind() != object::INT) ||
+        // float
+        (x->kind() == ast::T_FLOAT && y->kind() != object::FLOAT) ||
+        // str
+        (x->kind() == ast::T_STR && y->kind() != object::STR) ||
+        // char
+        (x->kind() == ast::T_CHAR && y->kind() != object::CHAR)) {
+      error("type error, require: " + x->stringer() +
+            ", found: " + y->stringer());
+    }
+    // list
+    if (x->kind() == ast::T_ARRAY) {
+      ast::Array *T = static_cast<ast::Array *>(x);
+      object::Array *arr = static_cast<object::Array *>(y);
+
+      for (auto i : arr->elements) {
+        this->typeChecker(T->T, i);
+      }
+    }
+    // tuple
+    if (x->kind() == ast::T_TUPLE) {
+      ast::Tuple *T = static_cast<ast::Tuple *>(x);
+      object::Tuple *tup = static_cast<object::Tuple *>(y);
+
+      for (auto i : tup->elements) {
+        this->typeChecker(T->T, i);
+      }
+    }
+    // map
+    if (x->kind() == ast::T_MAP) {
+      ast::Map *T = static_cast<ast::Map *>(x);
+      object::Map *map = static_cast<object::Map *>(y);
+
+      for (auto &i : map->value) {
+        this->typeChecker(T->T1, i.first);  // K
+        this->typeChecker(T->T2, i.second); // R
+      }
+    }
   }
 
   void vm::evaluate() {
@@ -3912,7 +4004,7 @@ namespace vm {
 
         case byte::CONST:
           this->pushData(this->retConstant());
-          if (op != 0) this->op++;
+          this->op++;
           break;
 
         case byte::ADD:
@@ -4078,37 +4170,83 @@ namespace vm {
         }
 
         case byte::STORE: {
-          std::cout << op << std::endl;
+          object::Object *obj = this->popData(); // OBJECT
+          ast::Type *type = this->retType();     // TO TYPE
 
-          object::Object *obj = this->popData();
-          ast::Type *type = this->retType();
-          std::string name = this->retName();
+          std::string name = this->retName(); // TO
 
-          if (type->kind() == ast::T_INT && obj->kind() != object::INT) {
-            error("type error");
+          this->typeChecker(type, obj);
+
+          if (top()->local.lookUp(name) != nullptr) {
+            error("redefining name '" + name + "'");
           }
 
           top()->local.symbols[name] = obj; // store to table
+          this->op += 2;
           break;
         }
 
         case byte::LOAD: {
-          std::string name = this->retName();
-          object::Object *obj = top()->local.lookUp(name);
+          std::string name = this->retName();              // NAME
+          object::Object *obj = top()->local.lookUp(name); // OBJECT
 
           if (obj == nullptr) error("not defined name '" + name + "'");
 
           this->pushData(obj);
+          this->op++;
+          break;
+        }
+
+        case byte::B_ARR: {
+          int count = this->retOffset(); // COUNT
+
+          object::Array *arr = new object::Array;
+          // emit elements
+          for (int i = 0; i < count; i++) {
+            arr->elements.push_back(this->popData());
+          }
+
+          this->pushData(arr);
+          this->op++;
+          break;
+        }
+
+        case byte::B_TUP: {
+          int count = this->retOffset(); // COUNT
+
+          object::Tuple *tup = new object::Tuple;
+          // emit elements
+          for (int i = 0; i < count; i++) {
+            tup->elements.push_back(this->popData());
+          }
+
+          this->pushData(tup);
+          this->op++;
+          break;
+        }
+
+        case byte::B_MAP: {
+          int count = this->retOffset(); // COUNT
+
+          object::Map *map = new object::Map;
+          // emit elements
+          for (int i = 0; i < count - 2; i++) {
+            object::Object *y = this->popData();
+            object::Object *x = this->popData();
+
+            map->value.insert(std::make_pair(x, y));
+          }
+
+          this->pushData(map);
+          this->op++;
           break;
         }
 
         case byte::RET: {
-          std::cout << top()->data.stringer() << std::endl;
-
+          // std::cout << top()->data.stringer() << std::endl;
           while (!top()->data.empty()) {
             std::cout << top()->data.pop()->stringer() << std::endl;
           }
-          std::cout << "== END EVALUATE!! ==" << std::endl;
         }
       }
     }
@@ -4116,8 +4254,7 @@ namespace vm {
   }
 } // namespace vm
 
-// DEBUG to output tokens and statements
-bool DEBUG = false;
+vm::vm *mac;
 
 // run source code
 void run(std::string source) {
@@ -4143,7 +4280,15 @@ void run(std::string source) {
     for (auto i : compiler->entities) i->dissemble();
 
     // vm
-    (new vm::vm(compiler->entities[0]))->evaluate();
+    if (REPL && mac != nullptr) {
+      // save the current symbol table
+      mac->top()->entity = compiler->entities[0];
+      mac->clean();
+    } else {
+      // new virtual machine
+      mac = new vm::vm(compiler->entities[0]);
+    }
+    mac->evaluate();
     //
   } catch (exp::Exp &e) {
     std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
@@ -4170,6 +4315,8 @@ void runFile(const char *path) {
 
 // REPL mode
 void repl() {
+  REPL = true;
+
   char *line = (char *)malloc(1024);
   std::cout << "\n"
             << "Drift 0.0.1 (REPL Mode, Feb 18 2021, 15:43:31)"

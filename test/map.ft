@@ -1,0 +1,4 @@
+
+def x: <int, str> = {5: "foo", 6: "bar"}
+
+x
