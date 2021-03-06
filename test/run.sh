@@ -1,7 +1,7 @@
-for f in $(ls $pwd)
+for f in $(ls test)
 do
     if [ $f == 'run.sh' ]; then
-        continue
+	continue
     fi
-    time ../a.out $f
+    time ./drift ./test/$f
 done

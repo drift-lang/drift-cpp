@@ -12,10 +12,11 @@
 //          https://www.drift-lang.fun/
 //
 
-#include <table.hpp>
-
 #ifndef DRIFT_FRAME_H
 #define DRIFT_FRAME_H
+
+#include "stack.hpp"
+#include "table.hpp"
 
 // frame structure
 struct Frame {
