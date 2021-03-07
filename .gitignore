@@ -3,8 +3,10 @@ node_modules
 package-lock.json
 .clang-format
 *.exe
-a.out
+*.out
 .idea
 1.cc
 .vscode
 tmp
+drift
+g++

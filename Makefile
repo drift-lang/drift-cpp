@@ -1,6 +1,7 @@
 DIR_SRC = ./src
 DIR_TMP = ./tmp
-CC = g++
+# Local project compiler soft link to /usr/local/Cellar/gcc/10.2.0_3/bin/g++-10
+CC = ./g++
 
 SRC = $(wildcard ${DIR_SRC}/*.cpp)
 TMP = $(wildcard $(DIR_TMP)/*.o)

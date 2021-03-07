@@ -1,15 +1,27 @@
 The Drift Programming Language Implementation
 
+- switch CC field in Makefile and specify your g++ compiler path
+
 To build:
 
-    > g++ -std=c++20 drift.cc
-    > mv a.out drift
+    > make
+    > make install
+
+To install:
+
     > export PATH=$PWD:$PATH
 
 To run:
  
-    > drift 		# REPL MODE
-    > drift <ft file>	# FILE MODE
+    > drift 		        # REPL MODE
+    > drift <ft file>	    # FILE MODE
+
+    > drift -d              # REPL AND DEBUG MODE
+    > drift <ft file> -d    # FILE AND DEBUG MODE
+
+To clean:
+
+    > make clean
 
 For documentation and project architecuture, visit the official website https://drift-lang.fun
 
