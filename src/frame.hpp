@@ -20,12 +20,12 @@
 
 // frame structure
 struct Frame {
-  Entity *entity; // ENTITY
+    Entity *entity; // ENTITY
 
-  Table local;                  // local names
-  Stack<object::Object *> data; // data stack
+    Table local;                  // local names
+    Stack<object::Object *> data; // data stack
 
-  explicit Frame(Entity *e) : entity(e) {}
+    explicit Frame(Entity *e) : entity(e) {}
 };
 
 #endif
