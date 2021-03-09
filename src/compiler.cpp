@@ -99,15 +99,14 @@ void Compiler::expr(ast::Expr *expr) {
       this->expr(b->right);
 
       switch (b->op.kind) {
-        case token::ADD: this->emitCode(byte::ADD); break;
-        case token::SUB: this->emitCode(byte::SUB); break;
-        case token::MUL: this->emitCode(byte::MUL); break;
-        case token::DIV: this->emitCode(byte::DIV); break;
-
-        case token::AS_ADD: this->emitCode(byte::A_ADD); break;
-        case token::AS_SUB: this->emitCode(byte::A_SUB); break;
-        case token::AS_MUL: this->emitCode(byte::A_MUL); break;
-        case token::AS_DIV: this->emitCode(byte::A_DIV); break;
+        case token::ADD:
+        case token::AS_ADD: this->emitCode(byte::ADD); break;
+        case token::SUB:
+        case token::AS_SUB: this->emitCode(byte::SUB); break;
+        case token::MUL:
+        case token::AS_MUL: this->emitCode(byte::MUL); break;
+        case token::DIV:
+        case token::AS_DIV: this->emitCode(byte::DIV); break;
 
         case token::GREATER: this->emitCode(byte::GR); break;
         case token::LESS: this->emitCode(byte::LE); break;

@@ -131,9 +131,6 @@ namespace token {
     int line;
   };
 
-  // keywords for drift
-  static std::map<std::string, Kind> keyword;
-
   // 16 keywords
   // initialize it when tokenizer
 
@@ -148,16 +145,9 @@ namespace token {
 
     return str.str();
   }
-
-  // return the corresponding keyword type according to the literal amount
-  static Kind getKeyword(const std::string &literal) {
-    auto i = keyword.find(literal);
-    // search map
-    if (i != keyword.end())
-      return i->second;
-    else
-      return IDENT;
-  }
 }; // namespace token
+
+void initializeKeyword(std::map<std::string, token::Kind> *);
+token::Kind getKeyword(std::map<std::string, token::Kind>, const std::string &);
 
 #endif

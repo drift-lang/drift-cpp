@@ -36,6 +36,8 @@ public:
     this->elements[count++] = t;
   }
 
+  T at(int pos) { return this->elements[pos]; }
+
   T pop() { return this->elements[--count]; }
 
   T top() { return this->elements[count]; }
@@ -43,6 +45,12 @@ public:
   int len() { return count; }
 
   bool empty() { return count == 0; }
+
+  void clear() {
+    while (len()) {
+      this->pop();
+    }
+  }
 
   std::string stringer() {
     return "<Stack count = " + std::to_string(count) + ">";

@@ -13,7 +13,7 @@ To install:
 
 To run:
  
-    > drift 		        # REPL MODE
+    > drift                 # REPL MODE
     > drift <ft file>	    # FILE MODE
 
     > drift -d              # REPL AND DEBUG MODE

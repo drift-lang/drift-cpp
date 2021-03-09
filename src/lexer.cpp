@@ -109,10 +109,8 @@ void Lexer::lexIdent() {
     this->position++;
   }
 
-  std::cout << "SIZE " << token::keyword.size() << std::endl;
-
   this->tokens.push_back(token::Token{// keyword or IDENT
-                                      token::getKeyword(literal.str()),
+                                      getKeyword(this->keyword, literal.str()),
                                       literal.str(), this->line});
 }
 

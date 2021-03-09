@@ -121,7 +121,9 @@ namespace object {
 
     Bool(bool v) : value(v) {}
 
-    std::string stringer() override { return "<Bool>"; }
+    std::string stringer() override {
+      return "<Bool " + std::to_string(value) + ">";
+    }
 
     Kind kind() override { return BOOL; }
   };

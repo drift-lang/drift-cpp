@@ -66,29 +66,11 @@ private:
   // resolve to skip block comment
   inline void skipBlockComment();
 
+  std::map<std::string, token::Kind> keyword;
+
 public:
   explicit Lexer(std::string source) : source(std::move(source)) {
-    using namespace token;
-    // initializer keywords map here
-    //
-    keyword["use"] = USE; // 1
-    keyword["def"] = DEF; // 2
-    keyword["pub"] = PUB; // 3
-    keyword["ret"] = RET; // 4
-    keyword["and"] = AND; // 5
-    keyword["end"] = END; // 6
-    keyword["if"] = IF;   // 7
-    keyword["ef"] = EF;   // 8
-    keyword["nf"] = NF;   // 9
-    keyword["for"] = FOR; // 10
-    keyword["do"] = DO;   // 11
-    keyword["out"] = OUT; // 12
-    keyword["tin"] = TIN; // 13
-    keyword["new"] = NEW; // 14
-    keyword["mod"] = MOD; // 15
-    keyword["as"] = AS;   // 16
-
-    std::cout << "SIZE " << token::keyword.size() << std::endl;
+    initializeKeyword(&keyword);
   }
 
   // final token list

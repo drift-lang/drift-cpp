@@ -15,7 +15,7 @@ install:
 
 	${CC} $(foreach i, $(TMP), $(i)) -o drift
 
-	@echo "\n\t\033[41;37m<TARGET FILE GENERATED>: ./drift\033[0m 🐇🐰🍻 \n"
+	@echo "\n\t<TARGET FILE GENERATED>: ./drift 🐇 🐰 🍻 \n"
 
 run: 
 	./test/run.sh

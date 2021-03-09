@@ -20,7 +20,7 @@
 // bytecode
 namespace byte {
   // total number of bytecodes
-  constexpr int len = 50;
+  constexpr int len = 46;
   // bytecode type
   enum Code {
     CONST,  // O
@@ -56,22 +56,18 @@ namespace byte {
     P_DECR, // P_DECR
 
     // INFIX
-    ADD,   // +
-    SUB,   // -
-    MUL,   // *
-    DIV,   // /
-    A_ADD, // +=
-    A_SUB, // -=
-    A_MUL, // *=
-    A_DIV, // /=
-    GR,    // >
-    LE,    // <
-    GR_E,  // >=
-    LE_E,  // <=
-    E_E,   // ==
-    N_E,   // !=
-    AND,   // &
-    OR,    // |
+    ADD,  // +
+    SUB,  // -
+    MUL,  // *
+    DIV,  // /
+    GR,   // >
+    LE,   // <
+    GR_E, // >=
+    LE_E, // <=
+    E_E,  // ==
+    N_E,  // !=
+    AND,  // &
+    OR,   // |
 
     // PREFIX
     BANG, // !
@@ -86,14 +82,13 @@ namespace byte {
 
   // return a string of bytecode
   static std::string codeString[len] = {
-      "CONST", "ASSIGN", "STORE", "LOAD", "INDEX", "GET",    "SET",
-      "CALL",  "CALL_I", "ORIG",  "NAME", "NEW",   "FUNC",   "CHA",
-      "END",   "WHOLE",  "ENUM",  "PUB",  "MOD",   "USE",    "UAS",
-      "B_ARR", "B_TUP",  "B_MAP", "INCR", "DECR",  "P_INCR", "P_DECR",
-      "ADD",   "SUB",    "MUL",   "DIV",  "A_ADD", "A_SUB",  "A_MUL",
-      "A_DIV", "GR",     "LE",    "GR_E", "LE_E",  "E_E",    "N_E",
-      "AND",   "OR",     "BANG",  "NOT",  "JUMP",  "F_JUMP", "T_JUMP",
-      "RET",
+      "CONST", "ASSIGN", "STORE",  "LOAD", "INDEX", "GET",    "SET",
+      "CALL",  "CALL_I", "ORIG",   "NAME", "NEW",   "FUNC",   "CHA",
+      "END",   "WHOLE",  "ENUM",   "PUB",  "MOD",   "USE",    "UAS",
+      "B_ARR", "B_TUP",  "B_MAP",  "INCR", "DECR",  "P_INCR", "P_DECR",
+      "ADD",   "SUB",    "MUL",    "DIV",  "GR",    "LE",     "GR_E",
+      "LE_E",  "E_E",    "N_E",    "AND",  "OR",    "BANG",   "NOT",
+      "JUMP",  "F_JUMP", "T_JUMP", "RET",
   };
 }; // namespace byte
 
