@@ -85,15 +85,14 @@ void runFile(const char *path) {
   stream.close();
 }
 
+const char *vers = "Drift 0.0.1 (REPL Mode, Feb 18 2021, 15:43:31)";
+
 // REPL mode
 void repl() {
   REPL = true;
 
   char *line = (char *)malloc(1024);
-  std::cout << "\n"
-            << "Drift 0.0.1 (REPL Mode, Feb 18 2021, 15:43:31)"
-            << "\n"
-            << std::endl;
+  std::cout << "\n" << vers << "\n" << std::endl;
 
   while (true) {
     std::cout << "ft >> ";
@@ -106,12 +105,17 @@ void repl() {
   }
 }
 
+// VER
+void version() { std::cout << vers << std::endl; }
+
 // entry
 int main(int argc, char **argv) {
   if (argc == 2) {
     if (strcmp(argv[1], "-d") == 0) {
       DEBUG = true;
       repl();
+    } else if (strcmp(argv[1], "-v") == 0) {
+      version();
     } else {
       runFile(argv[1]);
     }

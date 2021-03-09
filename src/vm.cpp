@@ -117,6 +117,10 @@ void vm::evaluate() {
         this->op++;
         break;
 
+        //
+        // BINARY OPERATOR START
+        //
+
       case byte::ADD: { // +
         object::Object *y = this->popData();
         object::Object *x = this->popData();
@@ -137,7 +141,7 @@ void vm::evaluate() {
           }
         }
         // <Float> + <Int> <Float>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
@@ -152,7 +156,7 @@ void vm::evaluate() {
           }
         }
         // <Str> + <Str>
-        if (x->kind() == object::STR && y->kind() == object::STR) {
+        else if (x->kind() == object::STR && y->kind() == object::STR) {
           object::Str *l = static_cast<object::Str *>(x);
           object::Str *r = static_cast<object::Str *>(y);
 
@@ -161,6 +165,9 @@ void vm::evaluate() {
           }
 
           this->pushData(new object::Str(l->value + r->value));
+        } else {
+          // ERROR
+          error("unsupport type to + operator");
         }
         break;
       }
@@ -184,7 +191,7 @@ void vm::evaluate() {
           }
         }
         // <Float> - <Int> <Float>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
@@ -197,6 +204,9 @@ void vm::evaluate() {
               break;
             }
           }
+        } else {
+          // ERROR
+          error("unsupport type to - operator");
         }
         break;
       }
@@ -220,7 +230,7 @@ void vm::evaluate() {
           }
         }
         // <Float> * <Int> <Float>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Float,
@@ -235,6 +245,9 @@ void vm::evaluate() {
               break;
             }
           }
+        } else {
+          // ERROR
+          error("unsupport type to * operator");
         }
         break;
       }
@@ -248,7 +261,7 @@ void vm::evaluate() {
             case object::INT: {
               if (static_cast<object::Int *>(y)->value == 0)
                 error("division by zero");
-              BINARY_OP(object::Int, static_cast<object::Int *>(x)->value, /,
+              BINARY_OP(object::Float, static_cast<object::Int *>(x)->value, /,
                         static_cast<object::Int *>(y)->value);
               break;
             }
@@ -262,7 +275,7 @@ void vm::evaluate() {
           }
         }
         // <Float> / <Int> <Float>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               if (static_cast<object::Int *>(y)->value == 0)
@@ -279,6 +292,9 @@ void vm::evaluate() {
               break;
             }
           }
+        } else {
+          // ERROR
+          error("unsupport type to / operator");
         }
         break;
       }
@@ -303,7 +319,7 @@ void vm::evaluate() {
           }
         }
         // <Float> > <Int> <Float>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value, >,
@@ -316,6 +332,9 @@ void vm::evaluate() {
               break;
             }
           }
+        } else {
+          // ERROR
+          error("unsupport type to > operator");
         }
         break;
       }
@@ -340,7 +359,7 @@ void vm::evaluate() {
           }
         }
         // <Float> >= <Int> <Float>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
@@ -353,6 +372,9 @@ void vm::evaluate() {
               break;
             }
           }
+        } else {
+          // ERROR
+          error("unsupport type to >= operator");
         }
         break;
       }
@@ -377,7 +399,7 @@ void vm::evaluate() {
           }
         }
         // <Float> < <Int> <Float>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value, <,
@@ -390,6 +412,9 @@ void vm::evaluate() {
               break;
             }
           }
+        } else {
+          // ERROR
+          error("unsupport type to < operator");
         }
         break;
       }
@@ -414,7 +439,7 @@ void vm::evaluate() {
           }
         }
         // <Float> <= <Int> <Float>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
@@ -427,6 +452,9 @@ void vm::evaluate() {
               break;
             }
           }
+        } else {
+          // ERROR
+          error("unsupport type to <= operator");
         }
         break;
       }
@@ -464,7 +492,7 @@ void vm::evaluate() {
           }
         }
         // <Float> == <Int> <Float> <Bool>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
@@ -492,7 +520,7 @@ void vm::evaluate() {
           }
         }
         // <Bool> == <Int> <Float> <Bool>
-        if (x->kind() == object::BOOL) {
+        else if (x->kind() == object::BOOL) {
           switch (y->kind()) {
             case object::INT: {
               if (static_cast<object::Int *>(y)->value > 0 &&
@@ -524,15 +552,24 @@ void vm::evaluate() {
           }
         }
         // <Str> == <Str>
-        if (x->kind() == object::STR && y->kind() == object::STR) {
+        else if (x->kind() == object::STR && y->kind() == object::STR) {
           this->pushData(
               new object::Bool(static_cast<object::Str *>(x)->value ==
                                static_cast<object::Str *>(y)->value));
         }
+        // <Char> == <Char>
+        else if (x->kind() == object::CHAR && y->kind() == object::CHAR) {
+          this->pushData(
+              new object::Bool(static_cast<object::Char *>(x)->value ==
+                               static_cast<object::Char *>(y)->value));
+        } else {
+          // ERROR
+          error("unsupport type to == operator");
+        }
         break;
       }
 
-      case byte::N_E: { //!=
+      case byte::N_E: { // !=
         object::Object *y = this->popData();
         object::Object *x = this->popData();
 
@@ -553,17 +590,19 @@ void vm::evaluate() {
               int l = static_cast<object::Int *>(x)->value;
               bool r = static_cast<object::Bool *>(y)->value;
 
-              if (r) {
-                this->pushData(new object::Bool(l > 0));
+              if (l > 0 && r) {
+                this->pushData(new object::Bool(false));
+              } else if (l < 0 && !r) {
+                this->pushData(new object::Bool(false));
               } else {
-                this->pushData(new object::Bool(l <= 0));
+                this->pushData(new object::Bool(true));
               }
               break;
             }
           }
         }
         // <Float> != <Int> <Float> <Bool>
-        if (x->kind() == object::FLOAT) {
+        else if (x->kind() == object::FLOAT) {
           switch (y->kind()) {
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
@@ -575,31 +614,288 @@ void vm::evaluate() {
                         !=, static_cast<object::Float *>(y)->value);
               break;
             }
+            case object::BOOL: {
+              float l = static_cast<object::Float *>(x)->value;
+              bool r = static_cast<object::Bool *>(y)->value;
+
+              if (l > 0 && r) {
+                this->pushData(new object::Bool(false));
+              } else if (l < 0 && !r) {
+                this->pushData(new object::Bool(false));
+              } else {
+                this->pushData(new object::Bool(true));
+              }
+              break;
+            }
           }
         }
         // <Bool> != <Int> <Float> <Bool>
-        if (x->kind() == object::BOOL) {
+        else if (x->kind() == object::BOOL) {
+          switch (y->kind()) {
+            case object::INT: {
+              if (static_cast<object::Int *>(y)->value > 0 &&
+                  static_cast<object::Bool *>(x)->value) {
+                this->pushData(new object::Bool(false));
+              } else {
+                this->pushData(new object::Bool(true));
+              }
+              break;
+            }
+            case object::FLOAT: {
+              if (static_cast<object::Float *>(y)->value > 0 &&
+                  static_cast<object::Bool *>(x)->value) {
+                this->pushData(new object::Bool(false));
+              } else {
+                this->pushData(new object::Bool(true));
+              }
+              break;
+            }
+            case object::BOOL: {
+              if (static_cast<object::Bool *>(y)->value &&
+                  static_cast<object::Bool *>(x)->value) {
+                this->pushData(new object::Bool(false));
+              } else {
+                this->pushData(new object::Bool(true));
+              }
+              break;
+            }
+          }
         }
         // <Str> != <Str>
-        if (x->kind() == object::STR && y->kind() == object::STR) {
+        else if (x->kind() == object::STR && y->kind() == object::STR) {
           this->pushData(
               new object::Bool(static_cast<object::Str *>(x)->value !=
                                static_cast<object::Str *>(y)->value));
         }
+        // <Char> != <Char>
+        else if (x->kind() == object::CHAR && y->kind() == object::CHAR) {
+          this->pushData(
+              new object::Bool(static_cast<object::Char *>(x)->value !=
+                               static_cast<object::Char *>(y)->value));
+        } else {
+          // ERROR
+          error("unsupport type to == operator");
+        }
         break;
       }
 
-      case byte::AND: {
+      case byte::AND: { // &
         object::Object *y = this->popData();
         object::Object *x = this->popData();
+
+        // <Int> & <Int> <Float> <Bool>
+        if (x->kind() == object::INT) {
+          switch (y->kind()) {
+            case object::INT: {
+              if (static_cast<object::Int *>(x)->value > 0 &&
+                  static_cast<object::Int *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::FLOAT: {
+              if (static_cast<object::Int *>(x)->value > 0 &&
+                  static_cast<object::Float *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::BOOL: {
+              if (static_cast<object::Int *>(x)->value > 0 &&
+                  static_cast<object::Bool *>(y)->value) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+          }
+        }
+        // <Float> & <Int> <Float> <Bool>
+        else if (x->kind() == object::FLOAT) {
+          switch (y->kind()) {
+            case object::INT: {
+              if (static_cast<object::Float *>(x)->value > 0 &&
+                  static_cast<object::Int *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::FLOAT: {
+              if (static_cast<object::Float *>(x)->value > 0 &&
+                  static_cast<object::Float *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::BOOL: {
+              if (static_cast<object::Float *>(x)->value > 0 &&
+                  static_cast<object::Bool *>(y)->value) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+          }
+        }
+        // <Bool> & <Int> <Float> <Bool>
+        else if (x->kind() == object::BOOL) {
+          switch (y->kind()) {
+            case object::INT: {
+              if (static_cast<object::Bool *>(x)->value &&
+                  static_cast<object::Int *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::FLOAT: {
+              if (static_cast<object::Bool *>(x)->value &&
+                  static_cast<object::Float *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::BOOL: {
+              if (static_cast<object::Bool *>(x)->value &&
+                  static_cast<object::Bool *>(y)->value) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+          }
+        }
+        // ERROR
+        else {
+          error("only number and boolean type to & operator");
+        }
         break;
       }
 
-      case byte::OR: {
+      case byte::OR: { // |
         object::Object *y = this->popData();
         object::Object *x = this->popData();
+
+        // <Int> & <Int> <Float> <Bool>
+        if (x->kind() == object::INT) {
+          switch (y->kind()) {
+            case object::INT: {
+              if (static_cast<object::Int *>(x)->value > 0 ||
+                  static_cast<object::Int *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::FLOAT: {
+              if (static_cast<object::Int *>(x)->value > 0 ||
+                  static_cast<object::Float *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::BOOL: {
+              if (static_cast<object::Int *>(x)->value > 0 ||
+                  static_cast<object::Bool *>(y)->value) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+          }
+        }
+        // <Float> & <Int> <Float> <Bool>
+        else if (x->kind() == object::FLOAT) {
+          switch (y->kind()) {
+            case object::INT: {
+              if (static_cast<object::Float *>(x)->value > 0 ||
+                  static_cast<object::Int *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::FLOAT: {
+              if (static_cast<object::Float *>(x)->value > 0 ||
+                  static_cast<object::Float *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::BOOL: {
+              if (static_cast<object::Float *>(x)->value > 0 ||
+                  static_cast<object::Bool *>(y)->value) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+          }
+        }
+        // <Bool> & <Int> <Float> <Bool>
+        else if (x->kind() == object::BOOL) {
+          switch (y->kind()) {
+            case object::INT: {
+              if (static_cast<object::Bool *>(x)->value ||
+                  static_cast<object::Int *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::FLOAT: {
+              if (static_cast<object::Bool *>(x)->value ||
+                  static_cast<object::Float *>(y)->value > 0) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+            case object::BOOL: {
+              if (static_cast<object::Bool *>(x)->value ||
+                  static_cast<object::Bool *>(y)->value) {
+                this->pushData(new object::Bool(true));
+              } else {
+                this->pushData(new object::Bool(false));
+              }
+              break;
+            }
+          }
+        }
+        // ERROR
+        else {
+          error("only number and boolean type to | operator");
+        }
         break;
       }
+
+        //
+        // BINARY OPERATOR END
+        //
 
       case byte::BANG: { // !
         object::Object *obj = this->popData();
@@ -628,10 +924,10 @@ void vm::evaluate() {
         break;
       }
 
-      case byte::NOT: {
+      case byte::NOT: { // -
         object::Object *obj = this->popData();
 
-        if (obj->kind() != object::INT) {
+        if (obj->kind() != object::INT && obj->kind() != object::FLOAT) {
           error("only number type to unary operator");
         }
 
