@@ -8,7 +8,20 @@ if x > y
     x += 1
 nf
     y += 1
+
+    def sum: float = 5.23
 end
 
 x
 y
+sum
+sum = x + y // SUM IS FLOAT OR INT ??
+sum
+
+if sum >= x + y
+
+    sum = -1
+    
+end
+
+sum

@@ -102,23 +102,26 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
 }
 
 // add counter for bytecode within jump
-void vm::addCounter(int *num, int begin, int end) {
+void vm::addCounter(int begin, int end) {
     while (begin < end) {
-        switch (top()->entity->codes.at(begin)) {
-            case byte::LOAD:
-            case byte::CONST:
-            case byte::ASSIGN:
-            case byte::JUMP:
-            case byte::T_JUMP:
-            case byte::F_JUMP: {
-                *num++;
+        switch (top()->entity->codes.at(begin++)) {
+            case byte::LOAD:   // 1
+            case byte::CONST:  // 1
+            case byte::ASSIGN: // 1
+            case byte::JUMP:   // 1
+            case byte::T_JUMP: // 1
+            case byte::F_JUMP: // 1
+            {
+                this->op++; // ADD ONE
+                break;
+            }
+            case byte::STORE: // 2
+            {
+                this->op += 2; // ADD TWO
                 break;
             }
         }
-        begin++;
     }
-
-    std::cout << this->op << std::endl;
 }
 
 void vm::evaluate() {
@@ -1003,11 +1006,10 @@ void vm::evaluate() {
 
                 std::string name = this->retName(); // TO NAME
 
-                this->typeChecker(type, obj);
-
                 if (top()->local.lookUp(name) != nullptr) {
                     error("redefining name '" + name + "'");
                 }
+                this->typeChecker(type, obj); // TYPE CHECKER
 
                 if (type->kind() == ast::T_BOOL) {
                     // transfrom integer to boolean
@@ -1089,26 +1091,31 @@ void vm::evaluate() {
 
             case byte::F_JUMP:
             case byte::T_JUMP: {
-                int off = this->retOffset(); // TO
+                int off = this->retOffset() - 1; // TO
+                int now = ip;                    // TEMP
+
+                this->op++; // SKIP CURRENT
 
                 // JMP
                 if (co == byte::JUMP) {
                     ip = off;
+                    this->addCounter(now, off);
+                    break;
                 }
+
                 // T
                 if (static_cast<object::Bool *>(this->popData())->value) {
                     if (co == byte::T_JUMP) {
                         ip = off;
+                        this->addCounter(now, off); // T_JUMP
                     }
                 } else {
                     // F
                     if (co == byte::F_JUMP) {
                         ip = off;
+                        this->addCounter(now, off); // F_JUMP
                     }
                 }
-
-                this->op++; // OFFSET OP
-                this->addCounter(&off, ip, off);
                 break;
             }
 
