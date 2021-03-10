@@ -1,12 +1,14 @@
 
 // VIRTUAL MACHINE TEST
 
-def T: bool = 1
-def F: bool = 0
+def x: int = 34
+def y: int = 67
 
-def x: str = "Hello "
-def y: str = "World!"
+if x > y
+    x += 1
+nf
+    y += 1
+end
 
-def z: str = x + y
-
-z
+x
+y

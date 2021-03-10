@@ -101,6 +101,26 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
     }
 }
 
+// add counter for bytecode within jump
+void vm::addCounter(int *num, int begin, int end) {
+    while (begin < end) {
+        switch (top()->entity->codes.at(begin)) {
+            case byte::LOAD:
+            case byte::CONST:
+            case byte::ASSIGN:
+            case byte::JUMP:
+            case byte::T_JUMP:
+            case byte::F_JUMP: {
+                *num++;
+                break;
+            }
+        }
+        begin++;
+    }
+
+    std::cout << this->op << std::endl;
+}
+
 void vm::evaluate() {
 
 #define BINARY_OP(T, L, OP, R) this->pushData(new T(L OP R));
@@ -1057,11 +1077,38 @@ void vm::evaluate() {
             }
 
             case byte::ASSIGN: {
-                std::string name = this->retName();
-                object::Object *obj = this->popData();
+                std::string name = this->retName();    // NAME
+                object::Object *obj = this->popData(); // OBJ
 
-                top()->local.symbols[name] = obj;
+                top()->local.symbols[name] = obj; // TABLE
                 this->op++;
+                break;
+            }
+
+            case byte::JUMP:
+
+            case byte::F_JUMP:
+            case byte::T_JUMP: {
+                int off = this->retOffset(); // TO
+
+                // JMP
+                if (co == byte::JUMP) {
+                    ip = off;
+                }
+                // T
+                if (static_cast<object::Bool *>(this->popData())->value) {
+                    if (co == byte::T_JUMP) {
+                        ip = off;
+                    }
+                } else {
+                    // F
+                    if (co == byte::F_JUMP) {
+                        ip = off;
+                    }
+                }
+
+                this->op++; // OFFSET OP
+                this->addCounter(&off, ip, off);
                 break;
             }
 

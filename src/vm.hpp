@@ -47,6 +47,8 @@ class vm {
 
     int op = 0; // offset pointer
 
+    void addCounter(int *, int, int); // add counter for bytecode within jump
+
   public:
     explicit vm(Entity *main) {
         // to main frame as main
