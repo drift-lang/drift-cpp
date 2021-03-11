@@ -19,16 +19,11 @@ sum = x + y // SUM IS FLOAT OR INT ??
 sum
 
 if sum >= x + y
-
     sum = -1
-    
 end
 
 sum
-/*
+
 for 1 + 1 == 2
-
     "OK"
-
 end
-*/

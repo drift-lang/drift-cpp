@@ -5,20 +5,16 @@ def x: int = 45
 def y: int = 67
 
 for x < y
-
     y -= 1
-
 end
 
 y           // 45
 y == x      // T
 
 for ->
-
     out y == -1
 
     y -= 1
-
 end
 
 y           // -1
@@ -26,12 +22,10 @@ y           // -1
 def a: int = 0
 
 for ->
-
-    tin a == 20
-    out ->
+    // tin a == 20
+    out a == 30
 
     a += 1
-
 end
 
 a

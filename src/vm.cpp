@@ -102,11 +102,11 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
 }
 
 // add counter for bytecode within jump
-void vm::addCounter(int begin, int end) {
+void vm::addCounter(int *ip, int begin, int end) {
     bool reverse = begin > end; // condition
 
-    if (reverse) end += 1; // TO BEGIN
-    std::cout << "BEGIN: " << begin << " END: " << end << std::endl;
+    // std::cout << "BEGIN: " << begin << " END: " << end
+    //           << " REVERSE: " << reverse << " OP: " << this->op << std::endl;
 
     while (
         // condition
@@ -147,7 +147,7 @@ void vm::addCounter(int begin, int end) {
     }
 
     // std::cout << "OP: " << this->op << std::endl;
-    if (reverse) this->op -= 1; // TO BEGIN
+    *ip = end - 1; // for loop update
 }
 
 void vm::evaluate() {
@@ -1117,29 +1117,30 @@ void vm::evaluate() {
 
             case byte::F_JUMP:
             case byte::T_JUMP: {
-                int off = this->retOffset() - 1; // TO
-                int now = ip;                    // TEMP
+                int off = this->retOffset(); // TO
+                int now = ip;                // TEMP
 
-                this->op++; // SKIP CURRENT
-
-                // JMP
+                // JUMP
                 if (co == byte::JUMP) {
-                    ip = off;
-                    this->addCounter(now, off);
-                    break;
-                }
-
-                // T
-                if (static_cast<object::Bool *>(this->popData())->value) {
-                    if (co == byte::T_JUMP) {
-                        ip = off;
-                        this->addCounter(now, off); // T_JUMP
-                    }
+                    this->addCounter(&ip, now, off);
+                    //
                 } else {
-                    // F
-                    if (co == byte::F_JUMP) {
-                        ip = off;
-                        this->addCounter(now, off); // F_JUMP
+                    // T
+                    if (static_cast<object::Bool *>(this->popData())->value) {
+                        if (co == byte::T_JUMP) {
+                            //
+                            this->addCounter(&ip, now, off); // T_JUMP
+                        } else {
+                            this->op++; // NO
+                        }
+                    } else {
+                        // F
+                        if (co == byte::F_JUMP) {
+                            //
+                            this->addCounter(&ip, now, off); // F_JUMP
+                        } else {
+                            this->op++; // NO
+                        }
                     }
                 }
                 break;
@@ -1148,6 +1149,7 @@ void vm::evaluate() {
             case byte::RET: {
                 if (!top()->data.empty()) {
                     for (int i = 0; i < top()->data.len(); i++) {
+                        // DISS
                         std::cout << top()->data.at(i)->stringer() << std::endl;
                     }
                 }

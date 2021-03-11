@@ -47,7 +47,7 @@ class vm {
 
     int op = 0; // offset pointer
 
-    void addCounter(int, int); // add counter for bytecode within jump
+    void addCounter(int *, int, int); // add counter for bytecode within jump
 
   public:
     explicit vm(Entity *main) {
@@ -59,7 +59,7 @@ class vm {
     Frame *top();
 
     // repl mode to clean pointer for offset
-    void clean() { this->op = 0; }
+    inline void clean() { this->op = 0; }
 
     void evaluate(); // evaluate the top of frame
 };
