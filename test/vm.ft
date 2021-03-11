@@ -25,3 +25,10 @@ if sum >= x + y
 end
 
 sum
+/*
+for 1 + 1 == 2
+
+    "OK"
+
+end
+*/

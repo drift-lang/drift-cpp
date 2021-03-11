@@ -103,8 +103,17 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
 
 // add counter for bytecode within jump
 void vm::addCounter(int begin, int end) {
-    while (begin < end) {
-        switch (top()->entity->codes.at(begin++)) {
+    bool reverse = begin > end; // condition
+
+    if (reverse) end += 1; // TO BEGIN
+    std::cout << "BEGIN: " << begin << " END: " << end << std::endl;
+
+    while (
+        // condition
+        (reverse ? begin > end : begin < end)
+        //
+    ) {
+        switch (top()->entity->codes.at(begin)) {
             case byte::LOAD:   // 1
             case byte::CONST:  // 1
             case byte::ASSIGN: // 1
@@ -112,16 +121,33 @@ void vm::addCounter(int begin, int end) {
             case byte::T_JUMP: // 1
             case byte::F_JUMP: // 1
             {
-                this->op++; // ADD ONE
+                if (reverse) {
+                    // ADD
+                    this->op -= 1;
+                } else {
+                    // MINUS
+                    this->op += 1;
+                }
                 break;
             }
             case byte::STORE: // 2
             {
-                this->op += 2; // ADD TWO
+                if (reverse) {
+                    // ADD TWO
+                    this->op -= 2;
+                } else {
+                    // MINUS TWO
+                    this->op += 2;
+                }
                 break;
             }
         }
+        // indexes
+        reverse ? begin-- : begin++;
     }
+
+    // std::cout << "OP: " << this->op << std::endl;
+    if (reverse) this->op -= 1; // TO BEGIN
 }
 
 void vm::evaluate() {
