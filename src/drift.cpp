@@ -20,13 +20,14 @@
 #include "parser.hpp"
 #include "semantic.hpp"
 #include "vm.hpp"
+#include "version.hpp"
 
 // DEBUG to output tokens and statements
 bool DEBUG = false;
 // repl mode
 bool REPL = false;
 
-vm *mac;
+vm *mac; // local
 
 // run source code
 void run(std::string source) {
@@ -85,14 +86,12 @@ void runFile(const char *path) {
     stream.close();
 }
 
-const char *vers = "Drift 0.0.1 (REPL Mode, Feb 18 2021, 15:43:31)";
-
 // REPL mode
 void repl() {
     REPL = true;
 
     char *line = (char *)malloc(1024);
-    std::cout << "\n" << vers << "\n" << std::endl;
+    std::cout << "\n" << VERS << "\n" << std::endl;
 
     while (true) {
         std::cout << "ft >> ";
@@ -106,7 +105,7 @@ void repl() {
 }
 
 // VER
-void version() { std::cout << vers << std::endl; }
+void version() { std::cout << VERS << std::endl; }
 
 // entry
 int main(int argc, char **argv) {

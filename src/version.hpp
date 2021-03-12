@@ -12,22 +12,9 @@
 //          https://www.drift-lang.fun/
 //
 
-#ifndef DRIFT_FRAME_H
-#define DRIFT_FRAME_H
+#ifndef DRIFT_VERSION_H
+#define DRIFT_VERSION_H
 
-#include "stack.hpp"
-#include "table.hpp"
-
-// frame structure
-struct Frame {
-    Entity *entity; // ENTITY
-
-    Table global; // GLOBAL
-    Table local;  // LOCAL
-
-    Stack<object::Object *> data; // data stack
-
-    explicit Frame(Entity *e) : entity(e) {}
-};
+const char *VERS = "Drift 0.0.1 (REPL Mode, Feb 18 2021, 15:43:31)";
 
 #endif

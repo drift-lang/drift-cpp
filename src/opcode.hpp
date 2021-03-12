@@ -20,26 +20,27 @@
 // bytecode
 namespace byte {
     // total number of bytecodes
-    constexpr int len = 46;
+    constexpr int len = 47;
     // bytecode type
     enum Code {
-        CONST,  // O
-        ASSIGN, // ASSIGN
-        STORE,  // V
-        LOAD,   // V
-        INDEX,  // INDEX
-        GET,    // GET
-        SET,    // SET
-        CALL,   // CALL
-        CALL_I, // CALL_I
-        ORIG,   // ORIG
-        NAME,   // NAME
-        NEW,    // NEW
-        FUNC,   // FUNC
-        CHA,    // CHA
-        END,    // END
-        WHOLE,  // WHOLE
-        ENUM,   // ENUM
+        CONST,   // O
+        ASSIGN,  // ASSIGN
+        STORE,   // V
+        STORE_L, // LOCAL
+        LOAD,    // V
+        INDEX,   // INDEX
+        GET,     // GET
+        SET,     // SET
+        CALL,    // CALL
+        CALL_I,  // CALL_I
+        ORIG,    // ORIG
+        NAME,    // NAME
+        NEW,     // NEW
+        FUNC,    // FUNC
+        CHA,     // CHA
+        END,     // END
+        WHOLE,   // WHOLE
+        ENUM,    // ENUM
 
         PUB, // PUB
         MOD, // MOD
@@ -82,13 +83,13 @@ namespace byte {
 
     // return a string of bytecode
     static std::string codeString[len] = {
-        "CONST", "ASSIGN", "STORE",  "LOAD", "INDEX", "GET",    "SET",
-        "CALL",  "CALL_I", "ORIG",   "NAME", "NEW",   "FUNC",   "CHA",
-        "END",   "WHOLE",  "ENUM",   "PUB",  "MOD",   "USE",    "UAS",
-        "B_ARR", "B_TUP",  "B_MAP",  "INCR", "DECR",  "P_INCR", "P_DECR",
-        "ADD",   "SUB",    "MUL",    "DIV",  "GR",    "LE",     "GR_E",
-        "LE_E",  "E_E",    "N_E",    "AND",  "OR",    "BANG",   "NOT",
-        "JUMP",  "F_JUMP", "T_JUMP", "RET",
+        "CONST",  "ASSIGN", "STORE",  "STORE_L", "LOAD", "INDEX", "GET",
+        "SET",    "CALL",   "CALL_I", "ORIG",    "NAME", "NEW",   "FUNC",
+        "CHA",    "END",    "WHOLE",  "ENUM",    "PUB",  "MOD",   "USE",
+        "UAS",    "B_ARR",  "B_TUP",  "B_MAP",   "INCR", "DECR",  "P_INCR",
+        "P_DECR", "ADD",    "SUB",    "MUL",     "DIV",  "GR",    "LE",
+        "GR_E",   "LE_E",   "E_E",    "N_E",     "AND",  "OR",    "BANG",
+        "NOT",    "JUMP",   "F_JUMP", "T_JUMP",  "RET",
     };
 }; // namespace byte
 

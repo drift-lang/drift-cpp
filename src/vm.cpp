@@ -29,7 +29,16 @@ void vm::emitTable(std::string name, object::Object *obj) {
 }
 
 // look up a name
-object::Object *vm::lookUp(std::string n) { return top()->local.lookUp(n); }
+object::Object *vm::lookUp(std::string n) {
+    // look up the local symbol table first
+    if (!top()->local.empty() && top()->local.symbols.contains(n)) {
+        return top()->local.symbols.at(n); // LOCAL
+    }
+    if (!top()->global.empty() && top()->global.symbols.contains(n)) {
+        return top()->global.symbols.at(n); // GLOBAL
+    }
+    return nullptr;
+}
 
 // first to end constant iterator for current frame's entity
 object::Object *vm::retConstant() {
@@ -1026,15 +1035,17 @@ void vm::evaluate() {
                 break;
             }
 
-            case byte::STORE: {
+            case byte::STORE:   // GLOBAL
+            case byte::STORE_L: // LOCAL
+            {
                 object::Object *obj = this->popData(); // OBJECT
                 ast::Type *type = this->retType();     // TO TYPE
 
                 std::string name = this->retName(); // TO NAME
 
-                if (top()->local.lookUp(name) != nullptr) {
+                if (this->lookUp(name) != nullptr)
                     error("redefining name '" + name + "'");
-                }
+
                 this->typeChecker(type, obj); // TYPE CHECKER
 
                 if (type->kind() == ast::T_BOOL) {
@@ -1043,14 +1054,14 @@ void vm::evaluate() {
                         static_cast<object::Int *>(obj)->value);
                 }
 
-                top()->local.symbols[name] = obj; // store to table
+                this->emitTable(name, obj); // STORE
                 this->op += 2;
                 break;
             }
 
             case byte::LOAD: {
-                std::string name = this->retName();              // NAME
-                object::Object *obj = top()->local.lookUp(name); // OBJECT
+                std::string name = this->retName();       // NAME
+                object::Object *obj = this->lookUp(name); // OBJECT
 
                 if (obj == nullptr) error("not defined name '" + name + "'");
 
@@ -1108,12 +1119,12 @@ void vm::evaluate() {
                 std::string name = this->retName();    // NAME
                 object::Object *obj = this->popData(); // OBJ
 
-                top()->local.symbols[name] = obj; // TABLE
+                this->emitTable(name, obj); // STORE
                 this->op++;
                 break;
             }
 
-            case byte::JUMP:
+            case byte::JUMP: // JUMP
 
             case byte::F_JUMP:
             case byte::T_JUMP: {
