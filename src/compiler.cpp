@@ -195,11 +195,16 @@ void Compiler::expr(ast::Expr *expr) {
         case ast::EXPR_ASSIGN: {
             ast::AssignExpr *a = static_cast<ast::AssignExpr *>(expr);
 
-            this->expr(a->value); // right expression
+            this->expr(a->value);
 
-            this->emitCode(byte::ASSIGN);
-            this->emitName(
-                static_cast<ast::NameExpr *>(a->expr)->token.literal);
+            if (a->expr->kind() == ast::EXPR_NAME) {
+                this->emitCode(byte::ASSIGN);
+                this->emitName(
+                    static_cast<ast::NameExpr *>(a->expr)->token.literal);
+                // index expr
+            } else {
+                this->emitCode(byte::REPLACE);
+            }
         } break;
         //
         case ast::EXPR_ARRAY: {

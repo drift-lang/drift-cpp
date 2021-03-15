@@ -25,8 +25,10 @@ void Parser::parse() {
 // final to dissemble statement list
 void Parser::dissembleStmts() {
     if (this->statements.empty()) {
-        std::cout << "Empty Statements" << std::endl;
+        std::cout << "Empty Statements" << std::endl << std::endl;
         return;
+    } else {
+        std::cout << "STATEMENT: " << std::endl << std::endl;
     }
     int i = 1;
     for (auto stmt : this->statements)

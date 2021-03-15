@@ -25,21 +25,29 @@ class Parser {
   private:
     // current token
     int position = 0;
+
     // token list
     std::vector<token::Token> tokens;
+
     // return is end of token
     // end of file
     inline bool isEnd();
+
     // return the address of the token
     inline token::Token *look(bool previous);
+
     // look current token, if equal to peek next
     bool look(token::Kind kind);
+
     // look current token, do nothing
     inline token::Token look();
+
     // look the appoint position of tokens
     token::Token look(int i);
+
     // look previous token
     inline token::Token previous();
+
     // parsing expressions
     ast::Expr *expr();
     ast::Expr *assignment();
@@ -52,13 +60,16 @@ class Parser {
     ast::Expr *unary();
     ast::Expr *call();
     ast::Expr *primary();
+
     // parsing statements
     ast::Stmt *stmt();
+
     // determine where to stop the analysis
     ast::BlockStmt *block(token::Kind x, token::Kind y = token::EFF,
                           token::Kind z = token::EFF);
-    //
-    ast::Type *type();
+
+    ast::Type *type(); // parse types
+
     // throw an exception
     inline void error(exp::Kind kind, std::string message);
 
@@ -71,8 +82,10 @@ class Parser {
 
     // final stmts list
     std::vector<ast::Stmt *> statements;
+
     // do parsing
     void parse();
+
     // final to dissemble statement list
     void dissembleStmts();
 };

@@ -26,24 +26,36 @@
 class vm {
   private:
     std::vector<Frame *> frames; // execute frames
+
     // push object to the current frame
     void pushData(object::Object *);
+
     // pop the top of data stack
     object::Object *popData();
+
     // emit new name of table to the current frame
     void emitTable(std::string, object::Object *);
+
     // look up a name from current top frame
     object::Object *lookUp(std::string);
+
     // first to end iterator
     object::Object *retConstant();
+
     // first to end iterator
     ast::Type *retType();
+
     // first to end iterator
     std::string retName();
+
     // first to end iterator
     int retOffset();
+
     // are the comparison types the same
     void typeChecker(ast::Type *, object::Object *);
+
+    // are two values of same type equal
+    bool objValueEquation(object::Object *, object::Object *);
 
     int op = 0; // offset pointer
 

@@ -1,4 +1,3 @@
-
 def x: <int, str> = {5: "foo", 6: "bar"}
 
-x
+x[5]

@@ -177,17 +177,17 @@ namespace object {
     // MAP
     class Map : public Object {
       public:
-        std::map<object::Object *, object::Object *> value;
+        std::map<object::Object *, object::Object *> elements;
 
         std::string stringer() override {
-            if (value.empty()) return "<Map {}>";
+            if (elements.empty()) return "<Map {}>";
 
             std::stringstream str;
             str << "<Map {";
-            for (auto iter = value.begin(); iter != value.end();) {
+            for (auto iter = elements.begin(); iter != elements.end();) {
                 str << "K: " << iter->first->stringer()
                     << " V: " << iter->second->stringer();
-                if (++iter != value.end()) {
+                if (++iter != elements.end()) {
                     str << ", ";
                 }
             }

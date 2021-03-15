@@ -1,22 +1,20 @@
+def i: int = 1 // ONE PLUS
 
-def () foo -> int ret 123 end
+def (x: int) foo -> int
+    if x == 8
+        ret -1
+    end
+    i += 1
+    ret i * x
+end
 
-def x: int = 45
+def x: int = 0
 
-/*
-ENTITY 'main': 
-                   0: FUNC           0 <Func 'foo'>
-                   1: CONST          1 <Int 45>
-                   2: STORE          0 'x' 0 <Int>
-                   3: RET
-CONSTANT: 
-                   0: <Func 'foo'>
-                   1: <Int 45>
-NAME: 
-                   0: 'x'	
-OFFSET: 
-                   0: 0 	    1: 1  	    2: 0  	    3: 0  	
+for ->
+    def sum: int = foo(x)
 
-TYPE: 
-                   0: <Int>
-*/
+    sum
+
+    out x == 10
+    x += 1
+end

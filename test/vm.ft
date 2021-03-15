@@ -1,4 +1,3 @@
-
 // VIRTUAL MACHINE TEST
 
 def x: int = 34
@@ -23,7 +22,18 @@ if sum >= x + y
 end
 
 sum
-
+/*
 for 1 + 1 == 2
     "OK"
+end
+*/
+
+def (x: int, y: int) add -> int
+    def n: int = 75
+
+    if x > y
+        ret -1
+    nf
+        ret x + y + n
+    end
 end

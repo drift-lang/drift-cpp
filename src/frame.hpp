@@ -22,10 +22,10 @@
 struct Frame {
     Entity *entity; // ENTITY
 
-    Table global; // GLOBAL
-    Table local;  // LOCAL
+    Table tb; // SYMBOL
 
-    Stack<object::Object *> data; // data stack
+    Stack<object::Object *> data;  // DATA
+    object::Object *ret = nullptr; // RETURN
 
     explicit Frame(Entity *e) : entity(e) {}
 };

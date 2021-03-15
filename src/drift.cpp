@@ -19,8 +19,8 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "semantic.hpp"
-#include "vm.hpp"
 #include "version.hpp"
+#include "vm.hpp"
 
 // DEBUG to output tokens and statements
 bool DEBUG = false;
@@ -75,7 +75,7 @@ void runFile(const char *path) {
     stream.open(path);
 
     if (stream.fail()) {
-        std::cout << "failed to open file" << std::endl;
+        std::cout << "<Failed To Open File>" << std::endl;
         return;
     }
 

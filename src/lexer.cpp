@@ -45,6 +45,8 @@ void Lexer::tokenizer() {
 
 // final to dissemble tokens list
 void Lexer::dissembleTokens() {
+    std::cout << "TOKEN: " << std::endl << std::endl;
+
     int i = 1;
     for (const auto &token : this->tokens)
         std::cout << i++ << " " + token::toString(token) << std::endl;

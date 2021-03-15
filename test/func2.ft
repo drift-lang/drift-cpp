@@ -1,34 +1,6 @@
-
-def x: int = 12
-
-def (a + b + c: int) foo -> int
-
-    def y: int = 45
-
-    ret 123
-
+def (x + y: int) add -> int
+    ret x + y
 end
 
-def z: int = 78
-
-/*
-ENTITY 'main': 
-                   0: CONST          0 <Int 12>
-                   1: STORE          0 'x' 0 <Int>
-                   2: FUNC           1 <Func 'foo'>
-                   3: CONST          2 <Int 78>
-                   4: STORE          1 'z' 1 <Int>
-                   5: RET
-CONSTANT: 
-                   0: <Int 12>
-                   1: <Func 'foo'>
-                   2: <Int 78>
-NAME: 
-                   0: 'x'	    1: 'z' 	
-OFFSET: 
-                   0: 0 	    1: 0  	    2: 0  	    3: 1  	
-                   4: 2 	    5: 1  	    6: 1  	
-TYPE: 
-                   0: <Int>
-                   1: <Int>
-*/
+def x: float = add(4, 3) * add(1, 2) / 3
+x

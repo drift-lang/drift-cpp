@@ -1,0 +1,7 @@
+def x: str = "Hello World!!"
+
+x
+
+x += " - Haha.."
+
+x

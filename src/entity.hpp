@@ -166,22 +166,22 @@ struct Entity {
             printf("\n");
         }
 
-        std::cout << "OFFSET: " << std::endl;
-        if (offsets.empty()) {
-            printf("%20s\n", "EMPTY");
-        } else {
-            for (int i = 0; i < offsets.size(); i++) {
-                if (i % 4 == 0) {
-                    printf("%20d: %d \t", i, offsets.at(i));
-                } else {
-                    printf("%5d: %d  \t", i, offsets.at(i));
-                }
-                if ((i + 1) % 4 == 0) {
-                    printf("\n");
-                }
-            }
-            printf("\n");
-        }
+        // std::cout << "OFFSET: " << std::endl;
+        // if (offsets.empty()) {
+        //     printf("%20s\n", "EMPTY");
+        // } else {
+        //     for (int i = 0; i < offsets.size(); i++) {
+        //         if (i % 4 == 0) {
+        //             printf("%20d: %d \t", i, offsets.at(i));
+        //         } else {
+        //             printf("%5d: %d  \t", i, offsets.at(i));
+        //         }
+        //         if ((i + 1) % 4 == 0) {
+        //             printf("\n");
+        //         }
+        //     }
+        //     printf("\n");
+        // }
 
         std::cout << "TYPE: " << std::endl;
         if (types.empty()) {

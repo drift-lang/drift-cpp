@@ -25,17 +25,21 @@ object::Object *vm::popData() { return top()->data.pop(); }
 
 // emit new name of table to the current frame
 void vm::emitTable(std::string name, object::Object *obj) {
-    top()->local.symbols.insert(std::make_pair(name, obj));
+    if (this->lookUp(name) != nullptr) {
+        // REPLACE
+        top()->tb.remove(name);
+    }
+    // STORE
+    top()->tb.symbols.insert(std::make_pair(name, obj));
 }
 
 // look up a name
 object::Object *vm::lookUp(std::string n) {
-    // look up the local symbol table first
-    if (!top()->local.empty() && top()->local.symbols.contains(n)) {
-        return top()->local.symbols.at(n); // LOCAL
-    }
-    if (!top()->global.empty() && top()->global.symbols.contains(n)) {
-        return top()->global.symbols.at(n); // GLOBAL
+    if (!top()->tb.empty() &&
+        // check
+        top()->tb.symbols.count(n) != 0) {
+
+        return top()->tb.symbols.at(n); // GET
     }
     return nullptr;
 }
@@ -103,11 +107,33 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
         ast::Map *T = static_cast<ast::Map *>(x);
         object::Map *map = static_cast<object::Map *>(y);
 
-        for (auto &i : map->value) {
+        for (auto &i : map->elements) {
             this->typeChecker(T->T1, i.first);  // K
             this->typeChecker(T->T2, i.second); // R
         }
     }
+}
+
+// are two values of the same type equal
+bool vm::objValueEquation(object::Object *x, object::Object *y) {
+    switch (x->kind()) {
+        case object::INT:
+            return static_cast<object::Int *>(x)->value ==
+                   static_cast<object::Int *>(y)->value;
+        case object::FLOAT:
+            return static_cast<object::Float *>(x)->value ==
+                   static_cast<object::Float *>(y)->value;
+        case object::STR:
+            return static_cast<object::Str *>(x)->value ==
+                   static_cast<object::Str *>(y)->value;
+        case object::CHAR:
+            return static_cast<object::Char *>(x)->value ==
+                   static_cast<object::Char *>(y)->value;
+        case object::BOOL:
+            return static_cast<object::Bool *>(x)->value ==
+                   static_cast<object::Bool *>(y)->value;
+    }
+    return false;
 }
 
 // add counter for bytecode within jump
@@ -129,6 +155,7 @@ void vm::addCounter(int *ip, int begin, int end) {
             case byte::JUMP:   // 1
             case byte::T_JUMP: // 1
             case byte::F_JUMP: // 1
+            case byte::CALL:   // 1
             {
                 if (reverse) {
                     // ADD
@@ -159,11 +186,11 @@ void vm::addCounter(int *ip, int begin, int end) {
     *ip = end - 1; // for loop update
 }
 
-void vm::evaluate() {
+void vm::evaluate() { // EVALUATE
 
 #define BINARY_OP(T, L, OP, R) this->pushData(new T(L OP R));
 
-    for (int ip = 0; ip < top()->entity->codes.size(); ip++) {
+    for (int ip = 0; ip < top()->entity->codes.size(); ip++) { // MAIN LOOP
 
         // bytecode
         byte::Code co = top()->entity->codes.at(ip);
@@ -225,7 +252,6 @@ void vm::evaluate() {
                     if (l->longer || r->longer) {
                         error("cannot plus long string literal");
                     }
-
                     this->pushData(new object::Str(l->value + r->value));
                 } else {
                     // ERROR
@@ -1035,16 +1061,13 @@ void vm::evaluate() {
                 break;
             }
 
-            case byte::STORE:   // GLOBAL
-            case byte::STORE_L: // LOCAL
+            case byte::STORE: // STORE
             {
                 object::Object *obj = this->popData(); // OBJECT
-                ast::Type *type = this->retType();     // TO TYPE
+                std::string name = this->retName();    // TO NAME
 
-                std::string name = this->retName(); // TO NAME
-
-                if (this->lookUp(name) != nullptr)
-                    error("redefining name '" + name + "'");
+                this->op++;
+                ast::Type *type = this->retType(); // TO TYPE
 
                 this->typeChecker(type, obj); // TYPE CHECKER
 
@@ -1055,7 +1078,7 @@ void vm::evaluate() {
                 }
 
                 this->emitTable(name, obj); // STORE
-                this->op += 2;
+                this->op++;
                 break;
             }
 
@@ -1107,7 +1130,7 @@ void vm::evaluate() {
                     object::Object *y = this->popData();
                     object::Object *x = this->popData();
 
-                    map->value.insert(std::make_pair(x, y));
+                    map->elements.insert(std::make_pair(x, y));
                 }
 
                 this->pushData(map);
@@ -1118,6 +1141,10 @@ void vm::evaluate() {
             case byte::ASSIGN: {
                 std::string name = this->retName();    // NAME
                 object::Object *obj = this->popData(); // OBJ
+
+                if (this->lookUp(name) == nullptr) {
+                    error("not defined name '" + name + "'");
+                }
 
                 this->emitTable(name, obj); // STORE
                 this->op++;
@@ -1157,14 +1184,137 @@ void vm::evaluate() {
                 break;
             }
 
-            case byte::RET: {
-                if (!top()->data.empty()) {
-                    for (int i = 0; i < top()->data.len(); i++) {
-                        // DISS
-                        std::cout << top()->data.at(i)->stringer() << std::endl;
+            case byte::FUNC: { // FUNCTION
+                object::Func *f =
+                    static_cast<object::Func *>(this->retConstant()); // OBJECT
+                this->emitTable(f->name, f);                          // STORE
+                this->op++;
+                break;
+            }
+
+            case byte::CALL: { // CALL FUNCTION
+                int args = this->retOffset();
+
+                Stack<object::Object *> arguments;
+                while (args-- > 0) {
+                    arguments.push(this->popData()); // ARGUMENT
+                }
+
+                object::Func *f =
+                    static_cast<object::Func *>(this->popData()); // FUNCTION
+                Frame *fra = new Frame(f->entity);                // FRAME
+
+                if (f->arguments.size() != arguments.len()) {
+                    error("wrong number of parameters");
+                }
+                
+                // GLOBAL
+                fra->tb.symbols = top()->tb.symbols;
+
+                // ARGUMENT
+                for (auto i : f->arguments) {
+                    object::Object *val = arguments.pop(); // OBJECT
+
+                    this->typeChecker(i.second, val);        // TYPE CHECKER
+                    fra->tb.symbols[i.first->literal] = val; // STORE
+                }
+
+                int t = this->op; // TEMP OFFSET
+
+                this->op = 0;
+                this->frames.push_back(fra); // NEW FRAME
+                this->evaluate();
+
+                this->frames.pop_back(); // POP
+
+                if (f->ret != nullptr) {
+                    // RETURN
+                    if (top()->ret == nullptr) error("missing return value");
+                    // TYPE CHECKER
+                    this->typeChecker(f->ret, top()->ret);
+                    this->pushData(top()->ret); // PUSH
+                }
+
+                if (f->ret == nullptr && top()->ret != nullptr) {
+                    error("function does not define a return value, but it has "
+                          "a return value");
+                }
+
+                this->op = ++t; // NEXT
+                break;
+            }
+
+            case byte::INDEX: { // INDEX
+                object::Object *obj = this->popData();
+                object::Object *idx = this->popData();
+
+                // GET
+                switch (obj->kind()) {
+                    case object::ARRAY: {
+                        if (idx->kind() != object::INT) {
+                            error(
+                                "array subscript index can only be an integer");
+                        }
+
+                        auto x = static_cast<object::Int *>(idx);   // INDEX
+                        auto y = static_cast<object::Array *>(obj); // TO
+
+                        if (y->elements.empty())
+                            error("empty element of array");
+                        if (x->value >= y->elements.size()) {
+                            error("array out of bounds, index: " +
+                                  std::to_string(x->value) + " max: " +
+                                  std::to_string(y->elements.size() - 1));
+                        }
+                        this->pushData(y->elements.at(x->value)); // PUSH
+                        break;
+                    }
+                    case object::MAP: {
+                        object::Map *m = static_cast<object::Map *>(obj);
+
+                        if (m->elements.empty()) error("empty element of map");
+                        if (m->elements.begin()->first->kind() != idx->kind()) {
+                            error("wrong key index");
+                        }
+
+                        std::map<object::Object *, object::Object *>::iterator
+                            iter; // ITERATOR
+                        for (iter = m->elements.begin();
+                             // K TO IDX
+                             iter != m->elements.end() &&
+                             !this->objValueEquation(iter->first, idx);
+                             *iter++)
+                            ;
+                        if (iter == m->elements.end()) { // ERROR
+                            error("map does not have this key: " +
+                                  idx->stringer());
+                        }
+
+                        this->pushData(iter->second); // PUSH
+                        break;
                     }
                 }
+                break;
+            }
+
+            case byte::REPLACE: { // REPLACE
+                object::Object *obj = this->popData();
+
+                break;
+            }
+
+            case byte::RET: { // RETURN
+                if (top()->entity->title != "main") {
+                    // TO PREVIOUS FRAME
+                    this->frames.at(this->frames.size() - 2)->ret =
+                        this->popData();              // VALUE
+                    ip = top()->entity->codes.size(); // CATCH
+                }
+                for (int i = 0; i < top()->data.len(); i++) {
+                    std::cout << top()->data.at(i)->stringer() << std::endl;
+                }
                 top()->data.clear();
+                break;
             }
         }
     }

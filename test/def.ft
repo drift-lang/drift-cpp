@@ -1,0 +1,10 @@
+def x: int = 45
+def y: int = 12
+
+for ->
+    x += 1
+    out x > 100
+end
+
+x
+y

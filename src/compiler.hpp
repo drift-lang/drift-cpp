@@ -26,10 +26,13 @@
 class Compiler {
   private:
     int position = 0;
+
     // after semantic analysis
     std::vector<ast::Stmt *> statements;
+
     // return the current statement
     ast::Stmt *look();
+
     // offset of constant, offset of name, offset of type
     int icf = 0, inf = 0, itf = 0;
 
@@ -51,6 +54,7 @@ class Compiler {
 
     // entities of compiled
     std::vector<Entity *> entities = {new Entity("main")};
+
     // compile statements to entities
     void compile();
 
