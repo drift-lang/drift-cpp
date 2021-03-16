@@ -1,0 +1,5 @@
+def () foo -> []int
+    ret [1]
+end
+
+foo()[0] == 1

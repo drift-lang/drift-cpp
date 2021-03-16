@@ -1,5 +1,47 @@
-def x: (int) = (3, 5, 2, 1, 5)
+do
+    def x: (int) = (3, 5, 2, 1, 5)
+    def i: int = 0
+for ->
+    x.i
+    i += 1
+    out i == 5
+end
 
-def y: int = x.2
-
-y
+/*
+ENTITY 'main': 
+                   0: CONST          0 <Int 5>
+                   1: CONST          1 <Int 1>
+                   2: CONST          2 <Int 2>
+                   3: CONST          3 <Int 5>
+                   4: CONST          4 <Int 3>
+                   5: B_TUP          5
+                   6: STORE          0 'x' 0 <Tuple T=<Int> >
+                   7: CONST          5 <Int 0>
+                   8: STORE          1 'i' 1 <Int>
+                   9: LOAD           0 'x'
+                  10: GET            1 'i'
+                  11: LOAD           1 'i'
+                  12: CONST          6 <Int 1>
+                  13: ADD
+                  14: ASSIGN         1 'i'
+                  15: LOAD           1 'i'
+                  16: CONST          7 <Int 5>
+                  17: E_E
+                  18: T_JUMP        20
+                  19: JUMP           9
+                  20: RET
+CONSTANT: 
+                   0: <Int 5>
+                   1: <Int 1>
+                   2: <Int 2>
+                   3: <Int 5>
+                   4: <Int 3>
+                   5: <Int 0>
+                   6: <Int 1>
+                   7: <Int 5>
+NAME: 
+                   0: 'x'	    1: 'i' 	
+TYPE: 
+                   0: <Tuple T=<Int> >
+                   1: <Int>
+*/

@@ -219,15 +219,13 @@ void Lexer::lexSymbol() {
         case ']': tok.kind = token::R_BRACKET; break;
         case ':': tok.kind = token::COLON; break;
         case '+':
-            if (peekEmit(&tok, '=', token::AS_ADD, "+=")) break;
-            if (peekEmit(&tok, '+', token::PLUS, "++"))
+            if (peekEmit(&tok, '=', token::AS_ADD, "+="))
                 break;
             else
                 tok.kind = token::ADD;
             break;
         case '-':
             if (peekEmit(&tok, '>', token::R_ARROW, "->")) break;
-            if (peekEmit(&tok, '-', token::MINUS, "--")) break;
             if (peekEmit(&tok, '=', token::AS_SUB, "-="))
                 break;
             else
@@ -253,6 +251,12 @@ void Lexer::lexSymbol() {
                 return;
             } else
                 tok.kind = token::DIV;
+            break;
+        case '%':
+            if (peekEmit(&tok, '=', token::AS_SUR, "%="))
+                break;
+            else
+                tok.kind = token::SUR;
             break;
         case '$': tok.kind = token::DOLLAR; break;
         case '.': tok.kind = token::DOT; break;

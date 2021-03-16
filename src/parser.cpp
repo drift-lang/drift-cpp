@@ -183,7 +183,7 @@ ast::Expr *Parser::multiplication() {
     ast::Expr *expr = unary();
 
     while (look(token::MUL) || look(token::DIV) || look(token::AS_MUL) ||
-           look(token::AS_DIV)) {
+           look(token::AS_DIV) || look(token::SUR) || look(token::AS_SUR)) {
         token::Token op = this->previous();
         ast::Expr *right = unary();
         //
@@ -261,26 +261,7 @@ ast::Expr *Parser::primary() {
         look(token::CHAR))
         return new ast::LiteralExpr(this->previous());
     // name expr
-    if (look(token::IDENT)) {
-        token::Token tok = previous();
-        // ++ | --
-        if (look(token::PLUS) || look(token::MINUS))
-            // self increment
-            return new ast::NameExpr(tok, previous().kind == token::PLUS,
-                                     previous().kind == token::MINUS, false);
-        return new ast::NameExpr(tok);
-    }
-    // name expr of ++ or -- operators
-    if (look(token::PLUS) || look(token::MINUS)) {
-        token::Token op = previous();
-        //
-        if (look(token::IDENT))
-            return new ast::NameExpr(previous(), op.kind == token::PLUS,
-                                     op.kind == token::MINUS, true);
-        else
-            error(exp::INCREMENT_OP,
-                  "increment operand can only be performed on name");
-    }
+    if (look(token::IDENT)) return new ast::NameExpr(previous());
     // group expr
     if (look(token::L_PAREN)) {
         // vector for tuple and group expression
@@ -488,11 +469,12 @@ ast::Stmt *Parser::stmt() {
                     ret = this->type();
                 }
 
-                if (interfaceStmt)
+                if (interfaceStmt) {
                     return new ast::InterfaceStmt(args, name, ret);
-                else
-                    return new ast::FuncStmt(args, name, ret,
-                                             this->block(token::END));
+                }
+                // function
+                return new ast::FuncStmt(args, name, ret,
+                                         this->block(token::END));
                 //
                 break;
                 // whole

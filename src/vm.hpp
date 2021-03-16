@@ -15,12 +15,16 @@
 #ifndef DRIFT_VM_H
 #define DRIFT_VM_H
 
+#include <algorithm>
+
 #include "exp.hpp"
 #include "frame.hpp"
 #include "object.hpp"
 #include "opcode.hpp"
 
 #include "entity.hpp"
+
+#include "util.hpp"
 
 // structure
 class vm {
@@ -57,9 +61,15 @@ class vm {
     // are two values of same type equal
     bool objValueEquation(object::Object *, object::Object *);
 
+    // generate default values
+    object::Object *setOriginalValue(ast::Type *);
+
     int op = 0; // offset pointer
 
     void addCounter(int *, int, int); // add counter for bytecode within jump
+
+    bool callWholeMethod = false; // is current calling whole
+    std::string wholwName = "";   // name of current calling whole
 
   public:
     explicit vm(Entity *main) {

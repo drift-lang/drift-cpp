@@ -4,3 +4,44 @@ end
 
 def x: float = add(4, 3) * add(1, 2) / 3
 x
+
+/*
+ENTITY 'main': 
+                   0: FUNC           0 <Func 'add'>
+                   1: LOAD           0 'add'
+                   2: CONST          1 <Int 3>
+                   3: CONST          2 <Int 4>
+                   4: CALL           2
+                   5: LOAD           0 'add'
+                   6: CONST          3 <Int 2>
+                   7: CONST          4 <Int 1>
+                   8: CALL           2
+                   9: MUL
+                  10: CONST          5 <Int 3>
+                  11: DIV
+                  12: STORE          1 'x' 0 <Float>
+                  13: LOAD           1 'x'
+                  14: RET
+CONSTANT: 
+                   0: <Func 'add'>
+                   1: <Int 3>
+                   2: <Int 4>
+                   3: <Int 2>
+                   4: <Int 1>
+                   5: <Int 3>
+NAME: 
+                   0: 'add'	    1: 'x' 	
+TYPE: 
+                   0: <Float>
+ENTITY 'add': 
+                   0: LOAD           0 'x'
+                   1: LOAD           1 'y'
+                   2: ADD
+                   3: RET
+CONSTANT: 
+               EMPTY
+NAME: 
+                   0: 'x'	    1: 'y' 	
+TYPE: 
+               EMPTY
+*/

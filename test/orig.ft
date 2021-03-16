@@ -1,0 +1,17 @@
+def a: int
+def b: float
+def c: str
+def d: char
+def e: bool
+def f: []int
+def g: (int)
+def h: <int, str>
+
+a
+b
+c
+d
+e
+f
+g
+h

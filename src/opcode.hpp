@@ -20,7 +20,7 @@
 // bytecode
 namespace byte {
     // total number of bytecodes
-    constexpr int len = 47;
+    constexpr int len = 44;
     // bytecode type
     enum Code {
         CONST,   // O
@@ -51,16 +51,12 @@ namespace byte {
         B_TUP, // TUPLE
         B_MAP, // MAP
 
-        INCR,   // DECR
-        DECR,   // INCR
-        P_INCR, // P_INCR
-        P_DECR, // P_DECR
-
         // INFIX
         ADD,  // +
         SUB,  // -
         MUL,  // *
         DIV,  // /
+        SUR,  // %
         GR,   // >
         LE,   // <
         GR_E, // >=
@@ -83,13 +79,13 @@ namespace byte {
 
     // return a string of bytecode
     static std::string codeString[len] = {
-        "CONST",  "ASSIGN", "STORE",  "LOAD",   "INDEX", "REPLACE", "GET",
-        "SET",    "CALL",   "CALL_I", "ORIG",   "NAME",  "NEW",     "FUNC",
-        "CHA",    "END",    "WHOLE",  "ENUM",   "PUB",   "MOD",     "USE",
-        "UAS",    "B_ARR",  "B_TUP",  "B_MAP",  "INCR",  "DECR",    "P_INCR",
-        "P_DECR", "ADD",    "SUB",    "MUL",    "DIV",   "GR",      "LE",
-        "GR_E",   "LE_E",   "E_E",    "N_E",    "AND",   "OR",      "BANG",
-        "NOT",    "JUMP",   "F_JUMP", "T_JUMP", "RET",
+        "CONST",  "ASSIGN", "STORE",  "LOAD",  "INDEX", "REPLACE", "GET",
+        "SET",    "CALL",   "CALL_I", "ORIG",  "NAME",  "NEW",     "FUNC",
+        "CHA",    "END",    "WHOLE",  "ENUM",  "PUB",   "MOD",     "USE",
+        "UAS",    "B_ARR",  "B_TUP",  "B_MAP", "ADD",   "SUB",     "MUL",
+        "DIV",    "SUR",    "GR",     "LE",    "GR_E",  "LE_E",    "E_E",
+        "N_E",    "AND",    "OR",     "BANG",  "NOT",   "JUMP",    "F_JUMP",
+        "T_JUMP", "RET",
     };
 }; // namespace byte
 

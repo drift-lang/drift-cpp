@@ -35,14 +35,13 @@ namespace token {
         SUB, // -
         MUL, // *
         DIV, // /
+        SUR, // %
 
         AS_ADD, // +=
         AS_SUB, // -=
         AS_MUL, // *=
         AS_DIV, // /=
-
-        PLUS,  // ++
-        MINUS, // --
+        AS_SUR, // %=
 
         R_ARROW,        // ->
         L_ARROW,        // <-
@@ -103,8 +102,8 @@ namespace token {
         "IDENT",     "NUM",       "STR",
         "CHAR",      "FLOAT",     "ADD",
         "SUB",       "MUL",       "DIV",
-        "AS_ADD",    "AS_SUB",    "AS_MUL",
-        "AS_DIV",    "PLUS",      "MINUS",
+        "SUR",       "AS_ADD",    "AS_SUB",
+        "AS_MUL",    "AS_DIV",    "AS_SUR",
         "R_ARROW",   "L_ARROW",   "L_CURVED_ARROW",
         "DOLLAR",    "DOT",       "COMMA",
         "COLON",     "EQ",        "GREATER",

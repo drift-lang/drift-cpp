@@ -1,0 +1,7 @@
+def () x end
+def () y end
+def () z end
+
+x()
+y()
+z()

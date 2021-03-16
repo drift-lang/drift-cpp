@@ -284,33 +284,10 @@ namespace ast {
       public:
         token::Token token;
 
-        bool selfIncrement; // ++
-        bool selfDecrement; // --
-
-        bool prefix; // prefix, calc it first
-
-        explicit NameExpr(token::Token tok,
-                          bool x = false, // increment
-                          bool y = false, // decrement
-                          bool z = false  // prefix
-        ) {
-            this->token = std::move(tok);
-
-            this->selfIncrement = x;
-            this->selfDecrement = y;
-
-            this->prefix = z;
-        }
+        explicit NameExpr(token::Token tok) { this->token = std::move(tok); }
 
         std::string stringer() override {
-            std::stringstream str;
-
-            str << "<NameExpr { Token='" << token.literal
-                << "' Increment=" << selfIncrement
-                << " Decrement=" << selfDecrement << " Prefix=" << prefix
-                << " }>";
-
-            return str.str();
+            return "<NameExpr { Token='" + token.literal + "' }>";
         }
 
         Kind kind() override { return EXPR_NAME; }

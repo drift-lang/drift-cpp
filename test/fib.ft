@@ -1,0 +1,11 @@
+def x: []int = [1, 2, 3]
+
+def i: int = 0
+
+i
+x // ARRAY
+
+x[i] = 88
+
+i
+x

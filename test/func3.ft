@@ -1,0 +1,9 @@
+def (x: int, y: int) foo
+    if x > y
+        x += 1
+    nf
+        y += 1
+    end
+end
+
+foo(3, 1)

@@ -136,6 +136,24 @@ bool vm::objValueEquation(object::Object *x, object::Object *y) {
     return false;
 }
 
+// generate default value
+object::Object *vm::setOriginalValue(ast::Type *t) {
+    switch (t->kind()) {
+        case ast::T_INT: return new object::Int(0);
+        case ast::T_FLOAT: return new object::Float(0.0);
+        case ast::T_STR: return new object::Str("");
+        case ast::T_CHAR: return new object::Char(0);
+        case ast::T_BOOL: return new object::Int(0); // default conversion
+
+        case ast::T_ARRAY: return new object::Array();
+        case ast::T_TUPLE: return new object::Tuple();
+        case ast::T_MAP: return new object::Map();
+
+        default: error("this type cannot generate a default value");
+    }
+    return nullptr;
+}
+
 // add counter for bytecode within jump
 void vm::addCounter(int *ip, int begin, int end) {
     bool reverse = begin > end; // condition
@@ -156,6 +174,10 @@ void vm::addCounter(int *ip, int begin, int end) {
             case byte::T_JUMP: // 1
             case byte::F_JUMP: // 1
             case byte::CALL:   // 1
+            case byte::GET:    // 1
+            case byte::WHOLE:  // 1
+            case byte::FUNC:   // 1
+            case byte::NAME:   // 1
             {
                 if (reverse) {
                     // ADD
@@ -167,6 +189,7 @@ void vm::addCounter(int *ip, int begin, int end) {
                 break;
             }
             case byte::STORE: // 2
+            case byte::NEW:   // 2
             {
                 if (reverse) {
                     // ADD TWO
@@ -393,6 +416,21 @@ void vm::evaluate() { // EVALUATE
                 } else {
                     // ERROR
                     error("unsupport type to / operator");
+                }
+                break;
+            }
+
+            case byte::SUR: { // %
+                object::Object *y = this->popData();
+                object::Object *x = this->popData();
+
+                // <Int> % <Int>
+                if (x->kind() == object::INT && y->kind() == object::INT) {
+                    BINARY_OP(object::Int, static_cast<object::Int *>(x)->value,
+                              %, static_cast<object::Int *>(y)->value);
+                } else {
+                    // ERROR
+                    error("unsupport type to % operator");
                 }
                 break;
             }
@@ -1063,11 +1101,17 @@ void vm::evaluate() { // EVALUATE
 
             case byte::STORE: // STORE
             {
-                object::Object *obj = this->popData(); // OBJECT
-                std::string name = this->retName();    // TO NAME
+                object::Object *obj;
+                std::string name = this->retName(); // TO NAME
 
                 this->op++;
                 ast::Type *type = this->retType(); // TO TYPE
+
+                if (top()->entity->codes.at(ip - 1) == byte::ORIG) { // ORIGINAL
+                    obj = this->setOriginalValue(type);              // VALUE
+                } else {
+                    obj = this->popData(); // OBJECT
+                }
 
                 this->typeChecker(type, obj); // TYPE CHECKER
 
@@ -1207,9 +1251,18 @@ void vm::evaluate() { // EVALUATE
                 if (f->arguments.size() != arguments.len()) {
                     error("wrong number of parameters");
                 }
-                
-                // GLOBAL
-                fra->tb.symbols = top()->tb.symbols;
+
+                // SET TABLE SYMBOL
+                if (this->callWholeMethod) {
+                    // CALL WHOLE
+                    fra->tb =
+                        static_cast<object::Whole *>(this->lookUp(wholwName))
+                            ->f->tb;
+
+                    this->callWholeMethod = false;
+                } else
+                    // GLOBAL
+                    fra->tb.symbols = top()->tb.symbols;
 
                 // ARGUMENT
                 for (auto i : f->arguments) {
@@ -1233,13 +1286,14 @@ void vm::evaluate() { // EVALUATE
                     // TYPE CHECKER
                     this->typeChecker(f->ret, top()->ret);
                     this->pushData(top()->ret); // PUSH
+
+                    top()->ret = nullptr;
                 }
 
                 if (f->ret == nullptr && top()->ret != nullptr) {
-                    error("function does not define a return value, but it has "
-                          "a return value");
+                    error("function does not define return value, but it has "
+                          "return value");
                 }
-
                 this->op = ++t; // NEXT
                 break;
             }
@@ -1299,7 +1353,200 @@ void vm::evaluate() { // EVALUATE
 
             case byte::REPLACE: { // REPLACE
                 object::Object *obj = this->popData();
+                object::Object *idx = this->popData();
+                object::Object *val = this->popData();
 
+                // SET
+                switch (obj->kind()) {
+                    case object::ARRAY: {
+                        if (idx->kind() != object::INT) {
+                            error(
+                                "array subscript index can only be an integer");
+                        }
+
+                        object::Array *a = static_cast<object::Array *>(obj);
+                        int i = static_cast<object::Int *>(idx)->value;
+
+                        if (i >= a->elements.size()) {
+                            error("array out of bounds, index: " +
+                                  std::to_string(i) + " max: " +
+                                  std::to_string(a->elements.size() - 1));
+                        }
+
+                        // REPLACE
+                        std::replace(std::begin(a->elements),
+                                     std::end(a->elements), a->elements.at(i),
+                                     val);
+
+                        // RESTORE
+                        if (top()->entity->codes.at(ip) == byte::LOAD) {
+                            this->emitTable(
+                                // NAME
+                                top()->entity->names.back(),
+                                // VALUE
+                                a);
+                        }
+                        break;
+                    }
+                    case object::MAP: {
+                        object::Map *m = static_cast<object::Map *>(obj);
+
+                        std::map<object::Object *, object::Object *>::iterator
+                            iter; // ITERATOR
+                        for (iter = m->elements.begin();
+                             // K TO IDX
+                             iter != m->elements.end() &&
+                             !this->objValueEquation(iter->first, idx);
+                             *iter++)
+                            ;
+                        if (iter == m->elements.end()) { // NOT FOUND
+                            // INSERT
+                            m->elements.insert(std::make_pair(idx, val));
+                        } else {
+                            // REPLACE
+                            iter->second = val;
+                        }
+
+                        // RESTORE
+                        if (top()->entity->codes.at(ip) == byte::LOAD) {
+                            this->emitTable(
+                                // NAME
+                                top()->entity->names.back(),
+                                // VALUE
+                                m);
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case byte::GET: { // GET
+                std::string name = this->retName();
+                object::Object *obj = this->popData();
+
+                switch (obj->kind()) {
+                    case object::TUPLE: {
+                        object::Tuple *t = static_cast<object::Tuple *>(obj);
+
+                        int i;
+
+                        if (isNumberStr(name)) { // DIGITAL INDEX
+                            i = atoi(name.c_str());
+                        } else {
+                            // VAR
+                            object::Object *o = this->lookUp(name);
+
+                            if (o->kind() != object::INT) {
+                                error("index can only be of integer type");
+                            }
+                            i = static_cast<object::Int *>(o)->value;
+                        }
+
+                        if (i >= t->elements.size()) {
+                            error("tuple out of bounds, index: " +
+                                  std::to_string(i) + " max: " +
+                                  std::to_string(t->elements.size() - 1));
+                        }
+                        this->pushData(t->elements.at(i));
+                        break;
+                    }
+                    case object::ENUM: {
+                        object::Enum *e = static_cast<object::Enum *>(obj);
+
+                        std::map<int, std::string>::iterator iter =
+                            e->elements.begin(); // ITERATOR
+                        for (;
+                             iter != e->elements.end() && iter->second != name;
+                             *iter++)
+                            ;
+                        if (iter == e->elements.end()) {
+                            error("nonexistent members");
+                        }
+
+                        this->pushData(new object::Int(iter->first));
+                        break;
+                    }
+                    case object::WHOLE: {
+                        object::Whole *w = static_cast<object::Whole *>(obj);
+
+                        if (w->f->tb.symbols.count(name) != 0) {
+                            auto o = w->f->tb.symbols[name];
+
+                            if (o->kind() == object::FUNC) {
+                                this->callWholeMethod = true;
+                                this->wholwName = w->name;
+                            }
+
+                            this->pushData(o);
+                        } else {
+                            error("nonexistent members");
+                        }
+                        break;
+                    }
+                    default: error("nonexistent members");
+                }
+
+                this->op++;
+                break;
+            }
+
+            case byte::SET: { // SET
+                break;
+            }
+
+            case byte::ENUM: { // ENUM
+                object::Enum *e =
+                    static_cast<object::Enum *>(this->retConstant()); // OBJECT
+                this->emitTable(e->name, e);                          // STORE
+                this->op++;
+                break;
+            }
+
+            case byte::WHOLE: { // WHOLE
+                object::Whole *w =
+                    static_cast<object::Whole *>(this->retConstant()); // OBJECT
+                this->emitTable(w->name, w);                           // STORE
+                this->op++;
+                break;
+            }
+
+            case byte::NAME: { // NAME
+                this->pushData(new object::Str(this->retName()));
+                this->op++;
+                break;
+            }
+
+            case byte::NEW: { // NEW
+                std::string name = this->retName();
+
+                this->op++;
+                int count = this->retOffset(); // COUNT
+
+                object::Whole *w =
+                    static_cast<object::Whole *>(this->lookUp(name));
+
+                // FIRST EVALUATE IT
+                w->f = new Frame(w->entity);
+
+                int t = this->op; // TEMP OFFSET
+
+                this->op = 0;
+                this->frames.push_back(w->f); // GO
+                this->evaluate();
+
+                this->frames.pop_back(); // POP
+
+                // SECOND SET CONSTRUCTOR
+                while (count > 0) {
+                    object::Object *v = this->popData();
+                    object::Object *k = this->popData();
+                    // STORE
+                    w->f->tb.symbols[static_cast<object::Str *>(k)->value] = v;
+                    count -= 2;
+                }
+                this->pushData(w); // PUSH
+                this->op = ++t;    // NEXT
                 break;
             }
 

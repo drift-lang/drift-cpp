@@ -1,0 +1,22 @@
+def Foo
+    def () *bar
+    def (x: bool) *what -> bool
+
+    def x: int
+    def y: str = "HELLO!!"
+
+    def (x: int, y: int) max -> int
+        if x > y
+            ret x
+        nf
+            ret y
+        end
+    end
+end
+
+def f: Foo = new Foo{x: 43}
+
+f.x
+f.y
+
+f.max(2, 4)

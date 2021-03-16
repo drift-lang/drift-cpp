@@ -1,0 +1,8 @@
+def x: int = 100
+
+for x > 0
+    if x % 2 == 0
+        x
+    end
+    x -= 1
+end

@@ -18,6 +18,7 @@
 #include "ast.hpp"
 
 struct Entity;
+struct Frame;
 
 // object
 namespace object {
@@ -90,7 +91,7 @@ namespace object {
             if (longer) {
                 return "<Str LONGER>";
             }
-            return "<Str \"" + value + "\" >";
+            return "<Str \"" + value + "\">";
         }
 
         Kind kind() override { return STR; }
@@ -237,6 +238,9 @@ namespace object {
 
         // inherit definition
         std::vector<std::string> inherit;
+
+        // whole fram
+        Frame *f;
 
         std::string stringer() override { return "<Whole '" + name + "'>"; }
 

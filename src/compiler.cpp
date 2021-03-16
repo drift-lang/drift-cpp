@@ -107,6 +107,8 @@ void Compiler::expr(ast::Expr *expr) {
                 case token::AS_MUL: this->emitCode(byte::MUL); break;
                 case token::DIV:
                 case token::AS_DIV: this->emitCode(byte::DIV); break;
+                case token::SUR:
+                case token::AS_SUR: this->emitCode(byte::SUR); break;
 
                 case token::GREATER: this->emitCode(byte::GR); break;
                 case token::LESS: this->emitCode(byte::LE); break;
@@ -119,7 +121,8 @@ void Compiler::expr(ast::Expr *expr) {
             }
 
             if (b->op.kind == token::AS_ADD || b->op.kind == token::AS_SUB ||
-                b->op.kind == token::AS_MUL || b->op.kind == token::AS_DIV) {
+                b->op.kind == token::AS_MUL || b->op.kind == token::AS_DIV ||
+                b->op.kind == token::AS_SUR) {
                 ast::NameExpr *n = static_cast<ast::NameExpr *>(b->left);
 
                 this->emitName(n->token.literal);
@@ -151,14 +154,6 @@ void Compiler::expr(ast::Expr *expr) {
 
             this->emitCode(byte::LOAD);
             this->emitName(n->token.literal); // new name
-
-            // increment and prefix
-            if (n->selfIncrement && n->prefix) this->emitCode(byte::P_INCR);
-            if (n->selfIncrement) this->emitCode(byte::INCR); // suffix
-
-            // decrement and prefix
-            if (n->selfDecrement && n->prefix) this->emitCode(byte::P_DECR);
-            if (n->selfDecrement) this->emitCode(byte::DECR); // suffix
         } break;
         //
         case ast::EXPR_CALL: {
@@ -196,14 +191,18 @@ void Compiler::expr(ast::Expr *expr) {
             ast::AssignExpr *a = static_cast<ast::AssignExpr *>(expr);
 
             this->expr(a->value);
+            this->expr(a->expr);
 
             if (a->expr->kind() == ast::EXPR_NAME) {
                 this->emitCode(byte::ASSIGN);
                 this->emitName(
                     static_cast<ast::NameExpr *>(a->expr)->token.literal);
-                // index expr
             } else {
-                this->emitCode(byte::REPLACE);
+                // index replace
+                if (now->codes.back() == byte::INDEX) {
+                    this->now->codes.pop_back();   // pop
+                    this->emitCode(byte::REPLACE); // push
+                }
             }
         } break;
         //
@@ -452,6 +451,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
             this->itf = z;
 
             obj->entity = this->now; // function entity
+
+            this->entities.pop_back(); // lose
 
             // if more than one it points to the last one
             this->now =

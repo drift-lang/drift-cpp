@@ -3,9 +3,10 @@ def i: int = 1 // ONE PLUS
 def (x: int) foo -> int
     if x == 8
         ret -1
+    nf
+        i += 1
+        ret i * x
     end
-    i += 1
-    ret i * x
 end
 
 def x: int = 0
@@ -18,3 +19,65 @@ for ->
     out x == 10
     x += 1
 end
+
+/*
+ENTITY 'main': 
+                   0: CONST          0 <Int 1>
+                   1: STORE          0 'i' 0 <Int>
+                   2: FUNC           1 <Func 'foo'>
+                   3: CONST          2 <Int 0>
+                   4: STORE          1 'x' 1 <Int>
+                   5: LOAD           2 'foo'
+                   6: LOAD           1 'x'
+                   7: CALL           1
+                   8: STORE          3 'sum' 2 <Int>
+                   9: LOAD           3 'sum'
+                  10: LOAD           1 'x'
+                  11: CONST          3 <Int 10>
+                  12: E_E
+                  13: T_JUMP        19
+                  14: LOAD           1 'x'
+                  15: CONST          4 <Int 1>
+                  16: ADD
+                  17: ASSIGN         1 'x'
+                  18: JUMP           5
+                  19: RET
+CONSTANT: 
+                   0: <Int 1>
+                   1: <Func 'foo'>
+                   2: <Int 0>
+                   3: <Int 10>
+                   4: <Int 1>
+NAME: 
+                   0: 'i'	    1: 'x' 	    2: 'foo' 	    3: 'sum' 	
+
+TYPE: 
+                   0: <Int>
+                   1: <Int>
+                   2: <Int>
+ENTITY 'foo': 
+                   0: LOAD           0 'x'
+                   1: CONST          0 <Int 8>
+                   2: E_E
+                   3: F_JUMP         8
+                   4: CONST          1 <Int 1>
+                   5: NOT
+                   6: RET
+                   7: JUMP          16
+                   8: LOAD           1 'i'
+                   9: CONST          2 <Int 1>
+                  10: ADD
+                  11: ASSIGN         1 'i'
+                  12: LOAD           1 'i'
+                  13: LOAD           0 'x'
+                  14: MUL
+                  15: RET
+CONSTANT: 
+                   0: <Int 8>
+                   1: <Int 1>
+                   2: <Int 1>
+NAME: 
+                   0: 'x'	    1: 'i' 	
+TYPE: 
+               EMPTY
+*/

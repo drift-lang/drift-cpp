@@ -1,24 +1,40 @@
-
 def Color
-
     RED
     GREEN
     PINK
-    WHITE
-
 end
 
+def x: Color = Color.RED
+x
+
+def x: int = Color.GREEN
+x
+
+x == Color.RED
+
 /*
-[Semantic analysis replace 1]: WholeStmt -> <EnumStmt { Name='Color' Fields=(RED GREEN PINK WHITE) }>
+[Semantic analysis replace 1]: WholeStmt -> <EnumStmt { Name='Color' Fields=(RED GREEN PINK) }>
 ENTITY 'main': 
                    0: ENUM           0 <Enum 'Color'>
-                   1: RET
+                   1: LOAD           0 'Color'
+                   2: GET            1 'RED'
+                   3: STORE          2 'x' 0 <User Name='Color' >
+                   4: LOAD           2 'x'
+                   5: LOAD           0 'Color'
+                   6: GET            3 'GREEN'
+                   7: STORE          2 'x' 1 <Int>
+                   8: LOAD           2 'x'
+                   9: LOAD           2 'x'
+                  10: LOAD           0 'Color'
+                  11: GET            1 'RED'
+                  12: E_E
+                  13: RET
 CONSTANT: 
                    0: <Enum 'Color'>
 NAME: 
-               EMPTY
-OFFSET: 
-                   0: 0 	
+                   0: 'Color'	    1: 'RED' 	    2: 'x' 	    3: 'GREEN' 	
+
 TYPE: 
-               EMPTY
+                   0: <User Name='Color' >
+                   1: <Int>
 */
