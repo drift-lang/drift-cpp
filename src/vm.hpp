@@ -43,6 +43,9 @@ private:
   // look up a name from current top frame
   object::Object *lookUp(std::string);
 
+  // look up a name from main frame
+  object::Object *lookUpMainFrame(std::string);
+
   // first to end iterator
   object::Object *retConstant();
 
@@ -83,6 +86,9 @@ public:
 
   // top frame
   Frame *top();
+
+  // main frame
+  Frame *main();
 
   // repl mode to clean pointer for offset
   inline void clean() { this->op = 0; }

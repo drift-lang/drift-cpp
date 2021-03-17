@@ -1,4 +1,6 @@
-def Foo
+def Foo 
+    def (int) *add -> int
+
     def () f -> str
         ret "X"
     end
@@ -9,17 +11,10 @@ def Bar <- Foo
         ret f()
     end
 
-    def () b -> str
-        ret "B"
-    end
-
-    def () x -> str
-        ret "X"
+    def (x: int) add -> int
+        ret x + x
     end
 end
 
-def x: Bar = new Bar
-
-x.a()
-x.b()
-x.x()
+new Bar.a()
+new Bar.add(200)

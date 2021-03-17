@@ -17,6 +17,9 @@
 // top frame
 Frame *vm::top() { return frames.back(); }
 
+// main frame
+Frame *vm::main() { return frames.front(); }
+
 // push object to the current frame
 void vm::pushData(object::Object *obj) { top()->data.push(obj); }
 
@@ -40,6 +43,17 @@ object::Object *vm::lookUp(std::string n) {
       top()->tb.symbols.count(n) != 0) {
 
     return top()->tb.symbols.at(n); // GET
+  }
+  return nullptr;
+}
+
+// look up a name from main frame
+object::Object *vm::lookUpMainFrame(std::string n) {
+  if (!main()->tb.empty() &&
+      // check
+      main()->tb.symbols.count(n) != 0) {
+
+    return main()->tb.symbols.at(n); // GET
   }
   return nullptr;
 }
@@ -1088,7 +1102,33 @@ void vm::evaluate() { // EVALUATE
         std::string name = this->retName();       // NAME
         object::Object *obj = this->lookUp(name); // OBJECT
 
-        if (obj == nullptr) error("not defined name '" + name + "'");
+        // std::cout << "LOAD: " << name << std::endl;
+        if (obj == nullptr) {
+          // LOAD INHERIT
+          if (!this->wholeInherit.empty()) {
+
+            for (auto i : this->wholeInherit) {
+              object::Whole *w =
+                  static_cast<object::Whole *>(this->lookUpMainFrame(i));
+
+              auto iter = w->f->tb.symbols.begin();
+
+              for (; iter != w->f->tb.symbols.end() && iter->first != name;
+                   iter++)
+                ;
+
+              if (iter == w->f->tb.symbols.end()) {
+                error("not defined name '" + name + "'");
+              }
+              if (iter->second->kind() != object::FUNC) {
+                error("only parent class methods can be called");
+              }
+
+              obj = iter->second; // LOAD
+            }
+          } else
+            error("not defined name '" + name + "'");
+        }
 
         this->pushData(obj);
         this->op++;
@@ -1434,6 +1474,7 @@ void vm::evaluate() { // EVALUATE
 
               if (o->kind() == object::FUNC) {
                 this->callWholeMethod = true; // FOR CALL AND LOAD
+
                 this->wholeName = w->name;
                 this->wholeInherit = w->inherit;
               }
@@ -1481,8 +1522,19 @@ void vm::evaluate() { // EVALUATE
 
         w->entity->dissemble();
 
+        // EVALUATE IT
+        w->f = new Frame(w->entity);
+
+        int t = this->op; // TEMP OFFSET
+
+        this->op = 0;
+        this->frames.push_back(w->f); // GO
+        this->evaluate();
+
+        this->frames.pop_back(); // POP
+
         this->emitTable(w->name, w); // STORE
-        this->op++;
+        this->op = ++t;
         break;
       }
 
@@ -1502,17 +1554,6 @@ void vm::evaluate() { // EVALUATE
           error("not defined whole of '" + name + "'");
         }
         object::Whole *w = static_cast<object::Whole *>(this->lookUp(name));
-
-        // EVALUATE IT
-        w->f = new Frame(w->entity);
-
-        int t = this->op; // TEMP OFFSET
-
-        this->op = 0;
-        this->frames.push_back(w->f); // GO
-        this->evaluate();
-
-        this->frames.pop_back(); // POP
 
         // SET CONSTRUCTOR
         while (count > 0) {
@@ -1595,7 +1636,7 @@ void vm::evaluate() { // EVALUATE
         }
 
         this->pushData(w); // PUSH
-        this->op = ++t;    // NEXT
+        this->op++;        // NEXT
         break;
       }
 
