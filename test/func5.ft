@@ -1,0 +1,10 @@
+def () x -> str
+    ret "X"
+end
+
+def () a -> str
+    ret x() + x()
+end
+
+x()
+a()

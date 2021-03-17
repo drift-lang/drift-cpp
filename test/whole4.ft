@@ -1,0 +1,15 @@
+def Foo
+    def id: int
+
+    def ss: str = "OK"
+end
+
+def x: Foo = new Foo
+x.id
+
+x.id = 200
+x.id
+
+x.ss
+x.ss = "NO"
+x.ss

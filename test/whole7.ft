@@ -1,0 +1,15 @@
+def Foo
+    
+    def () x -> str
+        ret y()
+    end
+
+    def () y -> str
+        ret "Y"
+    end
+end
+
+def x: Foo = new Foo
+
+x.x()
+x.y()

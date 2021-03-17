@@ -22,230 +22,292 @@ struct Frame;
 
 // object
 namespace object {
-    // kind
-    enum Kind {
-        INT,
-        FLOAT,
-        STR,
-        CHAR,
-        BOOL,
-        ARRAY,
-        TUPLE,
-        MAP,
-        ENUM,
-        FUNC,
-        WHOLE
-    };
+  // kind
+  enum Kind {
+    INT,
+    FLOAT,
+    STR,
+    CHAR,
+    BOOL,
+    ARRAY,
+    TUPLE,
+    MAP,
+    ENUM,
+    FUNC,
+    WHOLE
+  };
 
-    // object abstract
-    class Object {
-      public:
-        // return a string of dis object
-        virtual std::string stringer() = 0;
-        // return the kind of object
-        virtual Kind kind() = 0;
-    };
+  // object abstract
+  class Object {
+  public:
+    // return a string of dis object
+    virtual std::string stringer() = 0;
+    // return a raw string of dis object
+    virtual std::string rawStringer() = 0;
+    // return the kind of object
+    virtual Kind kind() = 0;
+  };
 
-    // INT
-    class Int : public Object {
-      public:
-        int value;
+  // INT
+  class Int : public Object {
+  public:
+    int value;
 
-        Int(int v) : value(v) {}
+    Int(int v) : value(v) {}
 
-        std::string stringer() override {
-            return "<Int " + std::to_string(value) + ">";
+    std::string rawStringer() override {
+      return "<Int " + std::to_string(value) + ">";
+    }
+
+    std::string stringer() override { return std::to_string(value); }
+
+    Kind kind() override { return INT; }
+  };
+
+  // FLOAT
+  class Float : public Object {
+  public:
+    double value;
+
+    Float(float v) : value(v) {}
+
+    std::string rawStringer() override {
+      return "<Float " + std::to_string(value) + ">";
+    }
+
+    std::string stringer() override { return std::to_string(value); }
+
+    Kind kind() override { return FLOAT; }
+  };
+
+  // STR
+  class Str : public Object {
+  public:
+    std::string value;
+    bool longer = false;
+
+    Str(std::string v) : value(v) {}
+
+    Str(std::string v, bool longer) : value(v), longer(longer) {
+      value.pop_back(); // long character judgment end, delete judgment
+                        // char
+    }
+
+    std::string rawStringer() override {
+      if (longer) {
+        return "<Str LONGER>";
+      }
+      return "<Str \"" + value + "\">";
+    }
+
+    std::string stringer() override { return value; }
+
+    Kind kind() override { return STR; }
+  };
+
+  // CHAR
+  class Char : public Object {
+  public:
+    char value;
+
+    Char(char v) : value(v) {}
+
+    std::string rawStringer() override {
+      std::stringstream str;
+
+      str << "<Char '" << value << "'>";
+
+      return str.str();
+    }
+
+    std::string stringer() override { return "" + value; }
+
+    Kind kind() override { return CHAR; }
+  };
+
+  // BOOL
+  class Bool : public Object {
+  public:
+    bool value;
+
+    Bool(bool v) : value(v) {}
+
+    std::string rawStringer() override {
+      return "<Bool " + std::to_string(value) + ">";
+    }
+
+    std::string stringer() override { return value ? "T" : "F"; }
+
+    Kind kind() override { return BOOL; }
+  };
+
+  // ARRAY
+  class Array : public Object {
+  public:
+    std::vector<object::Object *> elements;
+
+    std::string rawStringer() override {
+      std::stringstream str;
+
+      str << "<Array [";
+      for (auto iter = elements.begin(); iter != elements.end();) {
+        str << (*iter)->stringer();
+        if (++iter != elements.end()) {
+          str << ", ";
         }
+      }
 
-        Kind kind() override { return INT; }
-    };
+      str << "]>";
+      return str.str();
+    }
 
-    // FLOAT
-    class Float : public Object {
-      public:
-        double value;
+    std::string stringer() override {
+      std::stringstream str;
 
-        Float(float v) : value(v) {}
-
-        std::string stringer() override {
-            return "<Float " + std::to_string(value) + ">";
+      str << "[";
+      for (auto iter = elements.begin(); iter != elements.end();) {
+        str << (*iter)->stringer();
+        if (++iter != elements.end()) {
+          str << ", ";
         }
+      }
 
-        Kind kind() override { return FLOAT; }
-    };
+      str << "]";
+      return str.str();
+    }
 
-    // STR
-    class Str : public Object {
-      public:
-        std::string value;
-        bool longer = false;
+    Kind kind() override { return ARRAY; }
+  };
 
-        Str(std::string v) : value(v) {}
+  // TUPLE
+  class Tuple : public Object {
+  public:
+    std::vector<object::Object *> elements;
 
-        Str(std::string v, bool longer) : value(v), longer(longer) {
-            value.pop_back(); // long character judgment end, delete judgment
-                              // char
+    std::string rawStringer() override {
+      std::stringstream str;
+
+      str << "<Tuple (";
+      for (auto iter = elements.begin(); iter != elements.end();) {
+        str << (*iter)->stringer();
+        if (++iter != elements.end()) {
+          str << ", ";
         }
+      }
 
-        std::string stringer() override {
-            if (longer) {
-                return "<Str LONGER>";
-            }
-            return "<Str \"" + value + "\">";
+      str << ")>";
+      return str.str();
+    }
+
+    std::string stringer() override {
+      std::stringstream str;
+
+      str << "(";
+      for (auto iter = elements.begin(); iter != elements.end();) {
+        str << (*iter)->stringer();
+        if (++iter != elements.end()) {
+          str << ", ";
         }
+      }
 
-        Kind kind() override { return STR; }
-    };
+      str << ")";
+      return str.str();
+    }
 
-    // CHAR
-    class Char : public Object {
-      public:
-        char value;
+    Kind kind() override { return TUPLE; }
+  };
 
-        Char(char v) : value(v) {}
+  // MAP
+  class Map : public Object {
+  public:
+    std::map<object::Object *, object::Object *> elements;
 
-        std::string stringer() override {
-            std::stringstream str;
+    std::string rawStringer() override {
+      std::stringstream str;
 
-            str << "<Char '" << value << "'>";
-
-            return str.str();
+      str << "<Map {";
+      for (auto iter = elements.begin(); iter != elements.end();) {
+        str << "K: " << iter->first->stringer()
+            << " V: " << iter->second->stringer();
+        if (++iter != elements.end()) {
+          str << ", ";
         }
+      }
 
-        Kind kind() override { return CHAR; }
-    };
+      str << "}>";
+      return str.str();
+    }
 
-    // BOOL
-    class Bool : public Object {
-      public:
-        bool value;
+    std::string stringer() override {
+      std::stringstream str;
 
-        Bool(bool v) : value(v) {}
-
-        std::string stringer() override {
-            return "<Bool " + std::to_string(value) + ">";
+      str << "{";
+      for (auto iter = elements.begin(); iter != elements.end();) {
+        str << iter->first->stringer() << ": " << iter->second->stringer();
+        if (++iter != elements.end()) {
+          str << ", ";
         }
+      }
 
-        Kind kind() override { return BOOL; }
-    };
+      str << "}";
+      return str.str();
+    }
 
-    // ARRAY
-    class Array : public Object {
-      public:
-        std::vector<object::Object *> elements;
+    Kind kind() override { return MAP; }
+  };
 
-        std::string stringer() override {
-            std::stringstream str;
+  // ENUM
+  class Enum : public Object {
+  public:
+    std::string name;
+    std::map<int, std::string> elements;
 
-            str << "<Array [";
-            for (auto iter = elements.begin(); iter != elements.end();) {
-                str << (*iter)->stringer();
-                if (++iter != elements.end()) {
-                    str << ", ";
-                }
-            }
+    std::string rawStringer() override { return "<Enum '" + name + "'>"; }
 
-            str << "]>";
-            return str.str();
-        }
+    std::string stringer() override { return "<Enum '" + name + "'>"; }
 
-        Kind kind() override { return ARRAY; }
-    };
+    Kind kind() override { return ENUM; }
+  };
 
-    // TUPLE
-    class Tuple : public Object {
-      public:
-        std::vector<object::Object *> elements;
+  // FUNC
+  class Func : public Object {
+  public:
+    std::string name; // function name
 
-        std::string stringer() override {
-            std::stringstream str;
+    ast::FuncArg arguments; // function args
+    ast::Type *ret;         // function return
 
-            str << "<Tuple (";
-            for (auto iter = elements.begin(); iter != elements.end();) {
-                str << (*iter)->stringer();
-                if (++iter != elements.end()) {
-                    str << ", ";
-                }
-            }
+    Entity *entity; // function entity
 
-            str << ")>";
-            return str.str();
-        }
+    std::string rawStringer() override { return "<Func '" + name + "'>"; }
 
-        Kind kind() override { return TUPLE; }
-    };
+    std::string stringer() override { return "<Func '" + name + "'>"; }
 
-    // MAP
-    class Map : public Object {
-      public:
-        std::map<object::Object *, object::Object *> elements;
+    Kind kind() override { return FUNC; }
+  };
 
-        std::string stringer() override {
-            if (elements.empty()) return "<Map {}>";
+  // WHOLE
+  class Whole : public Object {
+  public:
+    std::string name; // whole name
 
-            std::stringstream str;
-            str << "<Map {";
-            for (auto iter = elements.begin(); iter != elements.end();) {
-                str << "K: " << iter->first->stringer()
-                    << " V: " << iter->second->stringer();
-                if (++iter != elements.end()) {
-                    str << ", ";
-                }
-            }
+    Entity *entity; // whole entity
 
-            str << "}>";
-            return str.str();
-        }
+    // interface definition
+    std::vector<std::tuple<std::string, ast::FaceArg, ast::Type *>> interface;
 
-        Kind kind() override { return MAP; }
-    };
+    // inherit definition
+    std::vector<std::string> inherit;
 
-    // ENUM
-    class Enum : public Object {
-      public:
-        std::string name;
-        std::map<int, std::string> elements;
+    // whole fram
+    Frame *f;
 
-        std::string stringer() override { return "<Enum '" + name + "'>"; }
+    std::string rawStringer() override { return "<Whole '" + name + "'>"; }
 
-        Kind kind() override { return ENUM; }
-    };
+    std::string stringer() override { return "<Whole '" + name + "'>"; }
 
-    // FUNC
-    class Func : public Object {
-      public:
-        std::string name; // function name
-
-        ast::Arg arguments; // function args
-        ast::Type *ret;     // function return
-
-        Entity *entity; // function entity
-
-        std::string stringer() override { return "<Func '" + name + "'>"; }
-
-        Kind kind() override { return FUNC; }
-    };
-
-    // WHOLE
-    class Whole : public Object {
-      public:
-        std::string name; // whole name
-
-        Entity *entity; // whole entity
-
-        // interface definition
-        std::vector<std::tuple<std::string, ast::Arg, ast::Type *>> interface;
-
-        // inherit definition
-        std::vector<std::string> inherit;
-
-        // whole fram
-        Frame *f;
-
-        std::string stringer() override { return "<Whole '" + name + "'>"; }
-
-        Kind kind() override { return WHOLE; }
-    };
+    Kind kind() override { return WHOLE; }
+  };
 }; // namespace object
 
 #endif

@@ -20,14 +20,14 @@
 
 // frame structure
 struct Frame {
-    Entity *entity; // ENTITY
+  Entity *entity; // ENTITY
 
-    Table tb; // SYMBOL
+  Table tb; // SYMBOL
 
-    Stack<object::Object *> data;  // DATA
-    object::Object *ret = nullptr; // RETURN
+  Stack<object::Object *> data;  // DATA
+  object::Object *ret = nullptr; // RETURN
 
-    explicit Frame(Entity *e) : entity(e) {}
+  explicit Frame(Entity *e) : entity(e) {}
 };
 
 #endif

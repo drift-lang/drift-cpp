@@ -22,36 +22,36 @@
 
 // analysis
 class Analysis {
-  private:
-    int position = 0;
-    // stmts
-    std::vector<ast::Stmt *> *statements;
+private:
+  int position = 0;
+  // stmts
+  std::vector<ast::Stmt *> *statements;
 
-    // return the kind of current statement
-    inline ast::Kind look() { return statements->at(position)->kind(); }
+  // return the kind of current statement
+  inline ast::Kind look() { return statements->at(position)->kind(); }
 
-    // return the current statement
-    inline ast::Stmt *now() { return statements->at(position); }
+  // return the current statement
+  inline ast::Stmt *now() { return statements->at(position); }
 
-    // throw semantic analysis exception
-    void error(exp::Kind k, std::string message, int line) {
-        throw exp::Exp(k, message, line);
+  // throw semantic analysis exception
+  void error(exp::Kind k, std::string message, int line) {
+    throw exp::Exp(k, message, line);
+  }
+
+public:
+  explicit Analysis(std::vector<ast::Stmt *> *stmts) {
+    this->statements = stmts;
+
+    while (position < statements->size()) {
+      this->analysisStmt(now());
+      this->position++;
     }
+  }
 
-  public:
-    explicit Analysis(std::vector<ast::Stmt *> *stmts) {
-        this->statements = stmts;
-
-        while (position < statements->size()) {
-            this->analysisStmt(now());
-            this->position++;
-        }
-    }
-
-    // statement
-    void analysisStmt(ast::Stmt *stmt);
-    // expression
-    void analysisExpr(ast::Expr *expr);
+  // statement
+  void analysisStmt(ast::Stmt *stmt);
+  // expression
+  void analysisExpr(ast::Expr *expr);
 };
 
 #endif

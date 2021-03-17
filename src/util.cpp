@@ -16,10 +16,10 @@
 
 // returns whether the string is all numbers
 bool isNumberStr(const std::string str) {
-    for (int i = 0; i < str.size(); i++) {
-        if (!std::isdigit(str.at(i))) {
-            return false;
-        }
+  for (int i = 0; i < str.size(); i++) {
+    if (!std::isdigit(str.at(i))) {
+      return false;
     }
-    return true;
+  }
+  return true;
 }

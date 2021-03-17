@@ -1,0 +1,26 @@
+def Foo
+    def (int, int) *max -> int
+end
+
+def Op
+    def (int) *what -> int
+end
+
+def Bar <- Foo + Op
+
+    def (a + b: int) max -> int
+        if a > b
+            ret a
+        nf
+            ret b
+        end
+    end
+
+    def (x: int) what -> int
+        ret x * 2
+    end
+end
+
+def x: Bar = new Bar
+
+x.max(34, 12) == x.what(16) + 2

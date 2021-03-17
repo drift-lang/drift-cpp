@@ -1,18 +1,9 @@
-
 def () *foo
-def () *foo -> int
 
-def (x + y + z: int, x: str) *foo -> bool
+def (User) *foo -> int
 
-/*
-ENTITY 'main': 
-                   0: RET
-CONSTANT: 
-               EMPTY
-NAME: 
-               EMPTY
-OFFSET: 
-               EMPTY
-TYPE: 
-               EMPTY
-*/
+def (int, Foo, int, int, str) *foo -> bool
+
+def (a + b: int) foo -> int
+    ret a + b * 2
+end

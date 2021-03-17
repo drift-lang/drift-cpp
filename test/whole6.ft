@@ -1,0 +1,25 @@
+def Foo
+    def () f -> str
+        ret "X"
+    end
+end
+
+def Bar <- Foo
+    def () a -> str
+        ret f()
+    end
+
+    def () b -> str
+        ret "B"
+    end
+
+    def () x -> str
+        ret "X"
+    end
+end
+
+def x: Bar = new Bar
+
+x.a()
+x.b()
+x.x()

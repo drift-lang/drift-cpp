@@ -20,13 +20,13 @@
 #include "object.hpp"
 
 struct Table {
-    std::map<std::string, object::Object *> symbols;
+  std::map<std::string, object::Object *> symbols;
 
-    void remove(std::string n) { symbols.erase(n); }
+  void remove(std::string n) { symbols.erase(n); }
 
-    void clear() { symbols.clear(); }
+  void clear() { symbols.clear(); }
 
-    bool empty() { return symbols.empty(); }
+  bool empty() { return symbols.empty(); }
 };
 
 #endif
