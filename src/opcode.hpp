@@ -20,7 +20,7 @@
 // bytecode
 namespace byte {
   // total number of bytecodes
-  constexpr int len = 44;
+  constexpr int len = 43;
   // bytecode type
   enum Code {
     CONST,   // O
@@ -37,7 +37,6 @@ namespace byte {
     NEW,     // NEW
     FUNC,    // FUNC
     CHA,     // CHA
-    END,     // END
     WHOLE,   // WHOLE
     ENUM,    // ENUM
 
@@ -79,12 +78,13 @@ namespace byte {
 
   // return a string of bytecode
   static std::string codeString[len] = {
-      "CONST",  "ASSIGN", "STORE", "LOAD", "INDEX", "REPLACE", "GET",   "SET",
-      "CALL",   "ORIG",   "NAME",  "NEW",  "FUNC",  "CHA",     "END",   "WHOLE",
-      "ENUM",   "PUB",    "MOD",   "USE",  "UAS",   "B_ARR",   "B_TUP", "B_MAP",
-      "ADD",    "SUB",    "MUL",   "DIV",  "SUR",   "GR",      "LE",    "GR_E",
-      "LE_E",   "E_E",    "N_E",   "AND",  "OR",    "BANG",    "NOT",   "JUMP",
-      "F_JUMP", "T_JUMP", "RET_N", "RET",
+      "CONST", "ASSIGN", "STORE", "LOAD", "INDEX",  "REPLACE", "GET",
+      "SET",   "CALL",   "ORIG",  "NAME", "NEW",    "FUNC",    "CHA",
+      "WHOLE", "ENUM",   "PUB",   "MOD",  "USE",    "UAS",     "B_ARR",
+      "B_TUP", "B_MAP",  "ADD",   "SUB",  "MUL",    "DIV",     "SUR",
+      "GR",    "LE",     "GR_E",  "LE_E", "E_E",    "N_E",     "AND",
+      "OR",    "BANG",   "NOT",   "JUMP", "F_JUMP", "T_JUMP",  "RET_N",
+      "RET",
   };
 }; // namespace byte
 

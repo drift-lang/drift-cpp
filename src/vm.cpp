@@ -1269,13 +1269,17 @@ void vm::evaluate() { // EVALUATE
 
         // std::cout << "CALL: " << f->name << " " << fra->tb.symbols.size()
         //           << std::endl;
+        // std::cout << "CALL ARGS: " << arguments.len() << std::endl;
 
         // ARGUMENT
-        for (auto i : f->arguments) {
+        for (std::map<token::Token *, ast::Type *>::reverse_iterator iter =
+                 f->arguments.rbegin();
+             //  REVERSE EMIT
+             iter != f->arguments.rend(); iter++) {
           object::Object *val = arguments.pop(); // OBJECT
 
-          this->typeChecker(i.second, val);        // TYPE CHECKER
-          fra->tb.symbols[i.first->literal] = val; // STORE
+          this->typeChecker(iter->second, val);        // TYPE CHECKER
+          fra->tb.symbols[iter->first->literal] = val; // STORE
         }
 
         int t = this->op; // TEMP OFFSET
@@ -1283,7 +1287,6 @@ void vm::evaluate() { // EVALUATE
         this->op = 0;
         this->frames.push_back(fra); // NEW FRAME
         this->evaluate();
-
         // std::cout << "CALL END" << std::endl;
 
         this->frames.pop_back(); // POP
@@ -1637,6 +1640,15 @@ void vm::evaluate() { // EVALUATE
 
         this->pushData(w); // PUSH
         this->op++;        // NEXT
+        break;
+      }
+
+      case byte::CHA: { // CHA
+        std::string name = this->retName();
+        object::Object *obj = this->popData();
+
+        this->emitTable(name, obj);
+        this->op++;
         break;
       }
 

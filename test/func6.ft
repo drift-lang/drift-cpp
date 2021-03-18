@@ -1,0 +1,5 @@
+def (x: []int, t: int) a -> int
+    ret x[0] + t
+end
+
+a([1, 2, 3], 5)
