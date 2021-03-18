@@ -521,9 +521,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
 
       this->emitCode(byte::CHA);
       this->emitName(a->name.literal); // STORE
-
+      
       this->stmt(a->block);
-      this->emitName(a->name.literal);
     } break;
     //
     case ast::STMT_MOD: {

@@ -25,6 +25,7 @@
 #include "entity.hpp"
 
 #include "util.hpp"
+#include "module.hpp"
 
 // structure
 class vm {
@@ -39,6 +40,9 @@ private:
 
   // emit new name of table to the current frame
   void emitTable(std::string, object::Object *);
+
+  // emit the public of name in current frame
+  void emitPub(std::string);
 
   // look up a name from current top frame
   object::Object *lookUp(std::string);

@@ -1,0 +1,3 @@
+use io
+
+io.add(34)

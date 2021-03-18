@@ -1,0 +1,7 @@
+mod io
+
+pub def (x: int) add -> int
+    ret x + 1
+end
+
+pub def x: int = 34

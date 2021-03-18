@@ -1,5 +1,1 @@
 def (x: int) foo end
-
-foo(24)
-
-x

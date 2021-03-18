@@ -34,7 +34,8 @@ namespace object {
     MAP,
     ENUM,
     FUNC,
-    WHOLE
+    WHOLE,
+    MODULE
   };
 
   // object abstract
@@ -263,7 +264,6 @@ namespace object {
     std::map<int, std::string> elements;
 
     std::string rawStringer() override { return "<Enum '" + name + "'>"; }
-
     std::string stringer() override { return "<Enum '" + name + "'>"; }
 
     Kind kind() override { return ENUM; }
@@ -280,7 +280,6 @@ namespace object {
     Entity *entity; // function entity
 
     std::string rawStringer() override { return "<Func '" + name + "'>"; }
-
     std::string stringer() override { return "<Func '" + name + "'>"; }
 
     Kind kind() override { return FUNC; }
@@ -295,7 +294,6 @@ namespace object {
 
     // interface definition
     std::vector<std::tuple<std::string, ast::FaceArg, ast::Type *>> interface;
-
     // inherit definition
     std::vector<std::string> inherit;
 
@@ -303,10 +301,29 @@ namespace object {
     Frame *f;
 
     std::string rawStringer() override { return "<Whole '" + name + "'>"; }
-
     std::string stringer() override { return "<Whole '" + name + "'>"; }
 
     Kind kind() override { return WHOLE; }
+  };
+
+  // MODULE
+  class Module : public Object {
+  public:
+    std::string name; // module name
+
+    Frame *f;                     // module evaluated frame
+    std::vector<std::string> pub; // module public names
+
+    explicit Module(std::string name, Frame *f, std::vector<std::string> pub) {
+      this->name = name;
+      this->f = f;
+      this->pub = pub;
+    }
+
+    std::string rawStringer() override { return "<Module '" + name + "'>"; }
+    std::string stringer() override { return "<Module '" + name + "'>"; }
+
+    Kind kind() override { return MODULE; }
   };
 }; // namespace object
 

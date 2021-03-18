@@ -22,6 +22,8 @@
 #include "version.hpp"
 #include "vm.hpp"
 
+#include "module.hpp"
+
 // DEBUG to output tokens and statements
 bool DEBUG = false;
 // repl mode
@@ -62,6 +64,13 @@ void run(std::string source) {
       mac = new vm(compiler->entities[0]);
     }
     mac->evaluate();
+
+    // module
+    if (!mods.empty()) {
+      for (auto i : mods) {
+        std::cout << i->stringer() << std::endl;
+      }
+    }
     //
   } catch (exp::Exp &e) {
     std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;

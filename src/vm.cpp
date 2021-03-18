@@ -36,6 +36,9 @@ void vm::emitTable(std::string name, object::Object *obj) {
   top()->tb.symbols.insert(std::make_pair(name, obj));
 }
 
+// emit the public of name in current frame
+void vm::emitPub(std::string name) { top()->pub.push_back(name); }
+
 // look up a name
 object::Object *vm::lookUp(std::string n) {
   if (!top()->tb.empty() &&
@@ -58,23 +61,21 @@ object::Object *vm::lookUpMainFrame(std::string n) {
   return nullptr;
 }
 
+#define GET_OFFSET(ip) top()->entity->offsets.at(ip)
+
 // first to end constant iterator for current frame's entity
 object::Object *vm::retConstant() {
-  return top()->entity->constants.at(top()->entity->offsets.at(op));
+  return top()->entity->constants.at(GET_OFFSET(op));
 }
 
 // first to end
-ast::Type *vm::retType() {
-  return top()->entity->types.at(top()->entity->offsets.at(op));
-}
+ast::Type *vm::retType() { return top()->entity->types.at(GET_OFFSET(op)); }
 
 // first to end
-std::string vm::retName() {
-  return top()->entity->names.at(top()->entity->offsets.at(op));
-}
+std::string vm::retName() { return top()->entity->names.at(GET_OFFSET(op)); }
 
 // first to end
-int vm::retOffset() { return top()->entity->offsets.at(op); }
+int vm::retOffset() { return GET_OFFSET(op); }
 
 // throw an exception
 void error(std::string message) {
@@ -234,10 +235,10 @@ void vm::evaluate() { // EVALUATE
 
     switch (co) {
 
-      case byte::CONST:
+      case byte::CONST: { // CONST
         this->pushData(this->retConstant());
         this->op++;
-        break;
+      } break;
 
         //
         // BINARY OPERATOR START
@@ -253,13 +254,12 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Int, static_cast<object::Int *>(x)->value, +,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Float, static_cast<object::Int *>(x)->value, +,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Float> + <Int> <Float>
@@ -268,13 +268,12 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
                         +, static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
                         +, static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Str> + <Str>
@@ -290,8 +289,8 @@ void vm::evaluate() { // EVALUATE
           // ERROR
           error("unsupport type to + operator");
         }
-        break;
-      }
+      } break;
+
       case byte::SUB: { // -
         object::Object *y = this->popData();
         object::Object *x = this->popData();
@@ -302,13 +301,12 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Int, static_cast<object::Int *>(x)->value, -,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Float, static_cast<object::Int *>(x)->value, -,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Float> - <Int> <Float>
@@ -317,20 +315,19 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
                         -, static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
                         -, static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         } else {
           // ERROR
           error("unsupport type to - operator");
         }
-        break;
-      }
+      } break;
+
       case byte::MUL: { // *
         object::Object *y = this->popData();
         object::Object *x = this->popData();
@@ -341,13 +338,12 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Int, static_cast<object::Int *>(x)->value, *,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Float, static_cast<object::Int *>(x)->value, *,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Float> * <Int> <Float>
@@ -357,21 +353,20 @@ void vm::evaluate() { // EVALUATE
               BINARY_OP(object::Float,
                         static_cast<object::Float *>(x)->value, *,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Float,
                         static_cast<object::Float *>(x)->value, *,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         } else {
           // ERROR
           error("unsupport type to * operator");
         }
-        break;
-      }
+      } break;
+
       case byte::DIV: { // /
         object::Object *y = this->popData();
         object::Object *x = this->popData();
@@ -384,15 +379,14 @@ void vm::evaluate() { // EVALUATE
                 error("division by zero");
               BINARY_OP(object::Float, static_cast<object::Int *>(x)->value, /,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Float *>(y)->value == 0)
                 error("division by zero");
               BINARY_OP(object::Float, static_cast<object::Int *>(x)->value, /,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Float> / <Int> <Float>
@@ -403,22 +397,20 @@ void vm::evaluate() { // EVALUATE
                 error("division by zero");
               BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
                         /, static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Float *>(y)->value == 0)
                 error("division by zero");
               BINARY_OP(object::Float, static_cast<object::Float *>(x)->value,
                         /, static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         } else {
           // ERROR
           error("unsupport type to / operator");
         }
-        break;
-      }
+      } break;
 
       case byte::SUR: { // %
         object::Object *y = this->popData();
@@ -432,8 +424,7 @@ void vm::evaluate() { // EVALUATE
           // ERROR
           error("unsupport type to % operator");
         }
-        break;
-      }
+      } break;
 
       case byte::GR: { // >
         object::Object *y = this->popData();
@@ -445,13 +436,12 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, >,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, >,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Float> > <Int> <Float>
@@ -460,20 +450,18 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value, >,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value, >,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         } else {
           // ERROR
           error("unsupport type to > operator");
         }
-        break;
-      }
+      } break;
 
       case byte::GR_E: { // >=
         object::Object *y = this->popData();
@@ -485,13 +473,12 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, >=,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, >=,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Float> >= <Int> <Float>
@@ -500,20 +487,18 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
                         >=, static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
                         >=, static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         } else {
           // ERROR
           error("unsupport type to >= operator");
         }
-        break;
-      }
+      } break;
 
       case byte::LE: { // <
         object::Object *y = this->popData();
@@ -525,13 +510,12 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, <,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, <,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Float> < <Int> <Float>
@@ -540,20 +524,18 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value, <,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value, <,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         } else {
           // ERROR
           error("unsupport type to < operator");
         }
-        break;
-      }
+      } break;
 
       case byte::LE_E: { // <=
         object::Object *y = this->popData();
@@ -565,13 +547,12 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, <=,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, <=,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         }
         // <Float> <= <Int> <Float>
@@ -580,20 +561,18 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
                         <=, static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
                         <=, static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
           }
         } else {
           // ERROR
           error("unsupport type to <= operator");
         }
-        break;
-      }
+      } break;
 
       case byte::E_E: { // ==
         object::Object *y = this->popData();
@@ -605,13 +584,13 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, ==,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, ==,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               int l = static_cast<object::Int *>(x)->value;
               bool r = static_cast<object::Bool *>(y)->value;
@@ -623,8 +602,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Float> == <Int> <Float> <Bool>
@@ -633,13 +611,13 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
                         ==, static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
                         ==, static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               float l = static_cast<object::Float *>(x)->value;
               bool r = static_cast<object::Bool *>(y)->value;
@@ -651,8 +629,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Bool> == <Int> <Float> <Bool>
@@ -665,8 +642,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Float *>(y)->value > 0 &&
                   static_cast<object::Bool *>(x)->value) {
@@ -674,8 +651,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               if (static_cast<object::Bool *>(y)->value &&
                   static_cast<object::Bool *>(x)->value) {
@@ -683,8 +660,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Str> == <Str>
@@ -702,8 +678,7 @@ void vm::evaluate() { // EVALUATE
           // ERROR
           error("unsupport type to == operator");
         }
-        break;
-      }
+      } break;
 
       case byte::N_E: { // !=
         object::Object *y = this->popData();
@@ -715,13 +690,13 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, !=,
                         static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Int *>(x)->value, !=,
                         static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               int l = static_cast<object::Int *>(x)->value;
               bool r = static_cast<object::Bool *>(y)->value;
@@ -733,8 +708,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(true));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Float> != <Int> <Float> <Bool>
@@ -743,13 +717,13 @@ void vm::evaluate() { // EVALUATE
             case object::INT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
                         !=, static_cast<object::Int *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               BINARY_OP(object::Bool, static_cast<object::Float *>(x)->value,
                         !=, static_cast<object::Float *>(y)->value);
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               float l = static_cast<object::Float *>(x)->value;
               bool r = static_cast<object::Bool *>(y)->value;
@@ -761,8 +735,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(true));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Bool> != <Int> <Float> <Bool>
@@ -775,8 +748,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(true));
               }
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Float *>(y)->value > 0 &&
                   static_cast<object::Bool *>(x)->value) {
@@ -784,8 +757,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(true));
               }
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               if (static_cast<object::Bool *>(y)->value &&
                   static_cast<object::Bool *>(x)->value) {
@@ -793,8 +766,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(true));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Str> != <Str>
@@ -812,8 +784,7 @@ void vm::evaluate() { // EVALUATE
           // ERROR
           error("unsupport type to == operator");
         }
-        break;
-      }
+      } break;
 
       case byte::AND: { // &
         object::Object *y = this->popData();
@@ -829,8 +800,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Int *>(x)->value > 0 &&
                   static_cast<object::Float *>(y)->value > 0) {
@@ -838,8 +809,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               if (static_cast<object::Int *>(x)->value > 0 &&
                   static_cast<object::Bool *>(y)->value) {
@@ -847,8 +818,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Float> & <Int> <Float> <Bool>
@@ -861,8 +831,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Float *>(x)->value > 0 &&
                   static_cast<object::Float *>(y)->value > 0) {
@@ -870,8 +840,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               if (static_cast<object::Float *>(x)->value > 0 &&
                   static_cast<object::Bool *>(y)->value) {
@@ -879,8 +849,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Bool> & <Int> <Float> <Bool>
@@ -893,8 +862,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Bool *>(x)->value &&
                   static_cast<object::Float *>(y)->value > 0) {
@@ -902,8 +871,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               if (static_cast<object::Bool *>(x)->value &&
                   static_cast<object::Bool *>(y)->value) {
@@ -911,16 +880,14 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // ERROR
         else {
           error("only number and boolean type to & operator");
         }
-        break;
-      }
+      } break;
 
       case byte::OR: { // |
         object::Object *y = this->popData();
@@ -936,8 +903,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Int *>(x)->value > 0 ||
                   static_cast<object::Float *>(y)->value > 0) {
@@ -945,8 +912,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               if (static_cast<object::Int *>(x)->value > 0 ||
                   static_cast<object::Bool *>(y)->value) {
@@ -954,8 +921,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Float> & <Int> <Float> <Bool>
@@ -968,8 +934,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Float *>(x)->value > 0 ||
                   static_cast<object::Float *>(y)->value > 0) {
@@ -977,8 +943,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               if (static_cast<object::Float *>(x)->value > 0 ||
                   static_cast<object::Bool *>(y)->value) {
@@ -986,8 +952,7 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // <Bool> & <Int> <Float> <Bool>
@@ -1000,8 +965,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::FLOAT: {
               if (static_cast<object::Bool *>(x)->value ||
                   static_cast<object::Float *>(y)->value > 0) {
@@ -1009,8 +974,8 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
+            //
             case object::BOOL: {
               if (static_cast<object::Bool *>(x)->value ||
                   static_cast<object::Bool *>(y)->value) {
@@ -1018,16 +983,14 @@ void vm::evaluate() { // EVALUATE
               } else {
                 this->pushData(new object::Bool(false));
               }
-              break;
-            }
+            } break;
           }
         }
         // ERROR
         else {
           error("only number and boolean type to | operator");
         }
-        break;
-      }
+      } break;
 
         //
         // BINARY OPERATOR END
@@ -1057,8 +1020,7 @@ void vm::evaluate() { // EVALUATE
         }
 
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::NOT: { // -
         object::Object *obj = this->popData();
@@ -1069,11 +1031,9 @@ void vm::evaluate() { // EVALUATE
 
         this->pushData(
             new object::Int(-static_cast<object::Int *>(obj)->value));
-        break;
-      }
+      } break;
 
-      case byte::STORE: // STORE
-      {
+      case byte::STORE: { // STORE
         object::Object *obj;
         std::string name = this->retName(); // TO NAME
 
@@ -1095,8 +1055,7 @@ void vm::evaluate() { // EVALUATE
 
         this->emitTable(name, obj); // STORE
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::LOAD: {
         std::string name = this->retName();       // NAME
@@ -1132,8 +1091,7 @@ void vm::evaluate() { // EVALUATE
 
         this->pushData(obj);
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::B_ARR: {
         int count = this->retOffset(); // COUNT
@@ -1146,8 +1104,7 @@ void vm::evaluate() { // EVALUATE
 
         this->pushData(arr);
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::B_TUP: {
         int count = this->retOffset(); // COUNT
@@ -1160,8 +1117,7 @@ void vm::evaluate() { // EVALUATE
 
         this->pushData(tup);
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::B_MAP: {
         int count = this->retOffset(); // COUNT
@@ -1177,8 +1133,7 @@ void vm::evaluate() { // EVALUATE
 
         this->pushData(map);
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::ASSIGN: {
         std::string name = this->retName();    // NAME
@@ -1190,8 +1145,7 @@ void vm::evaluate() { // EVALUATE
 
         this->emitTable(name, obj); // STORE
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::JUMP: // JUMP
 
@@ -1229,16 +1183,14 @@ void vm::evaluate() { // EVALUATE
             }
           }
         }
-        break;
-      }
+      } break;
 
       case byte::FUNC: { // FUNCTION
         object::Func *f =
             static_cast<object::Func *>(this->retConstant()); // OBJECT
         this->emitTable(f->name, f);                          // STORE
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::CALL: { // CALL FUNCTION
         int args = this->retOffset();
@@ -1307,8 +1259,7 @@ void vm::evaluate() { // EVALUATE
         }
 
         this->op = ++t; // NEXT
-        break;
-      }
+      } break;
 
       case byte::INDEX: { // INDEX
         object::Object *obj = this->popData();
@@ -1330,8 +1281,8 @@ void vm::evaluate() { // EVALUATE
                     " max: " + std::to_string(y->elements.size() - 1));
             }
             this->pushData(y->elements.at(x->value)); // PUSH
-            break;
-          }
+          } break;
+          //
           case object::MAP: {
             object::Map *m = static_cast<object::Map *>(obj);
 
@@ -1353,11 +1304,10 @@ void vm::evaluate() { // EVALUATE
             }
 
             this->pushData(iter->second); // PUSH
-            break;
-          }
+          } break;
+            //
         }
-        break;
-      }
+      } break;
 
       case byte::REPLACE: { // REPLACE
         object::Object *obj = this->popData();
@@ -1391,8 +1341,8 @@ void vm::evaluate() { // EVALUATE
                   // VALUE
                   a);
             }
-            break;
-          }
+          } break;
+          //
           case object::MAP: {
             object::Map *m = static_cast<object::Map *>(obj);
 
@@ -1420,11 +1370,10 @@ void vm::evaluate() { // EVALUATE
                   // VALUE
                   m);
             }
-            break;
-          }
+          } break;
+            //
         }
-        break;
-      }
+      } break;
 
       case byte::GET: { // GET
         std::string name = this->retName();
@@ -1453,8 +1402,8 @@ void vm::evaluate() { // EVALUATE
                     " max: " + std::to_string(t->elements.size() - 1));
             }
             this->pushData(t->elements.at(i));
-            break;
-          }
+          } break;
+          //
           case object::ENUM: {
             object::Enum *e = static_cast<object::Enum *>(obj);
 
@@ -1467,8 +1416,8 @@ void vm::evaluate() { // EVALUATE
             }
 
             this->pushData(new object::Int(iter->first));
-            break;
-          }
+          } break;
+          //
           case object::WHOLE: {
             object::Whole *w = static_cast<object::Whole *>(obj);
 
@@ -1486,14 +1435,13 @@ void vm::evaluate() { // EVALUATE
             } else {
               error("nonexistent members");
             }
-            break;
-          }
+          } break;
+
           default: error("nonexistent members");
         }
 
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::SET: { // SET
         object::Object *obj = this->popData();
@@ -1508,16 +1456,14 @@ void vm::evaluate() { // EVALUATE
 
         this->emitTable(w->name, w); // REPLACE
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::ENUM: { // ENUM
         object::Enum *e =
             static_cast<object::Enum *>(this->retConstant()); // OBJECT
         this->emitTable(e->name, e);                          // STORE
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::WHOLE: { // WHOLE
         object::Whole *w =
@@ -1538,14 +1484,12 @@ void vm::evaluate() { // EVALUATE
 
         this->emitTable(w->name, w); // STORE
         this->op = ++t;
-        break;
-      }
+      } break;
 
       case byte::NAME: { // NAME
         this->pushData(new object::Str(this->retName()));
         this->op++;
-        break;
-      }
+      } break;
 
       case byte::NEW: { // NEW
         std::string name = this->retName();
@@ -1640,17 +1584,53 @@ void vm::evaluate() { // EVALUATE
 
         this->pushData(w); // PUSH
         this->op++;        // NEXT
-        break;
-      }
+      } break;
 
       case byte::CHA: { // CHA
-        std::string name = this->retName();
-        object::Object *obj = this->popData();
-
-        this->emitTable(name, obj);
+        this->emitTable(this->retName(), this->popData());
         this->op++;
-        break;
-      }
+      } break;
+
+      case byte::MOD: { // MOD
+        top()->mod = this->retName();
+        this->op++;
+      } break;
+
+      case byte::PUB: { // PUB
+        // std::cout << byte::codeString[top()->entity->codes.at(ip - 1)]
+        //           << std::endl;
+
+        if (top()->mod.empty()) error("module name not defined");
+
+        switch (top()->entity->codes.at(ip - 1)) {
+          case byte::FUNC: {
+            object::Func *f = static_cast<object::Func *>(
+                top()->entity->constants.at(GET_OFFSET(op - 1))); // FUNCTION
+            this->emitPub(f->name);
+          } break;
+          //
+          case byte::STORE: {
+            std::string name =
+                top()->entity->names.at(GET_OFFSET(op - 2)); // VARIABLE
+            this->emitPub(name);
+          } break;
+        }
+      } break;
+
+      case byte::UAS: // ALIAS
+
+      case byte::USE: { // USE
+        std::string name = this->retName();
+
+        this->op++;
+        std::string alias; // HAVE ALIAS
+
+        if (co == byte::UAS) alias = this->retName(); // ALIAS
+
+        std::cout << "NAME: " << name << " ALIAS: " << alias << std::endl;
+
+        this->op += co == byte::UAS ? 1 : 0;
+      } break;
 
       case byte::RET_N: // RET NONE
 
@@ -1663,15 +1643,17 @@ void vm::evaluate() { // EVALUATE
           ip = top()->entity->codes.size(); // CATCH
         }
 
-        // loop exit and no return value return
-        if (co == byte::RET_N) this->loopWasRet = true;
-
         for (int i = 0; i < top()->data.len(); i++) {
           std::cout << top()->data.at(i)->stringer() << std::endl;
         }
         top()->data.clear();
-        break;
-      }
+
+        // loop exit and no return value return
+        if (co == byte::RET_N) this->loopWasRet = true;
+
+        // MODULE
+        if (!top()->mod.empty()) addModule(top()->mod, top(), top()->pub);
+      } break;
     }
   }
 #undef BINARY_OP

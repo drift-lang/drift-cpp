@@ -10,10 +10,8 @@ def (x: []int, len + tar: int) load -> int
 end
 
 [43, 12, 53, 65, 22, 42] and -> arr
-
-    def t: int = 99
+    def x: int = load(arr, 6, 99)
 end
 
 arr
-t
-x
+x == -1
