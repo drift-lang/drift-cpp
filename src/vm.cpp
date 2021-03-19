@@ -1436,6 +1436,15 @@ void vm::evaluate() { // EVALUATE
               error("nonexistent members");
             }
           } break;
+          //
+          case object::MODULE: {
+            object::Module *m = static_cast<object::Module *>(obj);
+
+            std::cout << "GET: " << name << std::endl;
+            for (auto i : m->pub) {
+              std::cout << "PUB: " << i << std::endl;
+            }
+          } break;
 
           default: error("nonexistent members");
         }
@@ -1630,7 +1639,7 @@ void vm::evaluate() { // EVALUATE
 
         object::Module *m = getModule(this->mods, name);
 
-        if (m == nullptr) error("undefined module name of '" + name + "'");
+        if (m == nullptr) error("not defined module '" + name + "'");
 
         // STORE
         this->emitTable(co == byte::UAS ? alias : name, m);
@@ -1659,8 +1668,7 @@ void vm::evaluate() { // EVALUATE
         // MODULE
         if (!top()->mod.empty()) {
           if (!addModule(this->mods, top()->mod, top(), top()->pub)) {
-            error("redefintion module of name '" + top()->mod +
-                  "'"); // redefining
+            error("redefinition module '" + top()->mod + "'"); // redefinition
           }
         }
       } break;

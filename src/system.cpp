@@ -18,26 +18,28 @@
 
 #include "system.hpp"
 
+// return all the files in path
 std::vector<std::string> *getAllFileWithPath(std::string path) {
   DIR *dir;
   struct dirent *p;
 
-  std::vector<std::string> *files;
+  std::vector<std::string> *files = new std::vector<std::string>();
 
   if ((dir = opendir(path.c_str())) == NULL) return nullptr;
 
-  // std::cout << "GET: " << path << std::endl;
-  // std::cout << (files == nullptr) << std::endl;
-
   while ((p = readdir(dir)) != NULL) {
-    if (strcmp(p->d_name, ".") == 0 || strcmp(p->d_name, "..") == 0) {
-      continue;
-    } else if (p->d_type == 8) { // file
+    // folder
+    if (p->d_type == 4 && strcmp(p->d_name, ".") != 0 &&
+        strcmp(p->d_name, "..") != 0) {
+      std::vector<std::string> *fo = getAllFileWithPath(path + "/" + p->d_name);
+      for (auto i : *fo) {
+        files->push_back(i);
+      }
+    }
+    // file
+    if (p->d_type == 8) {
       files->push_back(path + "/" + p->d_name);
-    } else {
-      continue;
     }
   }
-
   return files;
 }

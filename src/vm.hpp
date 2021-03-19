@@ -82,10 +82,10 @@ private:
   // loop exit and no return value return
   bool loopWasRet = false;
 
-  std::vector<object::Module *> mods; // to global modules of program
+  std::vector<object::Module *> *mods; // to global modules of program
 
 public:
-  explicit vm(Entity *main, std::vector<object::Module *> mods) {
+  explicit vm(Entity *main, std::vector<object::Module *> *mods) {
     // to main frame as main
     this->frames.push_back(new Frame(main));
     this->mods = mods; // set global modules

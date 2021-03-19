@@ -23,3 +23,19 @@ bool isNumberStr(const std::string str) {
   }
   return true;
 }
+
+// read the string buffer into string
+void fileString(const char *path, std::string *to) {
+  std::ifstream stream;
+  stream.open(path);
+
+  if (stream.fail()) {
+    std::cout << "<Failed To Open File>" << std::endl;
+    return;
+  }
+
+  std::string source((std::istreambuf_iterator<char>(stream)),
+                     (std::istreambuf_iterator<char>()));
+  *to = source;
+  stream.close();
+}

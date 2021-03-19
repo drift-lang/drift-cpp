@@ -64,45 +64,22 @@ void run(std::string source) {
       mac->clean();
     } else {
       // new virtual machine
-      mac = new vm(compiler->entities[0], mods);
+      mac = new vm(compiler->entities[0], &mods);
     }
     mac->evaluate();
-
-    // module
-    if (!mods.empty()) {
-      for (auto i : mods) {
-        std::cout << i->stringer() << std::endl;
-      }
-    }
     //
   } catch (exp::Exp &e) {
     std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
     return;
   }
-
-  // std::vector<std::string> *fs =
-  //     getAllFileWithPath("/Users/turaiiao/Desktop/drift/std");
-  // for (auto i : *fs) {
-  //   std::cout << "FILE: " << i << std::endl;
-  // }
-  // delete fs;
 }
 
 // FILE mode
 void runFile(const char *path) {
-  std::ifstream stream;
-  stream.open(path);
+  std::string s;
+  fileString(path, &s);
 
-  if (stream.fail()) {
-    std::cout << "<Failed To Open File>" << std::endl;
-    return;
-  }
-
-  std::string source((std::istreambuf_iterator<char>(stream)),
-                     (std::istreambuf_iterator<char>()));
-  run(source);
-
-  stream.close();
+  run(s);
 }
 
 // REPL mode
@@ -128,6 +105,15 @@ void version() { std::cout << VERS << std::endl; }
 
 // entry
 int main(int argc, char **argv) {
+  loadStdModules(&mods); // load standard modules
+
+  // standard modules
+  if (!mods.empty()) {
+    for (auto i : mods) {
+      std::cout << i->stringer() << std::endl;
+    }
+  }
+
   if (argc == 2) {
     if (strcmp(argv[1], "-d") == 0) {
       DEBUG = true;

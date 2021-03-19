@@ -15,9 +15,13 @@
 #ifndef DRIFT_UTIL_H
 #define DRIFT_UTIL_H
 
+#include <fstream>
 #include <iostream>
 
 // returns whether the string is all numbers
 bool isNumberStr(const std::string);
+
+// read the string buffer into string
+void fileString(const char *, std::string *);
 
 #endif

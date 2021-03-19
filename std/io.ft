@@ -5,5 +5,3 @@ pub def (x: int) add -> int
 end
 
 pub def x: int = 34
-
-use io
