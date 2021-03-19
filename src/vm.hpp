@@ -17,7 +17,7 @@
 
 #include <algorithm>
 
-#include "exp.hpp"
+#include "exception.hpp"
 #include "frame.hpp"
 #include "object.hpp"
 #include "opcode.hpp"

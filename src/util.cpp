@@ -14,13 +14,10 @@
 
 #include "util.hpp"
 
-// returns whether the string is all numbers
+// return whether the string is all numbers
 bool isNumberStr(const std::string str) {
-  for (int i = 0; i < str.size(); i++) {
-    if (!std::isdigit(str.at(i))) {
-      return false;
-    }
-  }
+  for (int i = 0; i < str.size(); i++)
+    if (!std::isdigit(str.at(i))) return false;
   return true;
 }
 
@@ -38,4 +35,12 @@ void fileString(const char *path, std::string *to) {
                      (std::istreambuf_iterator<char>()));
   *to = source;
   stream.close();
+}
+
+// return the whether a value is the same
+bool sameValue(std::vector<std::string> &a, std::vector<std::string> &b) {
+  for (auto i : a)
+    for (auto k : b)
+      if (i == k) return true;
+  return false;
 }

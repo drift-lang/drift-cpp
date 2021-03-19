@@ -35,7 +35,8 @@ namespace object {
     ENUM,
     FUNC,
     WHOLE,
-    MODULE
+    MODULE,
+    MODS
   };
 
   // object abstract
@@ -324,6 +325,24 @@ namespace object {
     std::string stringer() override { return "<Module '" + name + "'>"; }
 
     Kind kind() override { return MODULE; }
+  };
+
+  // MODS
+  class Mods : public Object {
+  public:
+    std::vector<object::Module *> mods;
+    std::string name;
+
+    explicit Mods(std::vector<object::Module *> mods) {
+      this->mods = mods;
+      this->name = mods.front()->name;
+    }
+
+    std::string rawStringer() override { return "<Mods '" + name + "'>"; }
+
+    std::string stringer() override { return "<Mods '" + name + "'>"; }
+
+    Kind kind() override { return MODS; }
   };
 }; // namespace object
 

@@ -17,11 +17,15 @@
 
 #include <fstream>
 #include <iostream>
+#include <vector>
 
-// returns whether the string is all numbers
+// return whether the string is all numbers
 bool isNumberStr(const std::string);
 
 // read the string buffer into string
 void fileString(const char *, std::string *);
+
+// return the whether a value is the same
+bool sameValue(std::vector<std::string> &, std::vector<std::string> &);
 
 #endif

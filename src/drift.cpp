@@ -13,6 +13,7 @@
 //
 
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 
 #include "compiler.hpp"
@@ -22,7 +23,6 @@
 #include "version.hpp"
 #include "vm.hpp"
 
-#include "module.hpp"
 #include "system.hpp"
 
 // DEBUG to output tokens and statements
@@ -100,12 +100,47 @@ void repl() {
   }
 }
 
+// load standard modules
+bool loadStdModules() {
+  std::vector<std::string> *fs =
+      getAllFileWithPath(std::filesystem::current_path().string() + "/std");
+
+  for (auto i : *fs) {
+    std::string s;
+    fileString(i.c_str(), &s);
+
+    try {
+      // lexer
+      auto lex = new Lexer(s);
+      lex->tokenizer();
+
+      // parser
+      auto parser = new Parser(lex->tokens);
+      parser->parse();
+
+      // semantic
+      auto semantic = new Analysis(&parser->statements);
+      // compiler
+      auto compiler = new Compiler(parser->statements);
+      compiler->compile();
+
+      // vm
+      (new vm(compiler->entities[0], &mods))->evaluate();
+      //
+    } catch (exp::Exp &e) {
+      std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
+      return false;
+    }
+  }
+  return true; // OK
+}
+
 // VER
 void version() { std::cout << VERS << std::endl; }
 
 // entry
 int main(int argc, char **argv) {
-  loadStdModules(&mods); // load standard modules
+  if (!loadStdModules()) return 1; // load standard modules
 
   // standard modules
   if (!mods.empty()) {

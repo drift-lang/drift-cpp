@@ -1437,12 +1437,28 @@ void vm::evaluate() { // EVALUATE
             }
           } break;
           //
-          case object::MODULE: {
-            object::Module *m = static_cast<object::Module *>(obj);
+          case object::MODS: {
+            object::Mods *m = static_cast<object::Mods *>(obj);
 
-            std::cout << "GET: " << name << std::endl;
-            for (auto i : m->pub) {
-              std::cout << "PUB: " << i << std::endl;
+            std::vector<std::string>::iterator iter;
+            bool found = false;
+
+            // SEARCH PUBLIC NAME
+            for (auto i : m->mods) {
+              for (iter = i->pub.begin(); iter != i->pub.end() && *iter != name;
+                   iter++)
+                ;
+              if (iter != i->pub.end()) {
+                this->pushData(i->f->tb.symbols[name]);
+                found = true; // CATCH
+                break;
+              }
+            }
+
+            // NOT FOUND
+            if (!found) {
+              error("the module '" + m->name + "' not have public name '" +
+                    name + "'");
             }
           } break;
 
@@ -1524,13 +1540,11 @@ void vm::evaluate() { // EVALUATE
         if (!w->inherit.empty()) {
           for (auto i : w->inherit) {
 
-            if (this->lookUp(i) == nullptr) {
+            if (this->lookUp(i) == nullptr)
               error("inheritance '" + i + "' dose not exist");
-            }
 
-            if (this->lookUp(i)->kind() != object::WHOLE) {
+            if (this->lookUp(i)->kind() != object::WHOLE)
               error("only whole object can be inherited");
-            }
 
             // INTERFACE
             object::Whole *it = static_cast<object::Whole *>(this->lookUp(i));
@@ -1637,12 +1651,12 @@ void vm::evaluate() { // EVALUATE
         if (co == byte::UAS) alias = this->retName(); // ALIAS
         // std::cout << "NAME: " << name << " ALIAS: " << alias << std::endl;
 
-        object::Module *m = getModule(this->mods, name);
+        std::vector<object::Module *> m = getModule(this->mods, name);
 
-        if (m == nullptr) error("not defined module '" + name + "'");
+        if (m.empty()) error("not defined module '" + name + "'");
 
         // STORE
-        this->emitTable(co == byte::UAS ? alias : name, m);
+        this->emitTable(co == byte::UAS ? alias : name, new object::Mods(m));
         this->op += co == byte::UAS ? 1 : 0;
       } break;
 
@@ -1667,8 +1681,10 @@ void vm::evaluate() { // EVALUATE
 
         // MODULE
         if (!top()->mod.empty()) {
-          if (!addModule(this->mods, top()->mod, top(), top()->pub)) {
-            error("redefinition module '" + top()->mod + "'"); // redefinition
+          std::string *errs =
+              addModule(this->mods, top()->mod, top(), top()->pub);
+          if (errs != nullptr) {
+            error(*errs); // if have some errors to throw
           }
         }
       } break;

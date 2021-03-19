@@ -234,6 +234,7 @@ ast::Expr *Parser::call() {
     } else if (look(token::DOT)) {
       token::Token name = look();
 
+      if (isEnd()) error(exp::UNEXPECTED, "missing name and found EFF");
       this->position++; // skip name token
       expr = new ast::GetExpr(expr, name);
       // index for array

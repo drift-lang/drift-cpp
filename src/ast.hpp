@@ -960,9 +960,6 @@ namespace ast {
   };
 
   // enum
-  //
-  // TODO: semantic analysis
-  //
   class EnumStmt : public Stmt {
   public:
     std::vector<token::Token *> field;

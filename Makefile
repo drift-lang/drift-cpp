@@ -7,7 +7,7 @@ SRC = $(wildcard ${DIR_SRC}/*.cpp)
 TMP = $(wildcard $(DIR_TMP)/*.o)
 
 all:
-	${CC} -c $(foreach i, $(SRC), $(i))
+	${CC} -std=c++20 -c $(foreach i, $(SRC), $(i))
 
 install:
 	$(shell mkdir ${DIR_TMP})

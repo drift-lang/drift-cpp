@@ -24,6 +24,7 @@ std::vector<std::string> *getAllFileWithPath(std::string path) {
   struct dirent *p;
 
   std::vector<std::string> *files = new std::vector<std::string>();
+  // std::cout << "GET: " << path << std::endl;
 
   if ((dir = opendir(path.c_str())) == NULL) return nullptr;
 

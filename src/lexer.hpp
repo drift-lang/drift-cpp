@@ -18,7 +18,7 @@
 #include <iostream>
 #include <vector>
 
-#include "exp.hpp"
+#include "exception.hpp"
 #include "token.hpp"
 
 // lexer structure
