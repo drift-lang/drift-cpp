@@ -1626,9 +1626,14 @@ void vm::evaluate() { // EVALUATE
         std::string alias; // HAVE ALIAS
 
         if (co == byte::UAS) alias = this->retName(); // ALIAS
+        // std::cout << "NAME: " << name << " ALIAS: " << alias << std::endl;
 
-        std::cout << "NAME: " << name << " ALIAS: " << alias << std::endl;
+        object::Module *m = getModule(this->mods, name);
 
+        if (m == nullptr) error("undefined module name of '" + name + "'");
+
+        // STORE
+        this->emitTable(co == byte::UAS ? alias : name, m);
         this->op += co == byte::UAS ? 1 : 0;
       } break;
 
@@ -1652,7 +1657,12 @@ void vm::evaluate() { // EVALUATE
         if (co == byte::RET_N) this->loopWasRet = true;
 
         // MODULE
-        if (!top()->mod.empty()) addModule(top()->mod, top(), top()->pub);
+        if (!top()->mod.empty()) {
+          if (!addModule(this->mods, top()->mod, top(), top()->pub)) {
+            error("redefintion module of name '" + top()->mod +
+                  "'"); // redefining
+          }
+        }
       } break;
     }
   }

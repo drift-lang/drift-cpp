@@ -23,11 +23,14 @@
 #include "vm.hpp"
 
 #include "module.hpp"
+#include "system.hpp"
 
 // DEBUG to output tokens and statements
 bool DEBUG = false;
 // repl mode
 bool REPL = false;
+
+static std::vector<object::Module *> mods; // global modules
 
 vm *mac; // local
 
@@ -61,7 +64,7 @@ void run(std::string source) {
       mac->clean();
     } else {
       // new virtual machine
-      mac = new vm(compiler->entities[0]);
+      mac = new vm(compiler->entities[0], mods);
     }
     mac->evaluate();
 
@@ -76,6 +79,13 @@ void run(std::string source) {
     std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
     return;
   }
+
+  // std::vector<std::string> *fs =
+  //     getAllFileWithPath("/Users/turaiiao/Desktop/drift/std");
+  // for (auto i : *fs) {
+  //   std::cout << "FILE: " << i << std::endl;
+  // }
+  // delete fs;
 }
 
 // FILE mode

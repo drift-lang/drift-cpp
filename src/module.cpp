@@ -14,11 +14,20 @@
 
 #include "module.hpp"
 
-void addModule(std::string name, Frame *f, std::vector<std::string> pub) {
-  mods.push_back(new object::Module(name, f, pub));
+// add new module into global state
+bool addModule(std::vector<object::Module *> mods, std::string name, Frame *f,
+               std::vector<std::string> pub) {
+  if (getModule(mods, name) != nullptr) { // redefining module
+    return false;
+  } else {
+    mods.push_back(new object::Module(name, f, pub)); // insert new module
+  }
+  return true; // OK
 }
 
-object::Module *getModule(std::string name) {
+// get module with name
+object::Module *getModule(std::vector<object::Module *> mods,
+                          std::string name) {
   for (auto i : mods) {
     if (i->name == name) {
       return i;

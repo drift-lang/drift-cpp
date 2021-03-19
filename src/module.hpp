@@ -15,15 +15,17 @@
 #ifndef DRIFT_MODULE_H
 #define DRIFT_MODULE_H
 
+#include <algorithm>
 #include <vector>
 
 #include "frame.hpp"
 #include "object.hpp"
 
-extern std::vector<object::Module *> mods;
+// add new module into global state
+bool addModule(std::vector<object::Module *>, std::string, Frame *,
+               std::vector<std::string>);
 
-void addModule(std::string, Frame *f, std::vector<std::string>);
-
-object::Module *getModule(std::string);
+// get module with name
+object::Module *getModule(std::vector<object::Module *>, std::string);
 
 #endif
