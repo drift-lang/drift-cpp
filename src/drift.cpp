@@ -29,6 +29,8 @@
 bool DEBUG = false;
 // repl mode
 bool REPL = false;
+// dis mode
+bool DIS = false;
 
 static std::vector<object::Module *> mods; // global modules
 
@@ -55,7 +57,8 @@ void run(std::string source) {
     auto compiler = new Compiler(parser->statements);
     compiler->compile();
 
-    for (auto i : compiler->entities) i->dissemble();
+    if (DIS)
+      for (auto i : compiler->entities) i->dissemble();
 
     // vm
     if (REPL && mac != nullptr) {
@@ -138,29 +141,69 @@ bool loadStdModules() {
 // VER
 void version() { std::cout << VERS << std::endl; }
 
+// USAGE
+void usage() {
+  std::cout << "\n\t\tTHE DRIFT PROGRAMMING LANGUAGE\n" << std::endl;
+  std::cout << "\t\tCOPYRIGHT C 2021 BINGXIO (黄菁) | GPL 3.0 LICENSE | ALL "
+               "RIGHTS RESERVED\n"
+            << std::endl;
+  std::cout << "LINKS: " << std::endl;
+  std::cout << "\t\t- https://drift-lang.fun/" << std::endl;
+  std::cout << "\t\t- https://github.com/bingxio/drift\n" << std::endl;
+  std::cout << "USAGE: " << std::endl;
+  std::cout << "\t\t> drift                   # REPL MODE" << std::endl;
+  std::cout << "\t\t> drift <ft file>         # FILE MODE" << std::endl
+            << std::endl;
+  std::cout << "\t\t> drift -v                # DIS VERSION" << std::endl
+            << std::endl;
+  std::cout << "\t\t> drift -d                # REPL AND DEBUG MODE"
+            << std::endl;
+  std::cout << "\t\t> drift -d <ft file>      # FILE AND DEBUG MODE"
+            << std::endl
+            << std::endl;
+  std::cout << "\t\t> drift -b                # REPL AND DIS MODE" << std::endl;
+  std::cout << "\t\t> drift <ft file> -b      # FILE AND DIS MODE" << std::endl
+            << std::endl;
+  std::cout << "CONTACT: " << std::endl;
+  std::cout << "\t\t+ 1171840237@qq.com" << std::endl;
+  std::cout << "\t\t+ https://bingxio.fun/" << std::endl << std::endl;
+}
+
 // entry
 int main(int argc, char **argv) {
-  if (!loadStdModules()) return 1; // load standard modules
-
-  // standard modules
-  if (!mods.empty()) {
-    for (auto i : mods) {
-      std::cout << i->stringer() << std::endl;
-    }
+  if (argc == 2 && strcmp(argv[1], "-v") == 0) {
+    version();
+    return 0;
   }
 
+  if (argc == 2 && strcmp(argv[1], "-u") == 0) {
+    usage();
+    return 0;
+  }
+
+  if (!loadStdModules()) return 1; // load standard modules
+
   if (argc == 2) {
+    // D
     if (strcmp(argv[1], "-d") == 0) {
       DEBUG = true;
       repl();
-    } else if (strcmp(argv[1], "-v") == 0) {
-      version();
-    } else {
+    }
+    // B
+    else if (strcmp(argv[1], "-b") == 0) {
+      DIS = true;
+      repl();
+    }
+    // O
+    else {
       runFile(argv[1]);
     }
   } else if (argc == 3) {
     if (strcmp("-d", argv[2]) == 0) {
       DEBUG = true;
+    }
+    if (strcmp("-b", argv[2]) == 0) {
+      DIS = true;
     }
     runFile(argv[1]);
   } else {

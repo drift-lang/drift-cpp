@@ -62,23 +62,25 @@ def User
 end
 
 def u: User = new User
+puts(u.name == "", u.pass == "")
+
 def u: User = new User {name: "BINGXIO"}
 
-u.name
-u.pass == ""
+puts(u.name)
+puts(u.pass == "")
 
 def x: int = u.call()
-x
+puts(x)
 
-u.m[401]
+puts(u.m[401])
 
-u.l
-u.get()
+puts(u.l)
+puts(u.get())
 
-u.x()
-u.y()
-u.z()
+puts(u.x())
+puts(u.y())
+puts(u.z())
 
-u.counter()
-u.what(999)
-u.fib(12)
+puts(u.counter())
+puts(u.what(999))
+puts(u.fib(12))

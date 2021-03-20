@@ -1,6 +1,7 @@
 The Drift Programming Language Implementation
 
 - switch CC field in Makefile and specify your g++ compiler path
+- my gcc version is 10.2.0
 
 To build:
 
@@ -11,6 +12,10 @@ To install:
 
     > export PATH=$PWD:$PATH
 
+To usage:
+
+    > drift -u
+
 To run:
  
     > drift                 # REPL MODE
@@ -18,6 +23,9 @@ To run:
 
     > drift -d              # REPL AND DEBUG MODE
     > drift <ft file> -d    # FILE AND DEBUG MODE
+
+    > drift -b              # REPL AND DIS BYTECODE
+    > drift <ft file> -b    $ FILE AND DIS BYTECODE
 
 To clean:
 

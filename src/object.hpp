@@ -122,7 +122,7 @@ namespace object {
       return str.str();
     }
 
-    std::string stringer() override { return "" + value; }
+    std::string stringer() override { return std::string(&value); }
 
     Kind kind() override { return CHAR; }
   };
@@ -280,6 +280,8 @@ namespace object {
 
     Entity *entity; // function entity
 
+    std::vector<object::Object *> builtin; // for builtin function arguments
+
     std::string rawStringer() override { return "<Func '" + name + "'>"; }
     std::string stringer() override { return "<Func '" + name + "'>"; }
 
@@ -339,7 +341,6 @@ namespace object {
     }
 
     std::string rawStringer() override { return "<Mods '" + name + "'>"; }
-
     std::string stringer() override { return "<Mods '" + name + "'>"; }
 
     Kind kind() override { return MODS; }

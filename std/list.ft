@@ -1,0 +1,11 @@
+mod list
+
+def Foo
+    def () call -> int
+        ret 123
+    end
+end
+
+pub def () to
+    new Foo.call()
+end

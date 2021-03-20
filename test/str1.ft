@@ -1,7 +1,7 @@
 def x: str = "Hello World!!"
 
-x
+puts(x)
 
 x += " - Haha.."
 
-x
+puts(x)

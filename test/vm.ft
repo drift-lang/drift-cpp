@@ -11,20 +11,20 @@ nf
     def sum: float = 5.23
 end
 
-x
-y
-sum
-sum = x + y // SUM IS FLOAT OR INT ??
-sum
+puts(x)
+puts(y)
+puts(sum)
+puts(sum = x + y) // SUM IS FLOAT OR INT ??
+puts(sum)
 
 if sum >= x + y
     sum = -1
 end
 
-sum
+puts(sum)
 /*
 for 1 + 1 == 2
-    "OK"
+    puts("OK")
 end
 */
 
@@ -37,3 +37,5 @@ def (x: int, y: int) add -> int
         ret x + y + n
     end
 end
+
+puts(add(34, 55))

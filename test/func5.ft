@@ -6,5 +6,4 @@ def () a -> str
     ret x() + x()
 end
 
-x()
-a()
+puts(x(), a())

@@ -1,0 +1,45 @@
+mod fun
+
+// MY LOVE!!
+pub def () love
+    def x: float
+    def y: float
+
+    def s: str
+
+    def i: float = 1.5
+    for i > -1.5
+        s = ""
+
+        x = -1.5
+        for x < 1.5
+            y = x * x + i * i - 1
+
+            if (y * y * y - 
+                    x * x * i * i * i) < 0.0
+                s += "*"
+            nf
+                s += " "
+            end
+            x += 0.05
+        end
+
+        puts(s) // PRINT
+        i -= 0.1
+    end
+end
+
+// ITS A JOKER!!
+pub def (repeat: int) joker
+    do
+        def x: int = repeat + 1 // Love you more forever
+    for ->
+        love()
+        putl("第几次了？", x, " 次！！")
+
+        out x - 1 == 0
+        sleep(3)
+
+        x -= 1
+    end
+end

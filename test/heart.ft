@@ -1,0 +1,30 @@
+
+// MY LOVE!!
+
+def x: float
+def y: float
+
+def s: str
+
+def i: float = 1.5
+for i > -1.5
+    s = ""
+
+    x = -1.5
+    for x < 1.5
+        y = x * x + i * i - 1
+
+        if (y * y * y - 
+                x * x * i * i * i) < 0.0
+            s += "*"
+        nf
+            s += " "
+        end
+        x += 0.05
+    end
+
+    puts(s)
+    i -= 0.1
+end
+
+// END

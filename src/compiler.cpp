@@ -191,7 +191,6 @@ void Compiler::expr(ast::Expr *expr) {
       ast::AssignExpr *a = static_cast<ast::AssignExpr *>(expr);
 
       this->expr(a->value);
-      this->expr(a->expr);
 
       if (a->expr->kind() == ast::EXPR_NAME) {
         this->emitCode(byte::ASSIGN);

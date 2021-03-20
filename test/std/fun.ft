@@ -1,0 +1,3 @@
+use fun as f
+
+f.joker(4) // 5

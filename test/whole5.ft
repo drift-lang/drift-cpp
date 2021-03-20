@@ -23,4 +23,6 @@ end
 
 def x: Bar = new Bar
 
-x.max(34, 12) == x.what(16) + 2
+puts(
+    x.max(34, 12) == x.what(16) + 2
+)

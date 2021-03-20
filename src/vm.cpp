@@ -47,6 +47,17 @@ object::Object *vm::lookUp(std::string n) {
 
     return top()->tb.symbols.at(n); // GET
   }
+  // look name in current of calling module
+  if (!this->callModuleName.empty()) {
+    std::vector<object::Module *> m =
+        getModule(this->mods, this->callModuleName);
+
+    for (auto i : m) {
+      for (auto k : i->pub) {
+        if (k == n) return i->f->tb.symbols.at(n);
+      }
+    }
+  }
   return nullptr;
 }
 
@@ -1025,8 +1036,13 @@ void vm::evaluate() { // EVALUATE
       case byte::NOT: { // -
         object::Object *obj = this->popData();
 
-        if (obj->kind() != object::INT && obj->kind() != object::FLOAT) {
+        if (obj->kind() != object::INT && obj->kind() != object::FLOAT)
           error("only number type to unary operator");
+
+        if (obj->kind() == object::FLOAT) {
+          this->pushData(
+              new object::Float(-static_cast<object::Float *>(obj)->value));
+          break;
         }
 
         this->pushData(
@@ -1058,10 +1074,21 @@ void vm::evaluate() { // EVALUATE
       } break;
 
       case byte::LOAD: {
-        std::string name = this->retName();       // NAME
+        std::string name = this->retName(); // NAME
+        // std::cout << "LOAD: " << name << std::endl;
+
+        // LOAD BUILTIN
+        if (isBuiltinName(name)) {
+          object::Func *f = new object::Func;
+          f->name = name;
+
+          this->pushData(f);
+          this->op++;
+          break;
+        }
+
         object::Object *obj = this->lookUp(name); // OBJECT
 
-        // std::cout << "LOAD: " << name << std::endl;
         if (obj == nullptr) {
           // LOAD INHERIT
           if (!this->wholeInherit.empty()) {
@@ -1076,12 +1103,11 @@ void vm::evaluate() { // EVALUATE
                    iter++)
                 ;
 
-              if (iter == w->f->tb.symbols.end()) {
+              if (iter == w->f->tb.symbols.end())
                 error("not defined name '" + name + "'");
-              }
-              if (iter->second->kind() != object::FUNC) {
+
+              if (iter->second->kind() != object::FUNC)
                 error("only parent class methods can be called");
-              }
 
               obj = iter->second; // LOAD
             }
@@ -1139,9 +1165,10 @@ void vm::evaluate() { // EVALUATE
         std::string name = this->retName();    // NAME
         object::Object *obj = this->popData(); // OBJ
 
-        if (this->lookUp(name) == nullptr) {
+        // std::cout << "ASS: " << name << " OBJ: " << obj->stringer()
+        //           << std::endl;
+        if (this->lookUp(name) == nullptr)
           error("not defined name '" + name + "'");
-        }
 
         this->emitTable(name, obj); // STORE
         this->op++;
@@ -1196,18 +1223,30 @@ void vm::evaluate() { // EVALUATE
         int args = this->retOffset();
 
         Stack<object::Object *> arguments;
-        while (args-- > 0) {
-          arguments.push(this->popData()); // ARGUMENT
+        while (args-- > 0 && top()->data.len() != 1) { // TOP IS FUNC OBJ
+          arguments.push(this->popData());             // ARGUMENT
         }
+
+        // std::cout << "ARGS: " << arguments.len() << std::endl;
 
         object::Func *f =
             static_cast<object::Func *>(this->popData()); // FUNCTION
-        Frame *fra = new Frame(f->entity);                // FRAME
         // std::cout << "CALL: " << f->name << std::endl;
 
-        if (f->arguments.size() != arguments.len()) {
-          error("wrong number of parameters");
+        if (isBuiltinName(f->name)) {
+          while (arguments.len()) {
+            f->builtin.push_back(arguments.pop()); // BUILTIN ARGUMENTS
+          }
+          builtinFuncCall(f->name, f, top()); // TO BUILTIN CALL
+
+          this->op++;
+          break;
         }
+
+        Frame *fra = new Frame(f->entity); // FRAME
+
+        if (f->arguments.size() != arguments.len())
+          error("wrong number of parameters");
 
         // SET TABLE SYMBOL
         if (this->callWholeMethod) {
@@ -1460,6 +1499,8 @@ void vm::evaluate() { // EVALUATE
               error("the module '" + m->name + "' not have public name '" +
                     name + "'");
             }
+
+            this->callModuleName = m->name; // CURRENT CALLING MODULE WITHIN GET
           } break;
 
           default: error("nonexistent members");
@@ -1472,9 +1513,8 @@ void vm::evaluate() { // EVALUATE
         object::Object *obj = this->popData();
         std::string name = this->retName(); // NAME
 
-        if (obj->kind() != object::WHOLE) {
+        if (obj->kind() != object::WHOLE)
           error("the value type is not whole object");
-        }
 
         object::Whole *w = static_cast<object::Whole *>(obj);
         w->f->tb.symbols[name] = obj; // SET
@@ -1494,7 +1534,7 @@ void vm::evaluate() { // EVALUATE
         object::Whole *w =
             static_cast<object::Whole *>(this->retConstant()); // OBJECT
 
-        w->entity->dissemble();
+        // w->entity->dissemble();
 
         // EVALUATE IT
         w->f = new Frame(w->entity);
@@ -1522,10 +1562,10 @@ void vm::evaluate() { // EVALUATE
         this->op++;
         int count = this->retOffset(); // COUNT
 
-        if (this->lookUp(name) == nullptr) {
-          error("not defined whole of '" + name + "'");
-        }
-        object::Whole *w = static_cast<object::Whole *>(this->lookUp(name));
+        object::Object *obj = this->lookUp(name); // OBJECT
+        if (obj == nullptr) error("not defined whole of '" + name + "'");
+
+        object::Whole *w = static_cast<object::Whole *>(obj);
 
         // SET CONSTRUCTOR
         while (count > 0) {
@@ -1637,6 +1677,12 @@ void vm::evaluate() { // EVALUATE
                 top()->entity->names.at(GET_OFFSET(op - 2)); // VARIABLE
             this->emitPub(name);
           } break;
+          //
+          case byte::WHOLE: {
+            object::Whole *w = static_cast<object::Whole *>(
+                top()->entity->constants.at(GET_OFFSET(op - 1))); // WHOLE
+            this->emitPub(w->name);
+          } break;
         }
       } break;
 
@@ -1670,11 +1716,6 @@ void vm::evaluate() { // EVALUATE
                 this->popData();            // VALUE
           ip = top()->entity->codes.size(); // CATCH
         }
-
-        for (int i = 0; i < top()->data.len(); i++) {
-          std::cout << top()->data.at(i)->stringer() << std::endl;
-        }
-        top()->data.clear();
 
         // loop exit and no return value return
         if (co == byte::RET_N) this->loopWasRet = true;

@@ -7,11 +7,4 @@ def f: []int
 def g: (int)
 def h: <int, str>
 
-a
-b
-c
-d
-e
-f
-g
-h
+puts(a, b, c, d, e, f, g, h)

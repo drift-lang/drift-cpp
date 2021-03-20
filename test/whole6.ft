@@ -16,5 +16,4 @@ def Bar <- Foo
     end
 end
 
-new Bar.a()
-new Bar.add(200)
+puts(new Bar.a(), new Bar.add(200))

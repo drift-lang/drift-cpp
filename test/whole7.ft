@@ -11,5 +11,4 @@ end
 
 def x: Foo = new Foo
 
-x.x()
-x.y()
+puts(x.x(), x.y())

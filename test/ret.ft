@@ -12,4 +12,4 @@ def () foo
     end
 end
 
-foo()
+puts(foo())

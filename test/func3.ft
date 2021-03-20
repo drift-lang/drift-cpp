@@ -6,4 +6,4 @@ def (x: int, y: int) foo
     end
 end
 
-foo(3, 1)
+puts(foo(3, 1)) // to empty line

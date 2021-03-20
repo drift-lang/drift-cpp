@@ -26,6 +26,7 @@
 
 #include "module.hpp"
 #include "util.hpp"
+#include "builtin.hpp"
 
 // structure
 class vm {
@@ -83,6 +84,7 @@ private:
   bool loopWasRet = false;
 
   std::vector<object::Module *> *mods; // to global modules of program
+  std::string callModuleName = ""; // name of current calling module
 
 public:
   explicit vm(Entity *main, std::vector<object::Module *> *mods) {

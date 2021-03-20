@@ -16,7 +16,4 @@ end
 
 def f: Foo = new Foo{x: 43}
 
-f.x
-f.y
-
-f.max(2, 4)
+puts(f.x, f.y, f.max(2, 4))

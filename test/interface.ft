@@ -7,3 +7,5 @@ def (int, Foo, int, int, str) *foo -> bool
 def (a + b: int) foo -> int
     ret a + b * 2
 end
+
+puts(foo(2, 3))

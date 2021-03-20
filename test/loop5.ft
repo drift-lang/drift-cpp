@@ -1,42 +1,10 @@
 def x: float = 45.0
-def y: int = 67
 
 for ->
-    x
+    puts(x)
     x += 1
 
     if x >= 100
         out ->
     end
 end
-
-/*
-ENTITY 'main': 
-                   0: CONST          0 <Float 45.000000>
-                   1: STORE          0 'x' 0 <Float>
-                   2: CONST          1 <Int 67>
-                   3: STORE          1 'y' 1 <Int>
-                   4: LOAD           0 'x'
-                   5: LOAD           0 'x'
-                   6: CONST          2 <Int 1>
-                   7: ADD
-                   8: ASSIGN         0 'x'
-                   9: LOAD           0 'x'
-                  10: CONST          3 <Int 100>
-                  11: GR_E
-                  12: F_JUMP        15
-                  13: JUMP          16
-                  14: JUMP          15
-                  15: JUMP           4
-                  16: RET
-CONSTANT: 
-                   0: <Float 45.000000>
-                   1: <Int 67>
-                   2: <Int 1>
-                   3: <Int 100>
-NAME: 
-                   0: 'x'	    1: 'y' 	
-TYPE: 
-                   0: <Float>
-                   1: <Int>
-*/

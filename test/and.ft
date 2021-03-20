@@ -13,5 +13,4 @@ end
     def x: int = load(arr, 6, 99)
 end
 
-arr
-x == -1
+puts(arr, x)

@@ -1,0 +1,8 @@
+use io
+
+io.x
+io.y
+
+io.add(34)
+def x: str = io.test()
+puts(x)

@@ -3,8 +3,7 @@ def y: int = 12
 
 for ->
     x += 1
-    out x > 100
+    out x >= 100
 end
 
-x
-y
+puts(x, y)

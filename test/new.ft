@@ -4,39 +4,7 @@ def Foo
 end
 
 def a: Foo = new Foo{x: 12, y: 67}
-a
 
-/*
-ENTITY 'main': 
-                   0: WHOLE          0 <Whole 'Foo'>
-                   1: NAME           0 'x'
-                   2: CONST          1 <Int 12>
-                   3: NAME           1 'y'
-                   4: CONST          2 <Int 67>
-                   5: NEW            2 'Foo' 4
-                   6: STORE          3 'a' 0 <User Name='Foo' >
-                   7: LOAD           3 'a'
-                   8: RET
-CONSTANT: 
-                   0: <Whole 'Foo'>
-                   1: <Int 12>
-                   2: <Int 67>
-NAME: 
-                   0: 'x'	    1: 'y' 	    2: 'Foo' 	    3: 'a' 	
-
-TYPE: 
-                   0: <User Name='Foo' >
-ENTITY 'Foo': 
-                   0: ORIG
-                   1: STORE          0 'x' 0 <Int>
-                   2: ORIG
-                   3: STORE          1 'y' 1 <Int>
-CONSTANT: 
-               EMPTY
-NAME: 
-                   0: 'x'	    1: 'y' 	
-TYPE: 
-                   0: <Int>
-                   1: <Int>
-<Whole 'Foo'>
-*/
+puts(a)
+put("x = ", a.x, " y = ", a.y)
+puts()

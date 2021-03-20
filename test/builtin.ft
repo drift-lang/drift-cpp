@@ -1,0 +1,14 @@
+puts("Hello World!!")
+puts(12.53)
+puts(1 == 2)
+puts(1, 2, 3, 4, 5) // print line each
+
+putl("len = ", len([1, 2, 3])) // end to print line
+
+put(1, 2, 3) // no new line
+puts()
+
+// len(1, 2)
+
+def () foo end
+// len(foo)

@@ -9,3 +9,5 @@ x[i] = 88
 
 i
 x
+
+puts(i, x)
