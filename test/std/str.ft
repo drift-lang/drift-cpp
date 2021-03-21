@@ -9,3 +9,4 @@ putl("FIRST = ", str.String.first())
 putl("BACK = ", str.String.back())
 
 putl("SIZE = ", str.String.size())
+putl("SPLIT = ", str.String.split())

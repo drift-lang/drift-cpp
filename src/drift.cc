@@ -138,6 +138,10 @@ bool loadStdModules() {
       return false;
     }
   }
+
+  for (auto i : mods)
+    std::cout << i->stringer() << std::endl;
+
   return true;  // OK
 }
 
