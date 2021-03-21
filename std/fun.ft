@@ -43,3 +43,20 @@ pub def (repeat: int) joker
         x -= 1
     end
 end
+
+ColumnLimit: 80
+
+IndentWidth: 2
+TabWidth: 2
+
+NamespaceIndentation: All
+AccessModifierOffset: -2
+
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Always
+
+IndentCaseLabels: true
+
+PointerAlignment: Right

@@ -19,20 +19,21 @@
 #include "system.hpp"
 
 // return all the files in path
-std::vector<std::string> *getAllFileWithPath(std::string path) {
-  DIR *dir;
-  struct dirent *p;
+std::vector<std::string>* getAllFileWithPath(std::string path) {
+  DIR* dir;
+  struct dirent* p;
 
-  std::vector<std::string> *files = new std::vector<std::string>();
+  std::vector<std::string>* files = new std::vector<std::string>();
   // std::cout << "GET: " << path << std::endl;
 
-  if ((dir = opendir(path.c_str())) == NULL) return nullptr;
+  if ((dir = opendir(path.c_str())) == NULL)
+    return nullptr;
 
   while ((p = readdir(dir)) != NULL) {
     // folder
     if (p->d_type == 4 && strcmp(p->d_name, ".") != 0 &&
         strcmp(p->d_name, "..") != 0) {
-      std::vector<std::string> *fo = getAllFileWithPath(path + "/" + p->d_name);
+      std::vector<std::string>* fo = getAllFileWithPath(path + "/" + p->d_name);
       for (auto i : *fo) {
         files->push_back(i);
       }

@@ -32,9 +32,9 @@ bool REPL = false;
 // dis mode
 bool DIS = false;
 
-static std::vector<object::Module *> mods; // global modules
+static std::vector<object::Module*> mods;  // global modules
 
-vm *mac; // local
+vm* mac;  // local
 
 // run source code
 void run(std::string source) {
@@ -43,13 +43,15 @@ void run(std::string source) {
     auto lex = new Lexer(source);
 
     lex->tokenizer();
-    if (DEBUG) lex->dissembleTokens();
+    if (DEBUG)
+      lex->dissembleTokens();
 
     // parser
     auto parser = new Parser(lex->tokens);
 
     parser->parse();
-    if (DEBUG) parser->dissembleStmts();
+    if (DEBUG)
+      parser->dissembleStmts();
 
     // semantic
     auto semantic = new Analysis(&parser->statements);
@@ -58,7 +60,8 @@ void run(std::string source) {
     compiler->compile();
 
     if (DIS)
-      for (auto i : compiler->entities) i->dissemble();
+      for (auto i : compiler->entities)
+        i->dissemble();
 
     // vm
     if (REPL && mac != nullptr) {
@@ -71,14 +74,14 @@ void run(std::string source) {
     }
     mac->evaluate();
     //
-  } catch (exp::Exp &e) {
+  } catch (exp::Exp& e) {
     std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
     return;
   }
 }
 
 // FILE mode
-void runFile(const char *path) {
+void runFile(const char* path) {
   std::string s;
   fileString(path, &s);
 
@@ -89,7 +92,7 @@ void runFile(const char *path) {
 void repl() {
   REPL = true;
 
-  char *line = (char *)malloc(1024);
+  char* line = (char*)malloc(1024);
   std::cout << "\n" << VERS << "\n" << std::endl;
 
   while (true) {
@@ -105,7 +108,7 @@ void repl() {
 
 // load standard modules
 bool loadStdModules() {
-  std::vector<std::string> *fs =
+  std::vector<std::string>* fs =
       getAllFileWithPath(std::filesystem::current_path().string() + "/std");
 
   for (auto i : *fs) {
@@ -130,16 +133,18 @@ bool loadStdModules() {
       // vm
       (new vm(compiler->entities[0], &mods))->evaluate();
       //
-    } catch (exp::Exp &e) {
+    } catch (exp::Exp& e) {
       std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
       return false;
     }
   }
-  return true; // OK
+  return true;  // OK
 }
 
 // VER
-void version() { std::cout << VERS << std::endl; }
+void version() {
+  std::cout << VERS << std::endl;
+}
 
 // USAGE
 void usage() {
@@ -170,7 +175,7 @@ void usage() {
 }
 
 // entry
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   if (argc == 2 && strcmp(argv[1], "-v") == 0) {
     version();
     return 0;
@@ -181,7 +186,8 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  if (!loadStdModules()) return 1; // load standard modules
+  if (!loadStdModules())
+    return 1;  // load standard modules
 
   if (argc == 2) {
     // D

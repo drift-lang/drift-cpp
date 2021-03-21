@@ -24,16 +24,16 @@
 
 // entity structure
 struct Entity {
-  std::string title = ""; // TITLE FOR ENTITY
+  std::string title = "";  // TITLE FOR ENTITY
 
   explicit Entity() {}
-  explicit Entity(std::string title) : title(title) {} // TO title
+  explicit Entity(std::string title) : title(title) {}  // TO title
 
   std::vector<byte::Code> codes;           // bytecodes
   std::vector<int> offsets;                // offset of bytecode
-  std::vector<object::Object *> constants; // constant
+  std::vector<object::Object*> constants;  // constant
   std::vector<std::string> names;          // names
-  std::vector<ast::Type *> types;          // type of variables
+  std::vector<ast::Type*> types;           // type of variables
 
   // output entity data
   void dissemble() {

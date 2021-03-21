@@ -20,7 +20,7 @@
 #include "object.hpp"
 
 struct Table {
-  std::map<std::string, object::Object *> symbols;
+  std::map<std::string, object::Object*> symbols;
 
   void remove(std::string n) { symbols.erase(n); }
 

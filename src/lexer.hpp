@@ -23,7 +23,7 @@
 
 // lexer structure
 class Lexer {
-private:
+ private:
   // current character
   int position = 0;
 
@@ -55,10 +55,10 @@ private:
   char peek();
 
   // judge the current character and process the token
-  bool peekEmit(token::Token *t,
-                char c,              // current char
-                token::Kind k,       // equal token kind
-                const std::string &l // equal token literal
+  bool peekEmit(token::Token* t,
+                char c,               // current char
+                token::Kind k,        // equal token kind
+                const std::string& l  // equal token literal
   );
 
   // return resolve is end
@@ -82,9 +82,9 @@ private:
   // resolve to skip block comment
   inline void skipBlockComment();
 
-  std::map<std::string, token::Kind> keyword; // KEYWORDS
+  std::map<std::string, token::Kind> keyword;  // KEYWORDS
 
-public:
+ public:
   explicit Lexer(std::string source) : source(std::move(source)) {
     initializeKeyword(&keyword);
   }

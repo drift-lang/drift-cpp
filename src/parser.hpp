@@ -22,7 +22,7 @@
 
 // parser structure
 class Parser {
-private:
+ private:
   // current token
   int position = 0;
 
@@ -34,7 +34,7 @@ private:
   inline bool isEnd();
 
   // return the address of the token
-  inline token::Token *look(bool);
+  inline token::Token* look(bool);
 
   // look current token, if equal to peek next
   bool look(token::Kind);
@@ -49,31 +49,32 @@ private:
   inline token::Token previous();
 
   // parsing expressions
-  ast::Expr *expr();
-  ast::Expr *assignment();
-  ast::Expr *logicalOr();
-  ast::Expr *logicalAnd();
-  ast::Expr *equality();
-  ast::Expr *comparison();
-  ast::Expr *addition();
-  ast::Expr *multiplication();
-  ast::Expr *unary();
-  ast::Expr *call();
-  ast::Expr *primary();
+  ast::Expr* expr();
+  ast::Expr* assignment();
+  ast::Expr* logicalOr();
+  ast::Expr* logicalAnd();
+  ast::Expr* equality();
+  ast::Expr* comparison();
+  ast::Expr* addition();
+  ast::Expr* multiplication();
+  ast::Expr* unary();
+  ast::Expr* call();
+  ast::Expr* primary();
 
   // parsing statements
-  ast::Stmt *stmt();
+  ast::Stmt* stmt();
 
   // determine where to stop the analysis
-  ast::BlockStmt *block(token::Kind x, token::Kind y = token::EFF,
+  ast::BlockStmt* block(token::Kind x,
+                        token::Kind y = token::EFF,
                         token::Kind z = token::EFF);
 
-  ast::Type *type(bool previous = false); // parse types
+  ast::Type* type(bool previous = false);  // parse types
 
   // throw an exception
   inline void error(exp::Kind, std::string);
 
-public:
+ public:
   // parser constructor
   explicit Parser(std::vector<token::Token> tokens) {
     // tokens
@@ -81,7 +82,7 @@ public:
   }
 
   // final stmts list
-  std::vector<ast::Stmt *> statements;
+  std::vector<ast::Stmt*> statements;
 
   // do parsing
   void parse();

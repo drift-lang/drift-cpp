@@ -20,17 +20,17 @@
 
 // frame structure
 struct Frame {
-  Entity *entity; // ENTITY
+  Entity* entity;  // ENTITY
 
-  Table tb; // SYMBOL
+  Table tb;  // SYMBOL
 
-  Stack<object::Object *> data;  // DATA
-  object::Object *ret = nullptr; // RETURN
+  Stack<object::Object*> data;    // DATA
+  object::Object* ret = nullptr;  // RETURN
 
-  std::string mod;              // MODULE NAME
-  std::vector<std::string> pub; // PUBLIC NAMES
-  
-  explicit Frame(Entity *e) : entity(e) {}
+  std::string mod;               // MODULE NAME
+  std::vector<std::string> pub;  // PUBLIC NAMES
+
+  explicit Frame(Entity* e) : entity(e) {}
 };
 
 #endif

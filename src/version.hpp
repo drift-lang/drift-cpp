@@ -15,6 +15,6 @@
 #ifndef DRIFT_VERSION_H
 #define DRIFT_VERSION_H
 
-const char *VERS = "Drift 0.0.1 (REPL Mode, Feb 18 2021, 15:43:31)";
+const char* VERS = "Drift 0.0.1 (REPL Mode, Feb 18 2021, 15:43:31)";
 
 #endif
