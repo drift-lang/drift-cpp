@@ -17,16 +17,16 @@
 
 #include <algorithm>
 
-#include "exception.hpp"
-#include "frame.hpp"
-#include "object.hpp"
-#include "opcode.hpp"
+#include "exception.h"
+#include "frame.h"
+#include "object.h"
+#include "opcode.h"
 
-#include "entity.hpp"
+#include "entity.h"
 
-#include "builtin.hpp"
-#include "module.hpp"
-#include "util.hpp"
+#include "builtin.h"
+#include "module.h"
+#include "util.h"
 
 
 // structure

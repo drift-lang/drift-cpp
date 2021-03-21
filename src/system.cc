@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "system.hpp"
+#include "system.h"
 
 // return all the files in path
 std::vector<std::string>* getAllFileWithPath(std::string path) {

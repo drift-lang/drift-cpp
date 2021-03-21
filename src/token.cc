@@ -1,4 +1,4 @@
-#include "token.hpp"
+#include "token.h"
 
 void initializeKeyword(std::map<std::string, token::Kind>* map) {
   using namespace token;

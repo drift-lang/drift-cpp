@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-#include "token.hpp"
+#include "token.h"
 
 // types for drift
 enum TypeKind {

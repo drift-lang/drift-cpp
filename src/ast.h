@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "token.hpp"
+#include "token.h"
 
 // abstract syntax tree
 namespace ast {

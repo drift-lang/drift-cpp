@@ -1,32 +1,39 @@
 mod fun
 
-// MY LOVE!!
-pub def () love
-    def x: float
-    def y: float
+pub def Fun
+    // MY LOVE!!
+    def () love
+        def x: float
+        def y: float
 
-    def s: str
+        def s: str
 
-    def i: float = 1.5
-    for i > -1.5
-        s = ""
+        def i: float = 1.5
+        for i > -1.5
+            s = ""
 
-        x = -1.5
-        for x < 1.5
-            y = x * x + i * i - 1
+            x = -1.5
+            for x < 1.5
+                y = x * x + i * i - 1
 
-            if (y * y * y - 
-                    x * x * i * i * i) < 0.0
-                s += "*"
-            nf
-                s += " "
+                if (y * y * y - 
+                        x * x * i * i * i) < 0.0
+                    s += "*"
+                nf
+                    s += " "
+                end
+                x += 0.05
             end
-            x += 0.05
-        end
 
-        puts(s) // PRINT
-        i -= 0.1
+            puts(s) // PRINT
+            i -= 0.1
+        end
     end
+end
+
+pub def Color
+    RED
+    PINK
 end
 
 // ITS A JOKER!!
@@ -34,7 +41,7 @@ pub def (repeat: int) joker
     do
         def x: int = repeat + 1 // Love you more forever
     for ->
-        love()
+        new Fun.love()
         putl("第几次了？", x, " 次！！")
 
         out x - 1 == 0
@@ -44,19 +51,30 @@ pub def (repeat: int) joker
     end
 end
 
-ColumnLimit: 80
+// litter
+pub def () heart
+    def x: []str = [
+        "",
+        "    ** ** ", 
+        "   *  *  *", 
+        "    *   *", 
+        "      *",
+        ""
+    ]
+    do
+        def i: int = len(x)
+    for i > 0
+        putl(x[len(x) - i])
+        i -= 1
+    end
+end
 
-IndentWidth: 2
-TabWidth: 2
-
-NamespaceIndentation: All
-AccessModifierOffset: -2
-
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: true
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortBlocksOnASingleLine: Always
-
-IndentCaseLabels: true
-
-PointerAlignment: Right
+// return the raw string of heart
+pub def () rawHeart -> str
+    ret `
+    ** **
+   *  .  *      LOVE ?
+    *   *
+      *
+`
+end

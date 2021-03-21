@@ -17,8 +17,8 @@
 
 #include <algorithm>
 
-#include "ast.hpp"
-#include "exception.hpp"
+#include "ast.h"
+#include "exception.h"
 
 // analysis
 class Analysis {

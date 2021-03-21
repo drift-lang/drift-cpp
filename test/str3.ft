@@ -1,0 +1,4 @@
+def x: str = "Hello World!!"
+
+putl(x[5] == ' ', x[8] == 'r')
+putl(x[11] == '!')

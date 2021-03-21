@@ -16,14 +16,14 @@
 #include <filesystem>
 #include <fstream>
 
-#include "compiler.hpp"
-#include "lexer.hpp"
-#include "parser.hpp"
-#include "semantic.hpp"
-#include "version.hpp"
-#include "vm.hpp"
+#include "compiler.h"
+#include "lexer.h"
+#include "parser.h"
+#include "semantic.h"
+#include "version.h"
+#include "vm.h"
 
-#include "system.hpp"
+#include "system.h"
 
 // DEBUG to output tokens and statements
 bool DEBUG = false;

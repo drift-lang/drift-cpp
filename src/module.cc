@@ -12,7 +12,7 @@
 //          https://www.drift-lang.fun/
 //
 
-#include "module.hpp"
+#include "module.h"
 
 // add new module into global state and return error message
 std::string* addModule(std::vector<object::Module*>* mods,

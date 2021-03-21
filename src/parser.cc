@@ -12,7 +12,7 @@
 //          https://www.drift-lang.fun/
 //
 
-#include "parser.hpp"
+#include "parser.h"
 
 // do parsing
 void Parser::parse() {
@@ -474,6 +474,7 @@ ast::Stmt* Parser::stmt() {
             continue;
           }
         }
+
         // function
         if (look(token::IDENT)) {
           name = previous();

@@ -18,8 +18,8 @@
 #include <iostream>
 #include <vector>
 
-#include "exception.hpp"
-#include "frame.hpp"
+#include "exception.h"
+#include "frame.h"
 
 struct builtin {
   std::string name;                     // builtin name

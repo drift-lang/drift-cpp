@@ -18,8 +18,8 @@
 #include <iostream>
 #include <vector>
 
-#include "exception.hpp"
-#include "token.hpp"
+#include "exception.h"
+#include "token.h"
 
 // lexer structure
 class Lexer {

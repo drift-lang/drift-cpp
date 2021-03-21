@@ -1,0 +1,11 @@
+use str
+
+// new str.String{val: "OK?"}
+
+putl("COUNT 'l' = ", str.String.count('l'))
+putl("ADD = ", str.String.add("OK!! + "))
+
+putl("FIRST = ", str.String.first())
+putl("BACK = ", str.String.back())
+
+putl("SIZE = ", str.String.size())

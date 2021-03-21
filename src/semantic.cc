@@ -12,7 +12,7 @@
 //          https://www.drift-lang.fun/
 //
 
-#include "semantic.hpp"
+#include "semantic.h"
 
 // statement
 void Analysis::analysisStmt(ast::Stmt* stmt) {
@@ -85,8 +85,8 @@ void Analysis::analysisStmt(ast::Stmt* stmt) {
         // replace new statement into
         ast::Stmt* n = new ast::EnumStmt(w->name, fields);
         std::replace(std::begin(*statements), std::end(*statements), now(), n);
-        std::cout << "\033[33m[Semantic analysis replace " << position + 1
-                  << "]\033[0m: WholeStmt -> " << n->stringer() << std::endl;
+        // std::cout << "\033[33m[Semantic analysis replace " << position + 1
+        //           << "]\033[0m: WholeStmt -> " << n->stringer() << std::endl;
       }
       // normal whole statement if hinder of statements include name expr
       // to throw an error

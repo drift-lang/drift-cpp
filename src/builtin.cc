@@ -20,7 +20,7 @@
 #include <windows.h>  // WINDOWS
 #endif
 
-#include "builtin.hpp"
+#include "builtin.h"
 
 // print to screen
 void puts(object::Object* obj, Frame*) {

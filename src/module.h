@@ -17,8 +17,8 @@
 
 #include <vector>
 
-#include "object.hpp"
-#include "util.hpp"
+#include "object.h"
+#include "util.h"
 
 // add new module into global state and return error message
 std::string* addModule(std::vector<object::Module*>*,

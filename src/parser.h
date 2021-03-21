@@ -17,8 +17,8 @@
 
 #include <vector>
 
-#include "ast.hpp"
-#include "exception.hpp"
+#include "ast.h"
+#include "exception.h"
 
 // parser structure
 class Parser {

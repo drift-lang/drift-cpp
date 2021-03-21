@@ -18,9 +18,9 @@
 #include <iostream>
 #include <vector>
 
-#include "ast.hpp"
-#include "object.hpp"
-#include "opcode.hpp"
+#include "ast.h"
+#include "object.h"
+#include "opcode.h"
 
 // entity structure
 struct Entity {

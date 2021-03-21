@@ -17,7 +17,7 @@
 
 #include <map>
 
-#include "object.hpp"
+#include "object.h"
 
 struct Table {
   std::map<std::string, object::Object*> symbols;

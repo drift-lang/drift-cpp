@@ -12,7 +12,7 @@
 //          https://www.drift-lang.fun/
 //
 
-#include "util.hpp"
+#include "util.h"
 
 // return whether the string is all numbers
 bool isNumberStr(const std::string str) {

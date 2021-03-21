@@ -12,7 +12,7 @@
 //          https://www.drift-lang.fun/
 //
 
-#include "compiler.hpp"
+#include "compiler.h"
 
 // return the current statement
 ast::Stmt* Compiler::look() {

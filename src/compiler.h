@@ -17,10 +17,10 @@
 
 #include <algorithm>
 
-#include "ast.hpp"
-#include "entity.hpp"
-#include "object.hpp"
-#include "opcode.hpp"
+#include "ast.h"
+#include "entity.h"
+#include "object.h"
+#include "opcode.h"
 
 // compiler structure
 class Compiler {

@@ -15,8 +15,8 @@
 #ifndef DRIFT_FRAME_H
 #define DRIFT_FRAME_H
 
-#include "stack.hpp"
-#include "table.hpp"
+#include "stack.h"
+#include "table.h"
 
 // frame structure
 struct Frame {

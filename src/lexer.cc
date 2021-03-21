@@ -12,7 +12,7 @@
 //          https://www.drift-lang.fun/
 //
 
-#include "lexer.hpp"
+#include "lexer.h"
 
 //  start
 void Lexer::tokenizer() {

@@ -15,7 +15,7 @@
 #ifndef DRIFT_OBJECT_H
 #define DRIFT_OBJECT_H
 
-#include "ast.hpp"
+#include "ast.h"
 
 struct Entity;
 struct Frame;
