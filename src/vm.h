@@ -17,17 +17,14 @@
 
 #include <algorithm>
 
+#include "builtin.h"
+#include "entity.h"
 #include "exception.h"
 #include "frame.h"
+#include "module.h"
 #include "object.h"
 #include "opcode.h"
-
-#include "entity.h"
-
-#include "builtin.h"
-#include "module.h"
 #include "util.h"
-
 
 // structure
 class vm {

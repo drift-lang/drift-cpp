@@ -1667,8 +1667,10 @@ void vm::evaluate() {  // EVALUATE
                   while (y != f->arguments.end()) {
                     //
                     if ((*x)->kind() != y->second->kind()) {
-                      error("subclass inheritance parameter " +
-                            y->second->stringer() + " no " + (*x)->stringer());
+                      error(
+                          "subclass inheritance "
+                          "parameter " +
+                          y->second->stringer() + " no " + (*x)->stringer());
                     }
                     *x++;  // NEXT
                     *y++;  // NEXT

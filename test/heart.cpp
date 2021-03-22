@@ -19,9 +19,7 @@ int main() {
       else
         str += " ";
     }
-    // std::cout << str << std::endl;
+    std::cout << str << std::endl;
   }
-
-  std::cout << "i: " << i << std::endl;
   return 0;
 }
