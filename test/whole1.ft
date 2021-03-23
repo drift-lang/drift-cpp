@@ -4,7 +4,6 @@ def User
 
     def () call -> int
         ret 23
-    end
 
     def m: <int, str> = {
         200: "OK", 
@@ -19,17 +18,14 @@ def User
         for ->
             i += 1
             out i == 5    
-        end
         ret i
-    end
 
     def () get -> <int, str>
         ret m
-    end
 
-    def () x end
-    def () y end
-    def () z end
+    def () x;
+    def () y;
+    def () z;
 
     def (count: int) fib -> []int
         def arr: []int = [
@@ -51,15 +47,10 @@ def User
             x += 1
             y += 1
             i += 1
-        end
-        
         ret arr
-    end
 
     def (x: int) what -> int
         ret x + 1
-    end
-end
 
 def u: User = new User
 puts(u.name == "", u.pass == "")

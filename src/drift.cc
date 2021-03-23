@@ -93,7 +93,7 @@ void repl() {
   REPL = true;
 
   char* line = (char*)malloc(1024);
-  std::cout << "\n" << VERS << "\n" << std::endl;
+  std::cout << VERS << std::endl;
 
   while (true) {
     std::cout << "ft >> ";

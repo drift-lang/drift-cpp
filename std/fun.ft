@@ -1,6 +1,6 @@
 mod fun
 
-pub def Fun
+def Fun
     // MY LOVE!!
     def () love
         def x: float
@@ -21,23 +21,17 @@ pub def Fun
                     s += "*"
                 nf
                     s += " "
-                end
                 x += 0.05
-            end
 
             puts(s) // PRINT
             i -= 0.1
-        end
-    end
-end
 
-pub def Color
+def Color
     RED
     PINK
-end
 
 // ITS A JOKER!!
-pub def (repeat: int) joker
+def (repeat: int) joker
     do
         def x: int = repeat + 1 // Love you more forever
     for ->
@@ -48,11 +42,9 @@ pub def (repeat: int) joker
         sleep(3)
 
         x -= 1
-    end
-end
 
 // litter
-pub def () heart
+def () heart
     def x: []str = [
         "",
         "    ** ** ", 
@@ -66,15 +58,12 @@ pub def () heart
     for i > 0
         putl(x[len(x) - i])
         i -= 1
-    end
-end
 
 // return the raw string of heart
-pub def () rawHeart -> str
+def () rawHeart -> str
     ret `
     ** **
    *  .  *      LOVE ?
     *   *
       *
 `
-end
