@@ -18,8 +18,7 @@
 void Lexer::tokenizer() {
   while (!this->isEnd()) {
     // first to skip whitespace
-    if (isSpace())
-      skipWhitespace();
+    if (isSpace()) skipWhitespace();
     // identifier
     else if (isIdent())
       this->lexIdent();
@@ -46,31 +45,25 @@ void Lexer::tokenizer() {
 
 // final to dissemble tokens list
 void Lexer::dissembleTokens() {
-  std::cout << "TOKEN: " << std::endl << std::endl;
-
   int i = 1;
-  for (const auto& token : this->tokens)
+  for (const auto &token : this->tokens)
     std::cout << i++ << " " + token::toString(token) << std::endl;
 }
 
 // return resolve is end
-inline bool Lexer::isEnd() {
-  return this->position >= this->source.length();
-}
+inline bool Lexer::isEnd() { return this->position >= this->source.length(); }
 
 // resolve to skip whitespace
 inline void Lexer::skipWhitespace() {
   while (!isEnd() && this->isSpace()) {
-    if (now() == '\n')
-      this->line++;
+    if (now() == '\n') this->line++;
     this->position++;
   }
 }
 
 // resolve to skip line comment
 inline void Lexer::skipLineComment() {
-  while (!isEnd() && now() != '\n')
-    this->position++;
+  while (!isEnd() && now() != '\n') this->position++;
 }
 
 // resolve to skip block comment
@@ -91,9 +84,7 @@ inline bool Lexer::isIdent() {
 }
 
 // return current char is digit
-inline bool Lexer::isDigit() {
-  return now() >= '0' && now() <= '9';
-}
+inline bool Lexer::isDigit() { return now() >= '0' && now() <= '9'; }
 
 // return current char is whitespace
 inline bool Lexer::isSpace() {
@@ -104,8 +95,15 @@ inline bool Lexer::isSpace() {
 }
 
 // return current char of resolve
-inline char Lexer::now() {
-  return this->source.at(this->position);
+inline char Lexer::now() { return this->source.at(this->position); }
+
+// throw an error
+inline void Lexer::error(exp::Kind k, std::string m) {
+  this->state->kind = k;
+  this->state->message = m;
+  this->state->line = this->line;
+
+  throw exp::Exp(this->state);
 }
 
 // resolve identifier
@@ -120,9 +118,12 @@ void Lexer::lexIdent() {
     this->position++;
   }
 
-  this->tokens.push_back(token::Token{
-      // keyword or IDENT
-      getKeyword(this->keyword, literal.str()), literal.str(), this->line});
+  auto tok = token::Token{};
+  tok.kind = getKeyword(this->keyword, literal.str());
+  tok.literal = literal.str();
+  tok.line = this->line;
+
+  this->tokens.push_back(tok);
 }
 
 // resolve digit
@@ -135,8 +136,7 @@ void Lexer::lexDigit() {
     if (isDigit() || now() == '.') {
       literal << now();
 
-      if (now() == '.')
-        floating = true;
+      if (now() == '.') floating = true;
     } else
       break;
     this->position++;
@@ -152,8 +152,7 @@ void Lexer::lexDigit() {
 void Lexer::lexString(bool longStr) {
   char cond = '"';
   // longer string
-  if (longStr)
-    cond = '`';
+  if (longStr) cond = '`';
 
   std::stringstream literal;
   bool isEndFile = false;
@@ -169,18 +168,14 @@ void Lexer::lexString(bool longStr) {
       break;
     }
     if (now() == '\n' && !longStr) {
-      throw exp::Exp(exp::STRING_EXP,
-                     // long strings
-                     "for long strings use the ` operator", this->line);
-      break;
+      error(exp::STRING_EXP, "for long string use ` operator");
     }
     literal << now();
     this->position++;
   }
 
   // missing closing symbol
-  if (!isEndFile)
-    throw exp::Exp(exp::STRING_EXP, "missing closing symbol", this->line);
+  if (!isEndFile) error(exp::STRING_EXP, "missing closing symbol");
 
   // add judgment character
   // used to judge long characters at compile time
@@ -197,14 +192,13 @@ void Lexer::lexChar() {
 
   // skip left single quotation mark
   this->position++;
-  if (isEnd())
-    throw exp::Exp(exp::CHARACTER_EXP, "wrong character", this->line);
+  if (isEnd()) error(exp::CHARACTER_EXP, "wrong character");
 
   literal << now();
 
   if (peek() != '\'')
     // this character is empty
-    throw exp::Exp(exp::CHARACTER_EXP, "wrong character", this->line);
+    error(exp::CHARACTER_EXP, "wrong character");
   else
     // skip value and right single quotation mark
     this->position += 2;
@@ -222,27 +216,13 @@ void Lexer::lexSymbol() {
   tok.line = this->line;
 
   switch (now()) {
-    case '(':
-      tok.kind = token::L_PAREN;
-      break;
-    case ')':
-      tok.kind = token::R_PAREN;
-      break;
-    case '{':
-      tok.kind = token::L_BRACE;
-      break;
-    case '}':
-      tok.kind = token::R_BRACE;
-      break;
-    case '[':
-      tok.kind = token::L_BRACKET;
-      break;
-    case ']':
-      tok.kind = token::R_BRACKET;
-      break;
-    case ':':
-      tok.kind = token::COLON;
-      break;
+    case '(': tok.kind = token::L_PAREN; break;
+    case ')': tok.kind = token::R_PAREN; break;
+    case '{': tok.kind = token::L_BRACE; break;
+    case '}': tok.kind = token::R_BRACE; break;
+    case '[': tok.kind = token::L_BRACKET; break;
+    case ']': tok.kind = token::R_BRACKET; break;
+    case ':': tok.kind = token::COLON; break;
     case '+':
       if (peekEmit(&tok, '=', token::AS_ADD, "+="))
         break;
@@ -250,8 +230,7 @@ void Lexer::lexSymbol() {
         tok.kind = token::ADD;
       break;
     case '-':
-      if (peekEmit(&tok, '>', token::R_ARROW, "->"))
-        break;
+      if (peekEmit(&tok, '>', token::R_ARROW, "->")) break;
       if (peekEmit(&tok, '=', token::AS_SUB, "-="))
         break;
       else
@@ -264,8 +243,7 @@ void Lexer::lexSymbol() {
         tok.kind = token::MUL;
       break;
     case '/':
-      if (peekEmit(&tok, '=', token::AS_DIV, "/="))
-        break;
+      if (peekEmit(&tok, '=', token::AS_DIV, "/=")) break;
       // to resolve skip comment
       else if (peek() == '/') {
         this->skipLineComment();
@@ -285,15 +263,9 @@ void Lexer::lexSymbol() {
       else
         tok.kind = token::SUR;
       break;
-    case '$':
-      tok.kind = token::DOLLAR;
-      break;
-    case '.':
-      tok.kind = token::DOT;
-      break;
-    case ',':
-      tok.kind = token::COMMA;
-      break;
+    case '$': tok.kind = token::DOLLAR; break;
+    case '.': tok.kind = token::DOT; break;
+    case ',': tok.kind = token::COMMA; break;
     case '>':
       if (peekEmit(&tok, '=', token::GR_EQ, ">="))
         break;
@@ -301,21 +273,15 @@ void Lexer::lexSymbol() {
         tok.kind = token::GREATER;
       break;
     case '<':
-      if (peekEmit(&tok, '=', token::LE_EQ, "<="))
-        break;
-      if (peekEmit(&tok, '-', token::L_ARROW, "<-"))
-        break;
+      if (peekEmit(&tok, '=', token::LE_EQ, "<=")) break;
+      if (peekEmit(&tok, '-', token::L_ARROW, "<-")) break;
       if (peekEmit(&tok, '~', token::L_CURVED_ARROW, "<~"))
         break;
       else
         tok.kind = token::LESS;
       break;
-    case '&':
-      tok.kind = token::ADDR;
-      break;
-    case '|':
-      tok.kind = token::OR;
-      break;
+    case '&': tok.kind = token::ADDR; break;
+    case '|': tok.kind = token::OR; break;
     case '!':
       if (peekEmit(&tok, '=', token::BANG_EQ, "!="))
         break;
@@ -332,9 +298,8 @@ void Lexer::lexSymbol() {
       tok.kind = token::UNDERLINE;
       break;
       break;
-    default:
-      // what
-      throw exp::Exp(exp::UNKNOWN_SYMBOL, "unknown symbol", this->line);
+
+    default: error(exp::UNKNOWN_SYMBOL, "unknown symbol");
   }
   // skip current single symbol
   this->position++;
@@ -350,10 +315,8 @@ char Lexer::peek() {
 }
 
 // judge the current character and process the token
-bool Lexer::peekEmit(token::Token* t,
-                     char c,
-                     token::Kind k,
-                     const std::string& l) {
+bool Lexer::peekEmit(token::Token *t, char c, token::Kind k,
+                     const std::string &l) {
   if (peek() == c) {
     t->kind = k;
     t->literal = l;

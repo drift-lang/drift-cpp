@@ -19,28 +19,36 @@
 
 #include "ast.h"
 #include "exception.h"
+#include "state.h"
 
 // analysis
 class Analysis {
- private:
+private:
   int position = 0;
   // stmts
-  std::vector<ast::Stmt*>* statements;
+  std::vector<ast::Stmt *> *statements;
 
   // return the kind of current statement
   inline ast::Kind look() { return statements->at(position)->kind(); }
 
   // return the current statement
-  inline ast::Stmt* now() { return statements->at(position); }
+  inline ast::Stmt *now() { return statements->at(position); }
+
+  State *state;
 
   // throw semantic analysis exception
   void error(exp::Kind k, std::string message, int line) {
-    throw exp::Exp(k, message, line);
+    state->kind = k;
+    state->message = message;
+    state->line = line;
+
+    throw exp::Exp(state);
   }
 
- public:
-  explicit Analysis(std::vector<ast::Stmt*>* stmts) {
+public:
+  explicit Analysis(std::vector<ast::Stmt *> *stmts, State *state) {
     this->statements = stmts;
+    this->state = state;
 
     while (position < statements->size()) {
       this->analysisStmt(now());
@@ -49,9 +57,9 @@ class Analysis {
   }
 
   // statement
-  void analysisStmt(ast::Stmt* stmt);
+  void analysisStmt(ast::Stmt *stmt);
   // expression
-  void analysisExpr(ast::Expr* expr);
+  void analysisExpr(ast::Expr *expr);
 };
 
 #endif

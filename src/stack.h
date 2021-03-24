@@ -17,14 +17,13 @@
 
 #include <iostream>
 
-template <class T>
-class Stack {
- private:
+template <class T> class Stack {
+private:
   int capacity = 4, count = 0;
 
-  T* elements;
+  T *elements;
 
- public:
+public:
   explicit Stack() { this->elements = new T[capacity]; }
 
   ~Stack() { delete[] elements; }
@@ -32,7 +31,7 @@ class Stack {
   void push(T t) {
     if (count + 1 > capacity) {
       this->capacity = capacity * 2;
-      this->elements = (T*)realloc(this->elements, sizeof(T) * capacity);
+      this->elements = (T *)realloc(this->elements, sizeof(T) * capacity);
     }
     this->elements[count++] = t;
   }
@@ -41,7 +40,7 @@ class Stack {
 
   T pop() { return this->elements[--count]; }
 
-  T top() { return this->elements[count]; }
+  T top() { return this->elements[count - 1]; }
 
   int len() { return count; }
 

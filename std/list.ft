@@ -6,6 +6,6 @@ def Foo
     end
 end
 
-pub def () to
+def () to
     new Foo.call()
 end

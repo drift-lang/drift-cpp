@@ -19,6 +19,6 @@
 #include <vector>
 
 // return all the files in folder
-std::vector<std::string>* getAllFileWithPath(std::string);
+std::vector<std::string> *getAllFileWithPath(std::string);
 
 #endif

@@ -1,6 +1,6 @@
 mod io
 
 // return the parameter value plus one
-pub def (x: int) add -> int
+def (x: int) add -> int
     ret x + 1 // return
 end

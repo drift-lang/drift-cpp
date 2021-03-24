@@ -19,11 +19,12 @@
 #include <vector>
 
 #include "exception.h"
+#include "state.h"
 #include "token.h"
 
 // lexer structure
 class Lexer {
- private:
+private:
   // current character
   int position = 0;
 
@@ -51,14 +52,17 @@ class Lexer {
   // return current char of resolve
   inline char now();
 
+  // throw an error
+  inline void error(exp::Kind k, std::string m);
+
   // return next char of resolve
   char peek();
 
   // judge the current character and process the token
-  bool peekEmit(token::Token* t,
-                char c,               // current char
-                token::Kind k,        // equal token kind
-                const std::string& l  // equal token literal
+  bool peekEmit(token::Token *t,
+                char c,              // current char
+                token::Kind k,       // equal token kind
+                const std::string &l // equal token literal
   );
 
   // return resolve is end
@@ -82,11 +86,14 @@ class Lexer {
   // resolve to skip block comment
   inline void skipBlockComment();
 
-  std::map<std::string, token::Kind> keyword;  // KEYWORDS
+  std::map<std::string, token::Kind> keyword; // KEYWORDS
 
- public:
-  explicit Lexer(std::string source) : source(std::move(source)) {
+  State *state;
+
+public:
+  explicit Lexer(std::string source, State *s) : source(std::move(source)) {
     initializeKeyword(&keyword);
+    this->state = s;
   }
 
   // final token list

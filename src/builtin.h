@@ -20,16 +20,20 @@
 
 #include "exception.h"
 #include "frame.h"
+#include "state.h"
 
 struct builtin {
-  std::string name;                     // builtin name
-  void (*to)(object::Object*, Frame*);  // to handler function
+  std::string name;                      // builtin name
+  void (*to)(object::Object *, Frame *); // to handler function
 };
 
 // return it is builtin function name
 bool isBuiltinName(std::string);
 
 // if its builtin function to call it
-void builtinFuncCall(std::string, object::Object*, Frame*);
+void builtinFuncCall(std::string, object::Object *, Frame *);
+
+// regist the name of builtin
+void regBuiltinName(Frame *);
 
 #endif

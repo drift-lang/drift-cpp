@@ -20,13 +20,21 @@
 #include "object.h"
 
 struct Table {
-  std::map<std::string, object::Object*> symbols;
+  std::map<std::string, object::Object *> symbols;
 
   void remove(std::string n) { symbols.erase(n); }
 
   void clear() { symbols.clear(); }
 
   bool empty() { return symbols.empty(); }
+
+  object::Object *lookUp(std::string n) {
+    for (auto i : symbols)
+      if (i.first == n) return i.second;
+    return nullptr;
+  }
+
+  void emit(std::string n, object::Object *o) { symbols[n] = o; }
 };
 
 #endif

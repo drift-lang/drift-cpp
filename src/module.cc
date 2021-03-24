@@ -15,28 +15,25 @@
 #include "module.h"
 
 // add new module into global state and return error message
-std::string* addModule(std::vector<object::Module*>* mods,
-                       std::string name,
-                       Frame* f,
-                       std::vector<std::string> pub) {
-  std::vector<object::Module*> m = getModule(mods, name);
+std::string *addModule(std::vector<object::Module *> *mods, std::string name,
+                       Frame *f) {
+  std::vector<object::Module *> m = getModule(mods, name);
 
   // multiple modules with the same name are alloweds
-  for (auto i : m)
-    if (sameValue(i->pub, pub))  // same value
-      return new std::string("same module defines the same name");
+  // for (auto i : m)
+  //   if (sameValue(i->pub, pub))  // same value
+  //     return new std::string("same module defines the same name");
 
-  mods->push_back(new object::Module(name, f, pub));  // insert new module
+  mods->push_back(new object::Module(name, f)); // insert new module
 
-  return nullptr;  // OK
+  return nullptr; // OK
 }
 
 // get module with name
-std::vector<object::Module*> getModule(std::vector<object::Module*>* mods,
-                                       std::string name) {
-  std::vector<object::Module*> m;  // multiple modules
+std::vector<object::Module *> getModule(std::vector<object::Module *> *mods,
+                                        std::string name) {
+  std::vector<object::Module *> m; // multiple modules
   for (auto i : *mods)
-    if (i->name == name)
-      m.push_back(i);
+    if (i->name == name) m.push_back(i);
   return m;
 }

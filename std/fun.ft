@@ -21,27 +21,43 @@ def Fun
                     s += "*"
                 nf
                     s += " "
+                end
                 x += 0.05
-
+            end
             puts(s) // PRINT
             i -= 0.1
+        end
+    end
+end
 
 def Color
     RED
     PINK
+end
 
 // ITS A JOKER!!
 def (repeat: int) joker
+    def first: bool = T
+
     do
         def x: int = repeat + 1 // Love you more forever
     for ->
-        new Fun.love()
+        //new Fun.love()
+        Fun.love()
         putl("第几次了？", x, " 次！！")
 
+        if first
+            putl("FIRST..")
+            first = !first
+        end
+
         out x - 1 == 0
-        sleep(3)
+        sleep(2)
 
         x -= 1
+    end
+    putl("END..")
+end
 
 // litter
 def () heart
@@ -58,6 +74,8 @@ def () heart
     for i > 0
         putl(x[len(x) - i])
         i -= 1
+    end
+end
 
 // return the raw string of heart
 def () rawHeart -> str
@@ -67,3 +85,4 @@ def () rawHeart -> str
     *   *
       *
 `
+end

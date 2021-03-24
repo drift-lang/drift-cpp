@@ -1,7 +1,6 @@
-#include <filesystem>
 #include <iostream>
 
 int main() {
-  std::cout << std::filesystem::current_path() << std::endl;
+  std::cout << (false == 1 > 2) << std::endl;
   return 0;
 }

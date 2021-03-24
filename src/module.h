@@ -21,13 +21,10 @@
 #include "util.h"
 
 // add new module into global state and return error message
-std::string* addModule(std::vector<object::Module*>*,
-                       std::string,
-                       Frame*,
-                       std::vector<std::string>);
+std::string *addModule(std::vector<object::Module *> *, std::string, Frame *);
 
 // get module with name
-std::vector<object::Module*> getModule(std::vector<object::Module*>*,
-                                       std::string);
+std::vector<object::Module *> getModule(std::vector<object::Module *> *,
+                                        std::string);
 
 #endif

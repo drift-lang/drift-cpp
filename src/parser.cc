@@ -24,12 +24,6 @@ void Parser::parse() {
 
 // final to dissemble statement list
 void Parser::dissembleStmts() {
-  if (this->statements.empty()) {
-    std::cout << "Empty Statements" << std::endl << std::endl;
-    return;
-  } else {
-    std::cout << "STATEMENT: " << std::endl << std::endl;
-  }
   int i = 1;
   for (auto stmt : this->statements)
     std::cout << i++ << " " + stmt->stringer() << std::endl;
@@ -41,17 +35,12 @@ inline bool Parser::isEnd() {
 }
 
 // return the address of the token
-inline token::Token* Parser::look(bool previous) {
-  if (previous) {
-    return &this->tokens.at(this->position - 1);
-  }
-  return &this->tokens.at(this->position);
+inline token::Token *Parser::look(bool previous) {
+  return &this->tokens.at(previous ? this->position - 1 : this->position);
 }
 
 // return the token of the current location
-inline token::Token Parser::look() {
-  return this->tokens.at(this->position);
-}
+inline token::Token Parser::look() { return this->tokens.at(this->position); }
 
 // look the appoint position of tokens
 token::Token Parser::look(int i) {
@@ -89,17 +78,15 @@ inline token::Token Parser::previous() {
  *
  * - top down operation precedence grammar analysis -
  */
-ast::Expr* Parser::expr() {
-  return assignment();
-}
+ast::Expr *Parser::expr() { return assignment(); }
 
 // EXPR.NAME = EXPR : SET
 // EXPR = EXPR      : ASSIGN
-ast::Expr* Parser::assignment() {
-  ast::Expr* expr = logicalOr();
+ast::Expr *Parser::assignment() {
+  ast::Expr *expr = logicalOr();
 
   if (look(token::EQ)) {
-    ast::Expr* value = assignment();
+    ast::Expr *value = assignment();
 
     // EXPR = EXPR
     if (expr->kind() == ast::EXPR_NAME || expr->kind() == ast::EXPR_INDEX) {
@@ -107,7 +94,7 @@ ast::Expr* Parser::assignment() {
     }
     // EXPR.NAME = EXPR
     if (expr->kind() == ast::EXPR_GET) {
-      ast::GetExpr* get = static_cast<ast::GetExpr*>(expr);
+      ast::GetExpr *get = static_cast<ast::GetExpr *>(expr);
       return new ast::SetExpr(get->expr, get->name, value);
     }
     error(exp::INVALID_SYNTAX, "cannot assign value");
@@ -116,12 +103,12 @@ ast::Expr* Parser::assignment() {
 }
 
 // |
-ast::Expr* Parser::logicalOr() {
-  ast::Expr* expr = logicalAnd();
+ast::Expr *Parser::logicalOr() {
+  ast::Expr *expr = logicalAnd();
 
   while (look(token::OR)) {
     token::Token op = this->previous();
-    ast::Expr* right = logicalAnd();
+    ast::Expr *right = logicalAnd();
     //
     expr = new ast::BinaryExpr(expr, op, right);
   }
@@ -129,12 +116,12 @@ ast::Expr* Parser::logicalOr() {
 }
 
 // &
-ast::Expr* Parser::logicalAnd() {
-  ast::Expr* expr = equality();
+ast::Expr *Parser::logicalAnd() {
+  ast::Expr *expr = equality();
 
   while (look(token::ADDR)) {
     token::Token op = this->previous();
-    ast::Expr* right = equality();
+    ast::Expr *right = equality();
     //
     expr = new ast::BinaryExpr(expr, op, right);
   }
@@ -142,12 +129,12 @@ ast::Expr* Parser::logicalAnd() {
 }
 
 // == | !=
-ast::Expr* Parser::equality() {
-  ast::Expr* expr = comparison();
+ast::Expr *Parser::equality() {
+  ast::Expr *expr = comparison();
 
   while (look(token::EQ_EQ) || look(token::BANG_EQ)) {
     token::Token op = this->previous();
-    ast::Expr* right = comparison();
+    ast::Expr *right = comparison();
     //
     expr = new ast::BinaryExpr(expr, op, right);
   }
@@ -155,13 +142,13 @@ ast::Expr* Parser::equality() {
 }
 
 // > | >= | < | <=
-ast::Expr* Parser::comparison() {
-  ast::Expr* expr = addition();
+ast::Expr *Parser::comparison() {
+  ast::Expr *expr = addition();
 
   while (look(token::GREATER) || look(token::GR_EQ) || look(token::LESS) ||
          look(token::LE_EQ)) {
     token::Token op = this->previous();
-    ast::Expr* right = addition();
+    ast::Expr *right = addition();
     //
     expr = new ast::BinaryExpr(expr, op, right);
   }
@@ -169,13 +156,13 @@ ast::Expr* Parser::comparison() {
 }
 
 // + | - | += | -=
-ast::Expr* Parser::addition() {
-  ast::Expr* expr = multiplication();
+ast::Expr *Parser::addition() {
+  ast::Expr *expr = multiplication();
 
   while (look(token::ADD) || look(token::SUB) || look(token::AS_ADD) ||
          look(token::AS_SUB)) {
     token::Token op = this->previous();
-    ast::Expr* right = multiplication();
+    ast::Expr *right = multiplication();
     //
     expr = new ast::BinaryExpr(expr, op, right);
   }
@@ -183,13 +170,13 @@ ast::Expr* Parser::addition() {
 }
 
 // * | / | *= | /=
-ast::Expr* Parser::multiplication() {
-  ast::Expr* expr = unary();
+ast::Expr *Parser::multiplication() {
+  ast::Expr *expr = unary();
 
   while (look(token::MUL) || look(token::DIV) || look(token::AS_MUL) ||
          look(token::AS_DIV) || look(token::SUR) || look(token::AS_SUR)) {
     token::Token op = this->previous();
-    ast::Expr* right = unary();
+    ast::Expr *right = unary();
     //
     expr = new ast::BinaryExpr(expr, op, right);
   }
@@ -197,10 +184,10 @@ ast::Expr* Parser::multiplication() {
 }
 
 // ! | -
-ast::Expr* Parser::unary() {
+ast::Expr *Parser::unary() {
   while (look(token::BANG) || look(token::SUB)) {
     token::Token op = previous();
-    ast::Expr* expr = unary();
+    ast::Expr *expr = unary();
     //
     return new ast::UnaryExpr(op, expr);
   }
@@ -208,8 +195,8 @@ ast::Expr* Parser::unary() {
 }
 
 // expr(<expr>..) | expr.name | expr[expr]
-ast::Expr* Parser::call() {
-  ast::Expr* expr = primary();
+ast::Expr *Parser::call() {
+  ast::Expr *expr = primary();
   // stack up the expression!!
   //
   // LIKE: bar(foo(1, 2, 3)[x + 4])
@@ -218,7 +205,7 @@ ast::Expr* Parser::call() {
     // call
     if (look(token::L_PAREN)) {
       // arguments
-      auto args = std::vector<ast::Expr*>();
+      auto args = std::vector<ast::Expr *>();
       // no argument
       if (look(token::R_PAREN)) {
         expr = new ast::CallExpr(expr, args);
@@ -238,15 +225,13 @@ ast::Expr* Parser::call() {
     } else if (look(token::DOT)) {
       token::Token name = look();
 
-      if (isEnd())
-        error(exp::UNEXPECTED, "missing name and found EFF");
-      this->position++;  // skip name token
+      if (isEnd()) error(exp::UNEXPECTED, "missing name and found EFF");
+      this->position++; // skip name token
       expr = new ast::GetExpr(expr, name);
       // index for array
     } else if (look(token::L_BRACKET)) {
       // empty index
-      if (look(token::R_BRACKET))
-        error(exp::UNEXPECTED, "null index");
+      if (look(token::R_BRACKET)) error(exp::UNEXPECTED, "null index");
       // index
       auto index = this->expr();
 
@@ -261,22 +246,20 @@ ast::Expr* Parser::call() {
 }
 
 // primary
-ast::Expr* Parser::primary() {
+ast::Expr *Parser::primary() {
   // literal expr
   // number | float | string | char
   if (look(token::NUM) || look(token::FLOAT) || look(token::STR) ||
       look(token::CHAR))
     return new ast::LiteralExpr(this->previous());
   // name expr
-  if (look(token::IDENT))
-    return new ast::NameExpr(previous());
+  if (look(token::IDENT)) return new ast::NameExpr(previous());
   // group expr
   if (look(token::L_PAREN)) {
     // vector for tuple and group expression
-    std::vector<ast::Expr*> elem;
+    std::vector<ast::Expr *> elem;
     // empty tuple expr
-    if (look(token::R_PAREN))
-      return new ast::TupleExpr(elem);
+    if (look(token::R_PAREN)) return new ast::TupleExpr(elem);
     // tuple or group ?
     elem.push_back(this->expr());
 
@@ -299,7 +282,7 @@ ast::Expr* Parser::primary() {
   }
   // array expr
   if (look(token::L_BRACKET)) {
-    auto elem = std::vector<ast::Expr*>();
+    auto elem = std::vector<ast::Expr *>();
 
     if (look(token::R_BRACKET))
       return new ast::ArrayExpr(elem);
@@ -315,18 +298,17 @@ ast::Expr* Parser::primary() {
   }
   // map expr
   if (look(token::L_BRACE)) {
-    std::map<ast::Expr*, ast::Expr*> elem;
+    std::map<ast::Expr *, ast::Expr *> elem;
     // empty map expr
-    if (look(token::R_BRACE))
-      return new ast::MapExpr(elem);
+    if (look(token::R_BRACE)) return new ast::MapExpr(elem);
 
     while (true) {
-      ast::Expr* K = this->expr();
+      ast::Expr *K = this->expr();
 
       if (!look(token::COLON)) {
         error(exp::UNEXPECTED, "expect ':' after key in map");
       }
-      ast::Expr* V = this->expr();
+      ast::Expr *V = this->expr();
 
       // push to map
       elem.insert(std::make_pair(K, V));
@@ -346,12 +328,11 @@ ast::Expr* Parser::primary() {
     if (!look(token::IDENT)) {
       error(exp::INVALID_SYNTAX, "name of new must be an identifier");
     }
-    token::Token name = previous();  // name of new
+    token::Token name = previous(); // name of new
 
-    std::map<token::Token*, ast::Expr*> builder;  // fields
+    std::map<token::Token *, ast::Expr *> builder; // fields
 
-    if (!look(token::L_BRACE))
-      return new ast::NewExpr(name, builder);
+    if (!look(token::L_BRACE)) return new ast::NewExpr(name, builder);
 
     while (true) {
       if (!look(token::IDENT)) {
@@ -363,7 +344,7 @@ ast::Expr* Parser::primary() {
       if (!look(token::COLON)) {
         error(exp::INVALID_SYNTAX, "expect ':' after key");
       }
-      ast::Expr* V = this->expr();  // expr V
+      ast::Expr *V = this->expr(); // expr V
 
       builder.insert(std::make_pair(&this->tokens.at(tempPos), V));
 
@@ -382,7 +363,7 @@ ast::Expr* Parser::primary() {
 }
 
 //  statement
-ast::Stmt* Parser::stmt() {
+ast::Stmt *Parser::stmt() {
   switch (this->look().kind) {
     // definition statement
     case token::DEF:
@@ -390,9 +371,9 @@ ast::Stmt* Parser::stmt() {
       // variable
       if (look(token::IDENT) && look().kind == token::COLON) {
         token::Token name = previous();
-        this->position++;  // skip colon symbol
+        this->position++; // skip colon symbol
 
-        ast::Type* T = this->type();
+        ast::Type *T = this->type();
 
         // value of variable
         if (look(token::EQ))
@@ -410,31 +391,31 @@ ast::Stmt* Parser::stmt() {
         // name
         token::Token name;
         // return
-        ast::Type* ret = nullptr;
+        ast::Type *ret = nullptr;
         // cache multiple parameters
-        std::vector<token::Token*> temp;
+        std::vector<token::Token *> temp;
 
         //
         bool interfaceStmt = false;
-        ast::FaceArg faceArgs;  // T1, T2..
+        ast::FaceArg faceArgs; // T1, T2..
 
         while (!look(token::R_PAREN)) {
           if (!look(token::IDENT) && !interfaceStmt) {
             error(exp::UNEXPECTED, "argument name muse be an identifier");
           }
           // K
-          token::Token* K = look(true);  // address of token
+          token::Token *K = look(true); // address of token
 
           // handle multiparameter
           while (look(token::ADD)) {
             if (!look(token::IDENT)) {
               error(exp::UNEXPECTED, "argument name muse be an identifier");
             } else {
-              temp.push_back(K);  // previous,
+              temp.push_back(K); // previous,
               // left of the
               // plus sign
-              temp.push_back(look(true));  // address
-                                           // of token
+              temp.push_back(look(true)); // address
+                                          // of token
             }
           }
 
@@ -443,15 +424,14 @@ ast::Stmt* Parser::stmt() {
               interfaceStmt) {
             //
             faceArgs.push_back(
-                this->type(true));  // parse previous token to type
-            interfaceStmt = true;   // set
+                this->type(true)); // parse previous token to type
+            interfaceStmt = true;  // set
 
-            if (look().kind == token::COMMA)
-              this->position++;
+            if (look().kind == token::COMMA) this->position++;
             if (look().kind == token::R_PAREN || look().kind == token::MUL) {
-              break;  // end
+              break; // end
             } else {
-              continue;  // go
+              continue; // go
             }
           }
 
@@ -464,7 +444,7 @@ ast::Stmt* Parser::stmt() {
             funcArgs.insert(std::make_pair(K, this->type()));
           } else {
             // multip
-            ast::Type* T = this->type();
+            ast::Type *T = this->type();
 
             for (auto i : temp) {
               funcArgs.insert(std::make_pair(i, T));
@@ -481,9 +461,9 @@ ast::Stmt* Parser::stmt() {
         }
         // interface
         else if (look(token::MUL)) {
-          name = look();  // name of interface
+          name = look(); // name of interface
           //
-          this->position++;  // skip name of
+          this->position++; // skip name of
           // interface
           //
           // current parsing interface statement
@@ -508,8 +488,8 @@ ast::Stmt* Parser::stmt() {
         break;
         // whole
       } else {
-        ast::Stmt* inherit = nullptr;
-        token::Token name = previous();  // name
+        ast::Stmt *inherit = nullptr;
+        token::Token name = previous(); // name
 
         // inherit
         if (look().kind == token::L_ARROW) {
@@ -522,22 +502,22 @@ ast::Stmt* Parser::stmt() {
     case token::IF: {
       this->position++;
       // if condition
-      ast::Expr* condition = this->expr();
+      ast::Expr *condition = this->expr();
       // if then branch
-      ast::BlockStmt* thenBranch =
+      ast::BlockStmt *thenBranch =
           this->block(token::EF, token::END, token::NF);
 
-      std::map<ast::Expr*, ast::BlockStmt*> elem;
+      std::map<ast::Expr *, ast::BlockStmt *> elem;
 
       while (previous().kind == token::EF) {
-        ast::Expr* efCondition = this->expr();
-        ast::BlockStmt* efBranch =
+        ast::Expr *efCondition = this->expr();
+        ast::BlockStmt *efBranch =
             this->block(token::EF, token::END, token::NF);
         //
         elem.insert(std::make_pair(efCondition, efBranch));
       }
 
-      ast::BlockStmt* nfBranch = nullptr;
+      ast::BlockStmt *nfBranch = nullptr;
 
       if (previous().kind == token::NF) {
         nfBranch = this->block(token::END);
@@ -551,8 +531,8 @@ ast::Stmt* Parser::stmt() {
       if (look(token::R_ARROW))
         return new ast::ForStmt(nullptr, this->block(token::END));
       // for condition
-      ast::Expr* condition = this->expr();
-      ast::BlockStmt* block = this->block(token::END);
+      ast::Expr *condition = this->expr();
+      ast::BlockStmt *block = this->block(token::END);
       //
       return new ast::ForStmt(condition, block);
     } break;
@@ -560,10 +540,10 @@ ast::Stmt* Parser::stmt() {
     case token::DO: {
       this->position++;
       // block
-      ast::BlockStmt* block = this->block(token::FOR);
+      ast::BlockStmt *block = this->block(token::FOR);
       // go back to the position of the `for` keyword
       this->position--;
-      ast::Stmt* stmt = this->stmt();
+      ast::Stmt *stmt = this->stmt();
       //
       return new ast::DoStmt(block, stmt);
     } break;
@@ -601,7 +581,7 @@ ast::Stmt* Parser::stmt() {
       // name
       token::Token alias = previous();
       // block
-      ast::BlockStmt* stmt = this->block(token::END);
+      ast::BlockStmt *stmt = this->block(token::END);
       //
       return new ast::AndStmt(alias, stmt);
     } break;
@@ -617,24 +597,11 @@ ast::Stmt* Parser::stmt() {
       // use
     case token::USE: {
       this->position++;
-
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "use of module name must be an identifier");
-      }
       // name
-      token::Token name = previous();
-      // no alias
-      if (!look(token::AS)) {
-        return new ast::UseStmt(name);
-      }
       if (!look(token::IDENT)) {
         error(exp::UNEXPECTED, "alias of module name must be an identifier");
       }
-      int previous = this->position - 1;
-      //
-      // [Q]: why can't variables on the stack be referenced
-      //
-      return new ast::UseStmt(name, &this->tokens.at(previous));
+      return new ast::UseStmt(previous());
     } break;
       // return
       // ret <expr>
@@ -655,25 +622,20 @@ ast::Stmt* Parser::stmt() {
       if (!look(token::IDENT)) {
         error(exp::UNEXPECTED, "inheritance name must be an indentifier");
       }
-      std::vector<token::Token*> names;
+      std::vector<token::Token *> names;
       // single
-      names.push_back(look(true));  // address of token
+      names.push_back(look(true)); // address of token
 
       while (look(token::ADD)) {
         if (!look(token::IDENT)) {
           error(exp::UNEXPECTED, "inheritance name must be an indentifier");
         }
-        names.push_back(look(true));  // address
+        names.push_back(look(true)); // address
       }
 
       return new ast::InheritStmt(names);
     } break;
-      // pub
-    case token::PUB:
-      this->position++;
-      //
-      return new ast::PubStmt(look().line, this->stmt());
-      break;
+    //
     default:
       // expression statement
       return new ast::ExprStmt(this->expr());
@@ -689,8 +651,8 @@ ast::Stmt* Parser::stmt() {
  * the x parameter is required, and y and z have default value
  * determine where to stop the analysis
  */
-ast::BlockStmt* Parser::block(token::Kind x, token::Kind y, token::Kind z) {
-  std::vector<ast::Stmt*> body;
+ast::BlockStmt *Parser::block(token::Kind x, token::Kind y, token::Kind z) {
+  std::vector<ast::Stmt *> body;
   // until end token
   while (true) {
     if (look(x)) {
@@ -711,37 +673,36 @@ ast::BlockStmt* Parser::block(token::Kind x, token::Kind y, token::Kind z) {
 
 // throw an exception
 inline void Parser::error(exp::Kind kind, std::string message) {
-  throw exp::Exp(kind, std::move(message), look().line);
+  this->state->kind = kind;
+  this->state->message = message;
+  this->state->line = look().line;
+  
+  throw exp::Exp(this->state);
 }
 
 //  type analysis
-ast::Type* Parser::type(bool previous) {
+ast::Type *Parser::type(bool previous) {
   token::Token now = *this->look(previous);
   // type
   if (now.kind == token::IDENT) {
     // skip type ident
     this->position++;
     // T1
-    if (now.literal == S_INT)
-      return new ast::Int();
+    if (now.literal == S_INT) return new ast::Int();
     // T2
-    if (now.literal == S_FLOAT)
-      return new ast::Float();
+    if (now.literal == S_FLOAT) return new ast::Float();
     // T3
-    if (now.literal == S_STR)
-      return new ast::Str;
+    if (now.literal == S_STR) return new ast::Str;
     // T4
-    if (now.literal == S_CHAR)
-      return new ast::Char();
+    if (now.literal == S_CHAR) return new ast::Char();
     // T5
-    if (now.literal == S_BOOL)
-      return new ast::Bool;
+    if (now.literal == S_BOOL) return new ast::Bool;
     // user define type
     return new ast::User(now);
   }
   // T6
   if (now.kind == token::L_BRACKET) {
-    this->position++;  // skip left [ symbol
+    this->position++; // skip left [ symbol
 
     if (!look(token::R_BRACKET)) {
       error(exp::UNEXPECTED, "expect ']' after left square bracket");
@@ -750,14 +711,14 @@ ast::Type* Parser::type(bool previous) {
   }
   // T7
   if (now.kind == token::LESS) {
-    this->position++;  // skip left < symbol
+    this->position++; // skip left < symbol
     // key
-    ast::Type* T1 = this->type();
+    ast::Type *T1 = this->type();
 
     if (!look(token::COMMA)) {
       error(exp::UNEXPECTED, "expect ',' after key of map");
     }
-    ast::Type* T2 = this->type();
+    ast::Type *T2 = this->type();
 
     if (!look(token::GREATER)) {
       error(exp::UNEXPECTED, "expect '>' after value of map");
@@ -766,9 +727,9 @@ ast::Type* Parser::type(bool previous) {
   }
   // T8
   if (now.kind == token::L_PAREN) {
-    this->position++;  // skip left ( symbol
+    this->position++; // skip left ( symbol
 
-    ast::Type* T = this->type();
+    ast::Type *T = this->type();
 
     if (!look(token::R_PAREN)) {
       error(exp::UNEXPECTED, "expect ')' after tuple define");

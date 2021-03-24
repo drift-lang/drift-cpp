@@ -4,15 +4,17 @@ def Iter
     /*
      * return the count of character in string
      */
-    fac (char) count -> int
+    def (char) *count -> int
 
-    fac () first -> char  // return first char of string
-    fac () back  -> char  // return back char of string
-    fac () size  -> int   // return size of string
+    def () *first -> char  // return first char of string
+    def () *back  -> char  // return back char of string
+    def () *size  -> int   // return size of string
+end
 
 def And
-    fac (str) add -> str    // add two string
-    fac () split  -> []char // split string to array
+    def (str) *add -> str    // add two string
+    def () *split  -> []char // split string to array
+end
 
 def String <- Iter + And // implemention
     def val: str // constructor
@@ -20,6 +22,7 @@ def String <- Iter + And // implemention
     def (x: char) count -> int
         if len(val) == 0
             ret 0
+        end
         do
             def i: int      // index
             def c: int      // count
@@ -28,27 +31,36 @@ def String <- Iter + And // implemention
         for l > i
             if val[len(val) - l] == x
                 c += 1
+            end
             l -= 1
+        end
         ret c // return the count
+    end
 
     // add two string and return it
     def (x: str) add -> str
         ret x + val
+    end
 
     // return first char of string
     def () first -> char
         ret val[0]
+    end
 
     // return back char of string
     def () back -> char
         ret val[len(val) - 1]
+    end
 
     // return size of string
     def () size -> int
         ret len(val)
+    end
 
     // split string
     def () split -> []char
         ret [val[0], val[1], val[2]]
+    end
+end
 
 new String{val: "Hello World"}

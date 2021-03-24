@@ -12,9 +12,17 @@
 //          https://www.drift-lang.fun/
 //
 
-#ifndef DRIFT_VERSION_H
-#define DRIFT_VERSION_H
+#ifndef DRIFT_STATE_H
+#define DRIFT_STATE_H
 
-const char *VERS = "Drift 0.0.1 (MADE AT Feb 18 2021 15:43:31)";
+#include <iostream>
+
+struct State {
+  std::string filePath = "REPL_MODE"; // current read file
+  std::string message;                // exception message
+
+  int line = 1; // syntax lineno
+  int kind;
+};
 
 #endif

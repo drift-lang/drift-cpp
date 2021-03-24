@@ -24,16 +24,18 @@
 
 // entity structure
 struct Entity {
-  std::string title = "";  // TITLE FOR ENTITY
+  std::string title = ""; // TITLE FOR ENTITY
 
   explicit Entity() {}
-  explicit Entity(std::string title) : title(title) {}  // TO title
+  explicit Entity(std::string title) : title(title) {} // TO title
 
   std::vector<byte::Code> codes;           // bytecodes
   std::vector<int> offsets;                // offset of bytecode
-  std::vector<object::Object*> constants;  // constant
+  std::vector<object::Object *> constants; // constant
   std::vector<std::string> names;          // names
-  std::vector<ast::Type*> types;           // type of variables
+  std::vector<ast::Type *> types;          // type of variables
+
+  std::vector<int> jumpOffsets;
 
   // output entity data
   void dissemble() {
@@ -42,19 +44,24 @@ struct Entity {
     for (int ip = 0, op = 0; ip < codes.size(); ip++) {
       byte::Code co = codes.at(ip);
 
+      printf("%10s", std::find(jumpOffsets.begin(), jumpOffsets.end(), ip) ==
+                             jumpOffsets.end()
+                         ? ""
+                         : ">>");
+
       switch (co) {
         case byte::CONST: {
-          printf("%20d: %s %10d %s\n", ip,
+          printf("%10d: %s %10d %s\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  constants.at(offsets.at(op))->rawStringer().c_str());
         } break;
         case byte::ASSIGN: {
-          printf("%20d: %s %9d '%s'\n", ip,
+          printf("%10d: %s %9d '%s'\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  names.at(offsets.at(op)).c_str());
         } break;
         case byte::STORE: {
-          printf("%20d: %s %10d '%s' %d %s\n", ip,
+          printf("%10d: %s %10d '%s' %d %s\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
                  names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
                  types.at(offsets.at(op + 1))->stringer().c_str());
@@ -62,18 +69,18 @@ struct Entity {
         } break;
         case byte::LOAD:
         case byte::NAME: {
-          printf("%20d: %s %11d '%s'\n", ip,
+          printf("%10d: %s %11d '%s'\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  names.at(offsets.at(op)).c_str());
         } break;
         case byte::FUNC:
         case byte::ENUM: {
-          printf("%20d: %s %11d %s\n", ip,
+          printf("%10d: %s %11d %s\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  constants.at(offsets.at(op))->rawStringer().c_str());
         } break;
         case byte::WHOLE: {
-          printf("%20d: %s %10d %s\n", ip,
+          printf("%10d: %s %10d %s\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  constants.at(offsets.at(op))->rawStringer().c_str());
         } break;
@@ -82,44 +89,37 @@ struct Entity {
         case byte::MOD:
         case byte::USE:
         case byte::CHA: {
-          printf("%20d: %s %12d '%s'\n", ip,
+          printf("%10d: %s %12d '%s'\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  names.at(offsets.at(op)).c_str());
         } break;
         case byte::CALL: {
-          printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+          printf("%10d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
                  offsets.at(op++));
         } break;
         case byte::B_ARR:
         case byte::B_TUP:
         case byte::B_MAP: {
-          printf("%20d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+          printf("%10d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
                  offsets.at(op++));
         } break;
         case byte::F_JUMP:
         case byte::T_JUMP: {
-          printf("%20d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+          printf("%10d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
                  offsets.at(op++));
         } break;
         case byte::JUMP: {
-          printf("%20d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+          printf("%10d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
                  offsets.at(op++));
         } break;
         case byte::NEW: {
-          printf("%20d: %s %12d '%s' %d\n", ip,
+          printf("%10d: %s %12d '%s' %d\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
                  names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
           op += 2;
         } break;
-        case byte::UAS: {
-          printf("%20d: %s %12d '%s' %d '%s'\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
-                 names.at(offsets.at(op + 1)).c_str());
-          op += 2;
-        } break;
         default:
-          printf("%20d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
+          printf("%10d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
           break;
       }
     }

@@ -23,6 +23,7 @@
 #include "version.h"
 #include "vm.h"
 
+#include "state.h"
 #include "system.h"
 
 // DEBUG to output tokens and statements
@@ -32,36 +33,34 @@ bool REPL = false;
 // dis mode
 bool DIS = false;
 
-static std::vector<object::Module*> mods;  // global modules
+static State state;                        // global state
+static std::vector<object::Module *> mods; // global modules
 
-vm* mac;  // local
+vm *mac; // local
 
 // run source code
 void run(std::string source) {
   try {
     // lexer
-    auto lex = new Lexer(source);
+    auto lex = new Lexer(source, &state);
 
     lex->tokenizer();
-    if (DEBUG)
-      lex->dissembleTokens();
+    if (DEBUG) lex->dissembleTokens();
 
     // parser
-    auto parser = new Parser(lex->tokens);
+    auto parser = new Parser(lex->tokens, &state);
 
     parser->parse();
-    if (DEBUG)
-      parser->dissembleStmts();
+    if (DEBUG) parser->dissembleStmts();
 
     // semantic
-    auto semantic = new Analysis(&parser->statements);
+    auto semantic = new Analysis(&parser->statements, &state);
     // compiler
     auto compiler = new Compiler(parser->statements);
     compiler->compile();
 
     if (DIS)
-      for (auto i : compiler->entities)
-        i->dissemble();
+      for (auto i : compiler->entities) i->dissemble();
 
     // vm
     if (REPL && mac != nullptr) {
@@ -70,20 +69,22 @@ void run(std::string source) {
       mac->clean();
     } else {
       // new virtual machine
-      mac = new vm(compiler->entities[0], &mods);
+      mac = new vm(compiler->entities[0], &mods, REPL, DIS, &state);
     }
     mac->evaluate();
     //
-  } catch (exp::Exp& e) {
-    std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
+  } catch (exp::Exp &e) {
+    std::cout << e.stringer() << std::endl;
     return;
   }
 }
 
 // FILE mode
-void runFile(const char* path) {
+void runFile(const char *path) {
   std::string s;
   fileString(path, &s);
+
+  state.filePath = std::string(path); // current read file
 
   run(s);
 }
@@ -92,11 +93,13 @@ void runFile(const char* path) {
 void repl() {
   REPL = true;
 
-  char* line = (char*)malloc(1024);
+  char *line = (char *)malloc(1024);
   std::cout << VERS << std::endl;
+  int count = 1;
 
   while (true) {
-    std::cout << "ft >> ";
+    // std::cout << count++ << " >> ";
+    std::cout << "> ";
     std::cin.getline(line, 1024);
 
     if (strlen(line) == 0) {
@@ -108,7 +111,7 @@ void repl() {
 
 // load standard modules
 bool loadStdModules() {
-  std::vector<std::string>* fs =
+  std::vector<std::string> *fs =
       getAllFileWithPath(std::filesystem::current_path().string() + "/std");
 
   for (auto i : *fs) {
@@ -117,77 +120,42 @@ bool loadStdModules() {
 
     try {
       // lexer
-      auto lex = new Lexer(s);
+      auto lex = new Lexer(s, &state);
       lex->tokenizer();
 
       // parser
-      auto parser = new Parser(lex->tokens);
+      auto parser = new Parser(lex->tokens, &state);
       parser->parse();
 
       // semantic
-      auto semantic = new Analysis(&parser->statements);
+      auto semantic = new Analysis(&parser->statements, &state);
       // compiler
       auto compiler = new Compiler(parser->statements);
       compiler->compile();
 
       // vm
-      (new vm(compiler->entities[0], &mods))->evaluate();
+      (new vm(compiler->entities[0], &mods, REPL, DIS, &state))->evaluate();
       //
-    } catch (exp::Exp& e) {
-      std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
+    } catch (exp::Exp &e) {
+      // std::cout << "\033[31m" << e.stringer() << "\033[0m" << std::endl;
+      std::cout << e.stringer() << std::endl;
       return false;
     }
   }
-  return true;  // OK
+  return true; // OK
 }
 
 // VER
-void version() {
-  std::cout << VERS << std::endl;
-}
-
-// USAGE
-void usage() {
-  std::cout << "\n\t\tTHE DRIFT PROGRAMMING LANGUAGE\n" << std::endl;
-  std::cout << "\t\tCOPYRIGHT C 2021 BINGXIO (黄菁) | GPL 3.0 LICENSE | ALL "
-               "RIGHTS RESERVED\n"
-            << std::endl;
-  std::cout << "LINKS: " << std::endl;
-  std::cout << "\t\t- https://drift-lang.fun/" << std::endl;
-  std::cout << "\t\t- https://github.com/bingxio/drift\n" << std::endl;
-  std::cout << "USAGE: " << std::endl;
-  std::cout << "\t\t> drift                   # REPL MODE" << std::endl;
-  std::cout << "\t\t> drift <ft file>         # FILE MODE" << std::endl
-            << std::endl;
-  std::cout << "\t\t> drift -v                # DIS VERSION" << std::endl
-            << std::endl;
-  std::cout << "\t\t> drift -d                # REPL AND DEBUG MODE"
-            << std::endl;
-  std::cout << "\t\t> drift -d <ft file>      # FILE AND DEBUG MODE"
-            << std::endl
-            << std::endl;
-  std::cout << "\t\t> drift -b                # REPL AND DIS MODE" << std::endl;
-  std::cout << "\t\t> drift <ft file> -b      # FILE AND DIS MODE" << std::endl
-            << std::endl;
-  std::cout << "CONTACT: " << std::endl;
-  std::cout << "\t\t+ 1171840237@qq.com" << std::endl;
-  std::cout << "\t\t+ https://bingxio.fun/" << std::endl << std::endl;
-}
+void version() { std::cout << VERS << std::endl; }
 
 // entry
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   if (argc == 2 && strcmp(argv[1], "-v") == 0) {
     version();
     return 0;
   }
 
-  if (argc == 2 && strcmp(argv[1], "-u") == 0) {
-    usage();
-    return 0;
-  }
-
-  if (!loadStdModules())
-    return 1;  // load standard modules
+  if (!loadStdModules()) return 1; // load standard modules
 
   if (argc == 2) {
     // D
