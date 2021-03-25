@@ -299,7 +299,8 @@ void Lexer::lexSymbol() {
       break;
       break;
 
-    default: error(exp::UNKNOWN_SYMBOL, "unknown symbol");
+    default:
+      error(exp::UNKNOWN_SYMBOL, "unknown symbol: " + std::to_string(now()));
   }
   // skip current single symbol
   this->position++;

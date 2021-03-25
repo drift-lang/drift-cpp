@@ -16,6 +16,7 @@
 #define DRIFT_STATE_H
 
 #include <iostream>
+#include <vector>
 
 struct State {
   std::string filePath = "REPL_MODE"; // current read file
@@ -23,6 +24,8 @@ struct State {
 
   int line = 1; // syntax lineno
   int kind;
+
+  std::vector<int> lineno;
 };
 
 #endif

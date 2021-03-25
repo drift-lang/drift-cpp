@@ -84,7 +84,7 @@ private:
 
   std::vector<object::Module *> *mods; // to global modules of program
 
-  bool replMode = false, disMode = false;
+  bool replMode = false, disMode = false; // cursor vars
 
   State *state;
 

@@ -79,7 +79,7 @@ namespace token {
     USE, // 1
     DEF, // 2
     RET, // 3
-    AND, // 4
+    LET, // 4
     END, // 5
     IF,  // 6
     EF,  // 7
@@ -108,10 +108,11 @@ namespace token {
       "R_BRACE",   "L_PAREN",   "R_PAREN",
       "L_BRACKET", "R_BRACKET", "UNDERLINE",
       "EFF",       "USE",       "DEF",
-      "RET",       "AND",       "END",
+      "RET",       "LET",       "END",
       "IF",        "EF",        "NF",
       "FOR",       "DO",        "OUT",
-      "TIN",       "NEW",       "MOD"};
+      "TIN",       "NEW",       "MOD",
+  };
 
   //  token structure
   struct Token {

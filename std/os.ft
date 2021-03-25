@@ -3,18 +3,14 @@ mod os
 /*
  * desc: 提示
  * deep: 睡觉
- * step: 取模
  * op:   结束
  */
-def (desc: str, deep + step + op: int) loop
+def (desc: str, deep + op: int) loop
     do
-        def i: int = 0
+        let i: int = 0
     for ->
         if i == op
             out ->
-        ef i % step == 0
-            i += 1
-            tin ->
         end
         
         putl(i, desc)

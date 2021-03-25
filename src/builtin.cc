@@ -24,14 +24,14 @@
 
 // throw an exception
 void error(std::string m) {
-  State state;
+  State *state = new State;
 
-  state.filePath = "Module";
-  state.kind = exp::RUNTIME_ERROR;
-  state.message = m;
-  state.line = -1;
+  state->filePath = "BUILTIN";
+  state->kind = exp::RUNTIME_ERROR;
+  state->message = m;
+  state->line = -1;
 
-  throw exp::Exp(&state);
+  throw exp::Exp(state);
 }
 
 // print to screen
@@ -147,4 +147,7 @@ void regBuiltinName(Frame *f) {
   f->tb.emit("F", new object::Bool(0));
 
   f->tb.emit("_VERSION_", new object::Str("DRIFT 0.0.1"));
+  f->tb.emit("_AUTHOR_", new object::Str("BINGXIO - 黄菁"));
+  f->tb.emit("_LICENSE_", new object::Str("GPL 3.0"));
+  f->tb.emit("_WEBSITE_", new object::Str("https://drift-lang.fun/"));
 }

@@ -87,8 +87,7 @@ struct Entity {
         case byte::GET:
         case byte::SET:
         case byte::MOD:
-        case byte::USE:
-        case byte::CHA: {
+        case byte::USE: {
           printf("%10d: %s %12d '%s'\n", ip,
                  byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                  names.at(offsets.at(op)).c_str());

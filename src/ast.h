@@ -530,20 +530,26 @@ namespace ast {
     // default is not init
     Expr *expr = nullptr;
 
+    bool local = false;
+
     // has expr
-    explicit VarStmt(token::Token name, Type *T, Expr *e) : T(T), expr(e) {
+    explicit VarStmt(token::Token name, Type *T, Expr *e, bool local)
+        : T(T), expr(e) {
       this->name = std::move(name);
+      this->local = local;
     }
 
     // not init expr
-    explicit VarStmt(token::Token name, Type *T) : T(T) {
+    explicit VarStmt(token::Token name, Type *T, bool local) : T(T) {
       this->name = std::move(name);
+      this->local = local;
     }
 
     std::string stringer() override {
       std::stringstream str;
 
-      str << "<VarStmt { Name='" << name.literal << "' Type=" << T->stringer();
+      str << "<VarStmt { Name='" << name.literal << "' Type=" << T->stringer()
+          << " Local=" << (local ? "T" : "F");
 
       if (expr != nullptr)
         str << " Expr=" << expr->stringer() << " }>";
@@ -775,24 +781,6 @@ namespace ast {
     }
 
     Kind kind() override { return STMT_RET; }
-  };
-
-  // and -> <name> <block> end
-  class AndStmt : public Stmt {
-  public:
-    token::Token name; // alias name
-    BlockStmt *block;  // block
-
-    explicit AndStmt(token::Token name, BlockStmt *block) : block(block) {
-      this->name = std::move(name);
-    }
-
-    std::string stringer() override {
-      return "<AndStmt Name='" + name.literal + "' Block=" + block->stringer() +
-             " }>";
-    }
-
-    Kind kind() override { return STMT_AND; }
   };
 
   // def (<param>..) <name> -> <ret>

@@ -7,7 +7,7 @@ void initializeKeyword(std::map<std::string, token::Kind> *map) {
   map->insert(std::make_pair("use", USE)); // 1
   map->insert(std::make_pair("def", DEF)); // 2
   map->insert(std::make_pair("ret", RET)); // 3
-  map->insert(std::make_pair("and", AND)); // 4
+  map->insert(std::make_pair("let", LET)); // 4
   map->insert(std::make_pair("end", END)); // 5
   map->insert(std::make_pair("if", IF));   // 6
   map->insert(std::make_pair("ef", EF));   // 7

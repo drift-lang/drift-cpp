@@ -1647,11 +1647,6 @@ void vm::evaluate() { // EVALUATE
         this->op++;        // NEXT
       } break;
 
-      case byte::CHA: { // CHA
-        this->emitTable(this->retName(), this->popData());
-        this->op++;
-      } break;
-
       case byte::MOD: { // MOD
         top()->mod = this->retName();
         this->op++;

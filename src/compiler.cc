@@ -309,7 +309,10 @@ void Compiler::stmt(ast::Stmt *stmt) {
       int ifPos = now->offsets.size();
 
       this->stmt(i->ifBranch);
-      this->emitCode(byte::JUMP); // jump out after
+
+      if (!i->efBranch.empty() ||
+          i->nfBranch != nullptr)   // ignore single expr to JUMP
+        this->emitCode(byte::JUMP); // jump out after
 
       int ifOff = now->offsets.size(); // jump after execution if branch
       std::vector<int> tempEfOffs;     // ef condition offsets
@@ -356,7 +359,9 @@ void Compiler::stmt(ast::Stmt *stmt) {
         this->insertPosOffset(tempEfOffs.at(i) + i);
       }
 
-      this->insertPosOffset(ifOff + 1); // TO: if (JUMP)
+      if (!i->efBranch.empty() ||
+          i->nfBranch != nullptr)         // ignore single expr to JUMP
+        this->insertPosOffset(ifOff + 1); // TO: if (JUMP)
     } break;
     //
     case ast::STMT_FOR: {
@@ -524,15 +529,6 @@ void Compiler::stmt(ast::Stmt *stmt) {
       // TO main ENTITY
       this->emitCode(byte::WHOLE);
       this->emitConstant(obj); // push to constant object
-    } break;
-    //
-    case ast::STMT_AND: {
-      ast::AndStmt *a = static_cast<ast::AndStmt *>(stmt);
-
-      this->emitCode(byte::CHA);
-      this->emitName(a->name.literal); // STORE
-
-      this->stmt(a->block);
     } break;
     //
     case ast::STMT_MOD: {

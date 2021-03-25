@@ -367,7 +367,15 @@ ast::Stmt *Parser::stmt() {
   switch (this->look().kind) {
     // definition statement
     case token::DEF:
+    case token::LET: {
       this->position++;
+
+      token::Kind k = previous().kind;
+
+      // let and name decoration
+      if (look().kind != token::IDENT && k == token::LET) {
+        error(exp::UNEXPECTED, "let name decoration can only be an ident");
+      }
       // variable
       if (look(token::IDENT) && look().kind == token::COLON) {
         token::Token name = previous();
@@ -378,9 +386,9 @@ ast::Stmt *Parser::stmt() {
         // value of variable
         if (look(token::EQ))
           // there is an initial value
-          return new ast::VarStmt(name, T, this->expr());
+          return new ast::VarStmt(name, T, this->expr(), k == token::LET);
         else
-          return new ast::VarStmt(name, T);
+          return new ast::VarStmt(name, T, k == token::LET);
       }
       // function or interface
       else if (look(token::L_PAREN)) {
@@ -497,7 +505,7 @@ ast::Stmt *Parser::stmt() {
         }
         return new ast::WholeStmt(name, inherit, this->block(token::END));
       }
-      break;
+    } break;
       // if
     case token::IF: {
       this->position++;
@@ -568,23 +576,6 @@ ast::Stmt *Parser::stmt() {
         return new ast::TinStmt();
       }
       return new ast::TinStmt(this->expr());
-      // and
-    case token::AND: {
-      this->position++;
-
-      if (!look(token::R_ARROW)) {
-        error(exp::UNEXPECTED, "expect '->' after and keyword");
-      }
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "alias must be an identifier");
-      }
-      // name
-      token::Token alias = previous();
-      // block
-      ast::BlockStmt *stmt = this->block(token::END);
-      //
-      return new ast::AndStmt(alias, stmt);
-    } break;
       // mod
     case token::MOD:
       this->position++;
@@ -676,7 +667,7 @@ inline void Parser::error(exp::Kind kind, std::string message) {
   this->state->kind = kind;
   this->state->message = message;
   this->state->line = look().line;
-  
+
   throw exp::Exp(this->state);
 }
 
