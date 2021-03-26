@@ -225,13 +225,15 @@ ast::Expr *Parser::call() {
     } else if (look(token::DOT)) {
       token::Token name = look();
 
-      if (isEnd()) error(exp::UNEXPECTED, "missing name and found EFF");
+      if (isEnd())
+        error(exp::UNEXPECTED, "missing name and found EFF");
       this->position++; // skip name token
       expr = new ast::GetExpr(expr, name);
       // index for array
     } else if (look(token::L_BRACKET)) {
       // empty index
-      if (look(token::R_BRACKET)) error(exp::UNEXPECTED, "null index");
+      if (look(token::R_BRACKET))
+        error(exp::UNEXPECTED, "null index");
       // index
       auto index = this->expr();
 
@@ -253,13 +255,15 @@ ast::Expr *Parser::primary() {
       look(token::CHAR))
     return new ast::LiteralExpr(this->previous());
   // name expr
-  if (look(token::IDENT)) return new ast::NameExpr(previous());
+  if (look(token::IDENT))
+    return new ast::NameExpr(previous());
   // group expr
   if (look(token::L_PAREN)) {
     // vector for tuple and group expression
     std::vector<ast::Expr *> elem;
     // empty tuple expr
-    if (look(token::R_PAREN)) return new ast::TupleExpr(elem);
+    if (look(token::R_PAREN))
+      return new ast::TupleExpr(elem);
     // tuple or group ?
     elem.push_back(this->expr());
 
@@ -300,7 +304,8 @@ ast::Expr *Parser::primary() {
   if (look(token::L_BRACE)) {
     std::map<ast::Expr *, ast::Expr *> elem;
     // empty map expr
-    if (look(token::R_BRACE)) return new ast::MapExpr(elem);
+    if (look(token::R_BRACE))
+      return new ast::MapExpr(elem);
 
     while (true) {
       ast::Expr *K = this->expr();
@@ -332,7 +337,8 @@ ast::Expr *Parser::primary() {
 
     std::map<token::Token *, ast::Expr *> builder; // fields
 
-    if (!look(token::L_BRACE)) return new ast::NewExpr(name, builder);
+    if (!look(token::L_BRACE))
+      return new ast::NewExpr(name, builder);
 
     while (true) {
       if (!look(token::IDENT)) {
@@ -365,271 +371,269 @@ ast::Expr *Parser::primary() {
 //  statement
 ast::Stmt *Parser::stmt() {
   switch (this->look().kind) {
-    // definition statement
-    case token::DEF:
-    case token::LET: {
-      this->position++;
+  // definition statement
+  case token::DEF:
+  case token::LET: {
+    this->position++;
 
-      token::Kind k = previous().kind;
+    token::Kind k = previous().kind;
 
-      // let and name decoration
-      if (look().kind != token::IDENT && k == token::LET) {
-        error(exp::UNEXPECTED, "let name decoration can only be an ident");
-      }
-      // variable
-      if (look(token::IDENT) && look().kind == token::COLON) {
-        token::Token name = previous();
-        this->position++; // skip colon symbol
+    // let and name decoration
+    if (look().kind != token::IDENT && k == token::LET) {
+      error(exp::UNEXPECTED, "let name decoration can only be an ident");
+    }
+    // variable
+    if (look(token::IDENT) && look().kind == token::COLON) {
+      token::Token name = previous();
+      this->position++; // skip colon symbol
 
-        ast::Type *T = this->type();
+      ast::Type *T = this->type();
 
-        // value of variable
-        if (look(token::EQ))
-          // there is an initial value
-          return new ast::VarStmt(name, T, this->expr(), k == token::LET);
-        else
-          return new ast::VarStmt(name, T, k == token::LET);
-      }
-      // function or interface
-      else if (look(token::L_PAREN)) {
-        // arguments
-        //
-        // <[ [token] ], Expr>
-        ast::FuncArg funcArgs;
-        // name
-        token::Token name;
-        // return
-        ast::Type *ret = nullptr;
-        // cache multiple parameters
-        std::vector<token::Token *> temp;
-
-        //
-        bool interfaceStmt = false;
-        ast::FaceArg faceArgs; // T1, T2..
-
-        while (!look(token::R_PAREN)) {
-          if (!look(token::IDENT) && !interfaceStmt) {
-            error(exp::UNEXPECTED, "argument name muse be an identifier");
-          }
-          // K
-          token::Token *K = look(true); // address of token
-
-          // handle multiparameter
-          while (look(token::ADD)) {
-            if (!look(token::IDENT)) {
-              error(exp::UNEXPECTED, "argument name muse be an identifier");
-            } else {
-              temp.push_back(K); // previous,
-              // left of the
-              // plus sign
-              temp.push_back(look(true)); // address
-                                          // of token
-            }
-          }
-
-          // interface
-          if (look().kind == token::COMMA || look().kind == token::R_PAREN ||
-              interfaceStmt) {
-            //
-            faceArgs.push_back(
-                this->type(true)); // parse previous token to type
-            interfaceStmt = true;  // set
-
-            if (look().kind == token::COMMA) this->position++;
-            if (look().kind == token::R_PAREN || look().kind == token::MUL) {
-              break; // end
-            } else {
-              continue; // go
-            }
-          }
-
-          if (!look(token::COLON)) {
-            error(exp::UNEXPECTED, "expect ':' after parameter name");
-          }
-          // handle multiparameter
-          if (temp.empty()) {
-            // no
-            funcArgs.insert(std::make_pair(K, this->type()));
-          } else {
-            // multip
-            ast::Type *T = this->type();
-
-            for (auto i : temp) {
-              funcArgs.insert(std::make_pair(i, T));
-            }
-          }
-          if (look(token::COMMA)) {
-            continue;
-          }
-        }
-
-        // function
-        if (look(token::IDENT)) {
-          name = previous();
-        }
-        // interface
-        else if (look(token::MUL)) {
-          name = look(); // name of interface
-          //
-          this->position++; // skip name of
-          // interface
-          //
-          // current parsing interface statement
-          interfaceStmt = true;
-        }
-        // error
-        else {
-          error(exp::UNEXPECTED,
-                "expect '*' to interface or identifier to function");
-        }
-        // return value
-        if (look(token::R_ARROW)) {
-          ret = this->type();
-        }
-
-        if (interfaceStmt) {
-          return new ast::InterfaceStmt(faceArgs, name, ret);
-        }
-        // function
-        return new ast::FuncStmt(funcArgs, name, ret, this->block(token::END));
-        //
-        break;
-        // whole
-      } else {
-        ast::Stmt *inherit = nullptr;
-        token::Token name = previous(); // name
-
-        // inherit
-        if (look().kind == token::L_ARROW) {
-          inherit = this->stmt();
-        }
-        return new ast::WholeStmt(name, inherit, this->block(token::END));
-      }
-    } break;
-      // if
-    case token::IF: {
-      this->position++;
-      // if condition
-      ast::Expr *condition = this->expr();
-      // if then branch
-      ast::BlockStmt *thenBranch =
-          this->block(token::EF, token::END, token::NF);
-
-      std::map<ast::Expr *, ast::BlockStmt *> elem;
-
-      while (previous().kind == token::EF) {
-        ast::Expr *efCondition = this->expr();
-        ast::BlockStmt *efBranch =
-            this->block(token::EF, token::END, token::NF);
-        //
-        elem.insert(std::make_pair(efCondition, efBranch));
-      }
-
-      ast::BlockStmt *nfBranch = nullptr;
-
-      if (previous().kind == token::NF) {
-        nfBranch = this->block(token::END);
-      }
-      return new ast::IfStmt(condition, thenBranch, elem, nfBranch);
-    } break;
-      // loop
-    case token::FOR: {
-      this->position++;
-      // dead loop
-      if (look(token::R_ARROW))
-        return new ast::ForStmt(nullptr, this->block(token::END));
-      // for condition
-      ast::Expr *condition = this->expr();
-      ast::BlockStmt *block = this->block(token::END);
+      // value of variable
+      if (look(token::EQ))
+        // there is an initial value
+        return new ast::VarStmt(name, T, this->expr(), k == token::LET);
+      else
+        return new ast::VarStmt(name, T, k == token::LET);
+    }
+    // function or interface
+    else if (look(token::L_PAREN)) {
+      // arguments
       //
-      return new ast::ForStmt(condition, block);
-    } break;
-      // do loop
-    case token::DO: {
-      this->position++;
-      // block
-      ast::BlockStmt *block = this->block(token::FOR);
-      // go back to the position of the `for` keyword
-      this->position--;
-      ast::Stmt *stmt = this->stmt();
-      //
-      return new ast::DoStmt(block, stmt);
-    } break;
-      // out in loop
-      // out <expr>
-    case token::OUT:
-      this->position++;
-      //
-      if (look(token::R_ARROW)) {
-        // no condition
-        return new ast::OutStmt();
-      }
-      return new ast::OutStmt(this->expr());
-      break;
-      // tin in loop
-      // tin <expr>
-    case token::TIN:
-      this->position++;
-      //
-      if (look(token::R_ARROW)) {
-        // no condition
-        return new ast::TinStmt();
-      }
-      return new ast::TinStmt(this->expr());
-      // mod
-    case token::MOD:
-      this->position++;
-      //
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "module name must be an identifier");
-      }
-      return new ast::ModStmt(previous());
-      break;
-      // use
-    case token::USE: {
-      this->position++;
+      // <[ [token] ], Expr>
+      ast::FuncArg funcArgs;
       // name
-      if (!look(token::IDENT)) {
-        error(exp::UNEXPECTED, "alias of module name must be an identifier");
-      }
-      return new ast::UseStmt(previous());
-    } break;
+      token::Token name;
       // return
-      // ret <expr>
-      // ret ->
-    case token::RET:
-      this->position++;
-      //
-      if (look(token::R_ARROW)) {
-        // no return value
-        return new ast::RetStmt();
-      }
-      return new ast::RetStmt(this->stmt());
-      break;
-      // inherit for class
-    case token::L_ARROW: {
-      this->position++;
+      ast::Type *ret = nullptr;
+      // cache multiple parameters
+      std::vector<token::Token *> temp;
 
+      //
+      bool interfaceStmt = false;
+      ast::FaceArg faceArgs; // T1, T2..
+
+      while (!look(token::R_PAREN)) {
+        if (!look(token::IDENT) && !interfaceStmt) {
+          error(exp::UNEXPECTED, "argument name muse be an identifier");
+        }
+        // K
+        token::Token *K = look(true); // address of token
+
+        // handle multiparameter
+        while (look(token::ADD)) {
+          if (!look(token::IDENT)) {
+            error(exp::UNEXPECTED, "argument name muse be an identifier");
+          } else {
+            temp.push_back(K); // previous,
+            // left of the
+            // plus sign
+            temp.push_back(look(true)); // address
+                                        // of token
+          }
+        }
+
+        // interface
+        if (look().kind == token::COMMA || look().kind == token::R_PAREN ||
+            interfaceStmt) {
+          //
+          faceArgs.push_back(this->type(true)); // parse previous token to type
+          interfaceStmt = true;                 // set
+
+          if (look().kind == token::COMMA)
+            this->position++;
+          if (look().kind == token::R_PAREN || look().kind == token::MUL) {
+            break; // end
+          } else {
+            continue; // go
+          }
+        }
+
+        if (!look(token::COLON)) {
+          error(exp::UNEXPECTED, "expect ':' after parameter name");
+        }
+        // handle multiparameter
+        if (temp.empty()) {
+          // no
+          funcArgs.insert(std::make_pair(K, this->type()));
+        } else {
+          // multip
+          ast::Type *T = this->type();
+
+          for (auto i : temp) {
+            funcArgs.insert(std::make_pair(i, T));
+          }
+        }
+        if (look(token::COMMA)) {
+          continue;
+        }
+      }
+
+      // function
+      if (look(token::IDENT)) {
+        name = previous();
+      }
+      // interface
+      else if (look(token::MUL)) {
+        name = look(); // name of interface
+        //
+        this->position++; // skip name of
+        // interface
+        //
+        // current parsing interface statement
+        interfaceStmt = true;
+      }
+      // error
+      else {
+        error(exp::UNEXPECTED,
+              "expect '*' to interface or identifier to function");
+      }
+      // return value
+      if (look(token::R_ARROW)) {
+        ret = this->type();
+      }
+
+      if (interfaceStmt) {
+        return new ast::InterfaceStmt(faceArgs, name, ret);
+      }
+      // function
+      return new ast::FuncStmt(funcArgs, name, ret, this->block(token::END));
+      //
+      break;
+      // whole
+    } else {
+      ast::Stmt *inherit = nullptr;
+      token::Token name = previous(); // name
+
+      // inherit
+      if (look().kind == token::L_ARROW) {
+        inherit = this->stmt();
+      }
+      return new ast::WholeStmt(name, inherit, this->block(token::END));
+    }
+  } break;
+    // if
+  case token::IF: {
+    this->position++;
+    // if condition
+    ast::Expr *condition = this->expr();
+    // if then branch
+    ast::BlockStmt *thenBranch = this->block(token::EF, token::END, token::NF);
+
+    std::map<ast::Expr *, ast::BlockStmt *> elem;
+
+    while (previous().kind == token::EF) {
+      ast::Expr *efCondition = this->expr();
+      ast::BlockStmt *efBranch = this->block(token::EF, token::END, token::NF);
+      //
+      elem.insert(std::make_pair(efCondition, efBranch));
+    }
+
+    ast::BlockStmt *nfBranch = nullptr;
+
+    if (previous().kind == token::NF) {
+      nfBranch = this->block(token::END);
+    }
+    return new ast::IfStmt(condition, thenBranch, elem, nfBranch);
+  } break;
+    // loop
+  case token::FOR: {
+    this->position++;
+    // dead loop
+    if (look(token::R_ARROW))
+      return new ast::ForStmt(nullptr, this->block(token::END));
+    // for condition
+    ast::Expr *condition = this->expr();
+    ast::BlockStmt *block = this->block(token::END);
+    //
+    return new ast::ForStmt(condition, block);
+  } break;
+    // do loop
+  case token::DO: {
+    this->position++;
+    // block
+    ast::BlockStmt *block = this->block(token::FOR);
+    // go back to the position of the `for` keyword
+    this->position--;
+    ast::Stmt *stmt = this->stmt();
+    //
+    return new ast::DoStmt(block, stmt);
+  } break;
+    // out in loop
+    // out <expr>
+  case token::OUT:
+    this->position++;
+    //
+    if (look(token::R_ARROW)) {
+      // no condition
+      return new ast::OutStmt();
+    }
+    return new ast::OutStmt(this->expr());
+    break;
+    // tin in loop
+    // tin <expr>
+  case token::TIN:
+    this->position++;
+    //
+    if (look(token::R_ARROW)) {
+      // no condition
+      return new ast::TinStmt();
+    }
+    return new ast::TinStmt(this->expr());
+    // mod
+  case token::MOD:
+    this->position++;
+    //
+    if (!look(token::IDENT)) {
+      error(exp::UNEXPECTED, "module name must be an identifier");
+    }
+    return new ast::ModStmt(previous());
+    break;
+    // use
+  case token::USE: {
+    this->position++;
+    // name
+    if (!look(token::IDENT)) {
+      error(exp::UNEXPECTED, "alias of module name must be an identifier");
+    }
+    return new ast::UseStmt(previous());
+  } break;
+    // return
+    // ret <expr>
+    // ret ->
+  case token::RET:
+    this->position++;
+    //
+    if (look(token::R_ARROW)) {
+      // no return value
+      return new ast::RetStmt();
+    }
+    return new ast::RetStmt(this->stmt());
+    break;
+    // inherit for class
+  case token::L_ARROW: {
+    this->position++;
+
+    if (!look(token::IDENT)) {
+      error(exp::UNEXPECTED, "inheritance name must be an indentifier");
+    }
+    std::vector<token::Token *> names;
+    // single
+    names.push_back(look(true)); // address of token
+
+    while (look(token::ADD)) {
       if (!look(token::IDENT)) {
         error(exp::UNEXPECTED, "inheritance name must be an indentifier");
       }
-      std::vector<token::Token *> names;
-      // single
-      names.push_back(look(true)); // address of token
+      names.push_back(look(true)); // address
+    }
 
-      while (look(token::ADD)) {
-        if (!look(token::IDENT)) {
-          error(exp::UNEXPECTED, "inheritance name must be an indentifier");
-        }
-        names.push_back(look(true)); // address
-      }
-
-      return new ast::InheritStmt(names);
-    } break;
-    //
-    default:
-      // expression statement
-      return new ast::ExprStmt(this->expr());
+    return new ast::InheritStmt(names);
+  } break;
+  //
+  default:
+    // expression statement
+    return new ast::ExprStmt(this->expr());
   }
   // end
   error(exp::INVALID_SYNTAX, "invalid statement");
@@ -679,15 +683,20 @@ ast::Type *Parser::type(bool previous) {
     // skip type ident
     this->position++;
     // T1
-    if (now.literal == S_INT) return new ast::Int();
+    if (now.literal == S_INT)
+      return new ast::Int();
     // T2
-    if (now.literal == S_FLOAT) return new ast::Float();
+    if (now.literal == S_FLOAT)
+      return new ast::Float();
     // T3
-    if (now.literal == S_STR) return new ast::Str;
+    if (now.literal == S_STR)
+      return new ast::Str;
     // T4
-    if (now.literal == S_CHAR) return new ast::Char();
+    if (now.literal == S_CHAR)
+      return new ast::Char();
     // T5
-    if (now.literal == S_BOOL) return new ast::Bool;
+    if (now.literal == S_BOOL)
+      return new ast::Bool;
     // user define type
     return new ast::User(now);
   }

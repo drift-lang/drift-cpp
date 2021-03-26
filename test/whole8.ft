@@ -1,0 +1,23 @@
+def Foo
+    def x: int
+
+    def () call
+        putl("HELLO WORLD!!")
+    end
+end
+
+def x: Foo = Foo
+
+Foo.call()
+x.call()
+
+putl(Foo.x, x.x)
+
+def x: Foo = new Foo{x: 56}
+putl(x.x, Foo.x)
+
+x.call()
+
+Foo.x = 32
+
+putl(x.x, Foo.x)

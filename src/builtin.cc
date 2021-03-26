@@ -82,25 +82,28 @@ void len(object::Object *obj, Frame *f) {
   obj = fu->builtin.front();
 
   switch (obj->kind()) {
-    case object::ARRAY:
-      f->data.push(
-          new object::Int(static_cast<object::Array *>(obj)->elements.size()));
-      break;
-    case object::TUPLE:
-      f->data.push(
-          new object::Int(static_cast<object::Tuple *>(obj)->elements.size()));
-      break;
-    case object::MAP:
-      f->data.push(
-          new object::Int(static_cast<object::Map *>(obj)->elements.size()));
-      break;
-    case object::STR:
-      f->data.push(
-          new object::Int(static_cast<object::Str *>(obj)->value.size()));
-      break;
-    case object::CHAR: f->data.push(new object::Int(1)); break;
+  case object::ARRAY:
+    f->data.push(
+        new object::Int(static_cast<object::Array *>(obj)->elements.size()));
+    break;
+  case object::TUPLE:
+    f->data.push(
+        new object::Int(static_cast<object::Tuple *>(obj)->elements.size()));
+    break;
+  case object::MAP:
+    f->data.push(
+        new object::Int(static_cast<object::Map *>(obj)->elements.size()));
+    break;
+  case object::STR:
+    f->data.push(
+        new object::Int(static_cast<object::Str *>(obj)->value.size()));
+    break;
+  case object::CHAR:
+    f->data.push(new object::Int(1));
+    break;
 
-    default: error(obj->stringer() + " not contain length type");
+  default:
+    error(obj->stringer() + " not contain length type");
   }
 }
 
@@ -131,14 +134,16 @@ static builtin bu[l] = {{"puts", puts},     // print to screen
 // return it is builtin function name
 bool isBuiltinName(std::string name) {
   for (int i = 0; i < l; i++)
-    if (bu[i].name == name) return true;
+    if (bu[i].name == name)
+      return true;
   return false;
 }
 
 // if its builtin function to call it
 void builtinFuncCall(std::string name, object::Object *obj, Frame *f) {
   for (int i = 0; i < l; i++)
-    if (bu[i].name == name) bu[i].to(obj, f); // CALL
+    if (bu[i].name == name)
+      bu[i].to(obj, f); // CALL
 }
 
 // regist the name of builtin

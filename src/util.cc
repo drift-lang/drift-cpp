@@ -17,7 +17,8 @@
 // return whether the string is all numbers
 bool isNumberStr(const std::string str) {
   for (int i = 0; i < str.size(); i++)
-    if (!std::isdigit(str.at(i))) return false;
+    if (!std::isdigit(str.at(i)))
+      return false;
   return true;
 }
 
@@ -41,6 +42,7 @@ void fileString(const char *path, std::string *to) {
 bool sameValue(std::vector<std::string> &a, std::vector<std::string> &b) {
   for (auto i : a)
     for (auto k : b)
-      if (i == k) return true;
+      if (i == k)
+        return true;
   return false;
 }

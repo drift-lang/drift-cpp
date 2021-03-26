@@ -18,7 +18,8 @@
 void Lexer::tokenizer() {
   while (!this->isEnd()) {
     // first to skip whitespace
-    if (isSpace()) skipWhitespace();
+    if (isSpace())
+      skipWhitespace();
     // identifier
     else if (isIdent())
       this->lexIdent();
@@ -56,14 +57,16 @@ inline bool Lexer::isEnd() { return this->position >= this->source.length(); }
 // resolve to skip whitespace
 inline void Lexer::skipWhitespace() {
   while (!isEnd() && this->isSpace()) {
-    if (now() == '\n') this->line++;
+    if (now() == '\n')
+      this->line++;
     this->position++;
   }
 }
 
 // resolve to skip line comment
 inline void Lexer::skipLineComment() {
-  while (!isEnd() && now() != '\n') this->position++;
+  while (!isEnd() && now() != '\n')
+    this->position++;
 }
 
 // resolve to skip block comment
@@ -136,7 +139,8 @@ void Lexer::lexDigit() {
     if (isDigit() || now() == '.') {
       literal << now();
 
-      if (now() == '.') floating = true;
+      if (now() == '.')
+        floating = true;
     } else
       break;
     this->position++;
@@ -152,7 +156,8 @@ void Lexer::lexDigit() {
 void Lexer::lexString(bool longStr) {
   char cond = '"';
   // longer string
-  if (longStr) cond = '`';
+  if (longStr)
+    cond = '`';
 
   std::stringstream literal;
   bool isEndFile = false;
@@ -175,7 +180,8 @@ void Lexer::lexString(bool longStr) {
   }
 
   // missing closing symbol
-  if (!isEndFile) error(exp::STRING_EXP, "missing closing symbol");
+  if (!isEndFile)
+    error(exp::STRING_EXP, "missing closing symbol");
 
   // add judgment character
   // used to judge long characters at compile time
@@ -192,7 +198,8 @@ void Lexer::lexChar() {
 
   // skip left single quotation mark
   this->position++;
-  if (isEnd()) error(exp::CHARACTER_EXP, "wrong character");
+  if (isEnd())
+    error(exp::CHARACTER_EXP, "wrong character");
 
   literal << now();
 
@@ -216,91 +223,119 @@ void Lexer::lexSymbol() {
   tok.line = this->line;
 
   switch (now()) {
-    case '(': tok.kind = token::L_PAREN; break;
-    case ')': tok.kind = token::R_PAREN; break;
-    case '{': tok.kind = token::L_BRACE; break;
-    case '}': tok.kind = token::R_BRACE; break;
-    case '[': tok.kind = token::L_BRACKET; break;
-    case ']': tok.kind = token::R_BRACKET; break;
-    case ':': tok.kind = token::COLON; break;
-    case '+':
-      if (peekEmit(&tok, '=', token::AS_ADD, "+="))
-        break;
-      else
-        tok.kind = token::ADD;
+  case '(':
+    tok.kind = token::L_PAREN;
+    break;
+  case ')':
+    tok.kind = token::R_PAREN;
+    break;
+  case '{':
+    tok.kind = token::L_BRACE;
+    break;
+  case '}':
+    tok.kind = token::R_BRACE;
+    break;
+  case '[':
+    tok.kind = token::L_BRACKET;
+    break;
+  case ']':
+    tok.kind = token::R_BRACKET;
+    break;
+  case ':':
+    tok.kind = token::COLON;
+    break;
+  case '+':
+    if (peekEmit(&tok, '=', token::AS_ADD, "+="))
       break;
-    case '-':
-      if (peekEmit(&tok, '>', token::R_ARROW, "->")) break;
-      if (peekEmit(&tok, '=', token::AS_SUB, "-="))
-        break;
-      else
-        tok.kind = token::SUB;
+    else
+      tok.kind = token::ADD;
+    break;
+  case '-':
+    if (peekEmit(&tok, '>', token::R_ARROW, "->"))
       break;
-    case '*':
-      if (peekEmit(&tok, '=', token::AS_MUL, "*="))
-        break;
-      else
-        tok.kind = token::MUL;
+    if (peekEmit(&tok, '=', token::AS_SUB, "-="))
       break;
-    case '/':
-      if (peekEmit(&tok, '=', token::AS_DIV, "/=")) break;
-      // to resolve skip comment
-      else if (peek() == '/') {
-        this->skipLineComment();
-        // continue
-        return;
-      }
-      // block comment
-      else if (peek() == '*') {
-        this->skipBlockComment();
-        return;
-      } else
-        tok.kind = token::DIV;
+    else
+      tok.kind = token::SUB;
+    break;
+  case '*':
+    if (peekEmit(&tok, '=', token::AS_MUL, "*="))
       break;
-    case '%':
-      if (peekEmit(&tok, '=', token::AS_SUR, "%="))
-        break;
-      else
-        tok.kind = token::SUR;
+    else
+      tok.kind = token::MUL;
+    break;
+  case '/':
+    if (peekEmit(&tok, '=', token::AS_DIV, "/="))
       break;
-    case '$': tok.kind = token::DOLLAR; break;
-    case '.': tok.kind = token::DOT; break;
-    case ',': tok.kind = token::COMMA; break;
-    case '>':
-      if (peekEmit(&tok, '=', token::GR_EQ, ">="))
-        break;
-      else
-        tok.kind = token::GREATER;
+    // to resolve skip comment
+    else if (peek() == '/') {
+      this->skipLineComment();
+      // continue
+      return;
+    }
+    // block comment
+    else if (peek() == '*') {
+      this->skipBlockComment();
+      return;
+    } else
+      tok.kind = token::DIV;
+    break;
+  case '%':
+    if (peekEmit(&tok, '=', token::AS_SUR, "%="))
       break;
-    case '<':
-      if (peekEmit(&tok, '=', token::LE_EQ, "<=")) break;
-      if (peekEmit(&tok, '-', token::L_ARROW, "<-")) break;
-      if (peekEmit(&tok, '~', token::L_CURVED_ARROW, "<~"))
-        break;
-      else
-        tok.kind = token::LESS;
+    else
+      tok.kind = token::SUR;
+    break;
+  case '$':
+    tok.kind = token::DOLLAR;
+    break;
+  case '.':
+    tok.kind = token::DOT;
+    break;
+  case ',':
+    tok.kind = token::COMMA;
+    break;
+  case '>':
+    if (peekEmit(&tok, '=', token::GR_EQ, ">="))
       break;
-    case '&': tok.kind = token::ADDR; break;
-    case '|': tok.kind = token::OR; break;
-    case '!':
-      if (peekEmit(&tok, '=', token::BANG_EQ, "!="))
-        break;
-      else
-        tok.kind = token::BANG;
+    else
+      tok.kind = token::GREATER;
+    break;
+  case '<':
+    if (peekEmit(&tok, '=', token::LE_EQ, "<="))
       break;
-    case '=':
-      if (peekEmit(&tok, '=', token::EQ_EQ, "=="))
-        break;
-      else
-        tok.kind = token::EQ;
+    if (peekEmit(&tok, '-', token::L_ARROW, "<-"))
       break;
-    case '_':
-      tok.kind = token::UNDERLINE;
+    if (peekEmit(&tok, '~', token::L_CURVED_ARROW, "<~"))
       break;
+    else
+      tok.kind = token::LESS;
+    break;
+  case '&':
+    tok.kind = token::ADDR;
+    break;
+  case '|':
+    tok.kind = token::OR;
+    break;
+  case '!':
+    if (peekEmit(&tok, '=', token::BANG_EQ, "!="))
       break;
+    else
+      tok.kind = token::BANG;
+    break;
+  case '=':
+    if (peekEmit(&tok, '=', token::EQ_EQ, "=="))
+      break;
+    else
+      tok.kind = token::EQ;
+    break;
+  case '_':
+    tok.kind = token::UNDERLINE;
+    break;
+    break;
 
-    default:
-      error(exp::UNKNOWN_SYMBOL, "unknown symbol: " + std::to_string(now()));
+  default:
+    error(exp::UNKNOWN_SYMBOL, "unknown symbol: " + std::to_string(now()));
   }
   // skip current single symbol
   this->position++;

@@ -2,4 +2,4 @@ def () foo -> []int
     ret [1]
 end
 
-puts(foo()[0] == 1)
+puts(foo()[0] == 1) // T

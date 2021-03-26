@@ -50,76 +50,76 @@ struct Entity {
                          : ">>");
 
       switch (co) {
-        case byte::CONST: {
-          printf("%10d: %s %10d %s\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 constants.at(offsets.at(op))->rawStringer().c_str());
-        } break;
-        case byte::ASSIGN: {
-          printf("%10d: %s %9d '%s'\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 names.at(offsets.at(op)).c_str());
-        } break;
-        case byte::STORE: {
-          printf("%10d: %s %10d '%s' %d %s\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
-                 types.at(offsets.at(op + 1))->stringer().c_str());
-          op += 2;
-        } break;
-        case byte::LOAD:
-        case byte::NAME: {
-          printf("%10d: %s %11d '%s'\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 names.at(offsets.at(op)).c_str());
-        } break;
-        case byte::FUNC:
-        case byte::ENUM: {
-          printf("%10d: %s %11d %s\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 constants.at(offsets.at(op))->rawStringer().c_str());
-        } break;
-        case byte::WHOLE: {
-          printf("%10d: %s %10d %s\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 constants.at(offsets.at(op))->rawStringer().c_str());
-        } break;
-        case byte::GET:
-        case byte::SET:
-        case byte::MOD:
-        case byte::USE: {
-          printf("%10d: %s %12d '%s'\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
-                 names.at(offsets.at(op)).c_str());
-        } break;
-        case byte::CALL: {
-          printf("%10d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::B_ARR:
-        case byte::B_TUP:
-        case byte::B_MAP: {
-          printf("%10d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::F_JUMP:
-        case byte::T_JUMP: {
-          printf("%10d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::JUMP: {
-          printf("%10d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-                 offsets.at(op++));
-        } break;
-        case byte::NEW: {
-          printf("%10d: %s %12d '%s' %d\n", ip,
-                 byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
-                 names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
-          op += 2;
-        } break;
-        default:
-          printf("%10d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
-          break;
+      case byte::CONST: {
+        printf("%10d: %s %10d %s\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++),
+               constants.at(offsets.at(op))->rawStringer().c_str());
+      } break;
+      case byte::ASSIGN: {
+        printf("%10d: %s %9d '%s'\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+               names.at(offsets.at(op)).c_str());
+      } break;
+      case byte::STORE: {
+        printf("%10d: %s %10d '%s' %d %s\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+               names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
+               types.at(offsets.at(op + 1))->stringer().c_str());
+        op += 2;
+      } break;
+      case byte::LOAD:
+      case byte::NAME: {
+        printf("%10d: %s %11d '%s'\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+               names.at(offsets.at(op)).c_str());
+      } break;
+      case byte::FUNC:
+      case byte::ENUM: {
+        printf("%10d: %s %11d %s\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++),
+               constants.at(offsets.at(op))->rawStringer().c_str());
+      } break;
+      case byte::WHOLE: {
+        printf("%10d: %s %10d %s\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++),
+               constants.at(offsets.at(op))->rawStringer().c_str());
+      } break;
+      case byte::GET:
+      case byte::SET:
+      case byte::MOD:
+      case byte::USE: {
+        printf("%10d: %s %12d '%s'\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
+               names.at(offsets.at(op)).c_str());
+      } break;
+      case byte::CALL: {
+        printf("%10d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::B_ARR:
+      case byte::B_TUP:
+      case byte::B_MAP: {
+        printf("%10d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::F_JUMP:
+      case byte::T_JUMP: {
+        printf("%10d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::JUMP: {
+        printf("%10d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
+               offsets.at(op++));
+      } break;
+      case byte::NEW: {
+        printf("%10d: %s %12d '%s' %d\n", ip,
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
+               names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
+        op += 2;
+      } break;
+      default:
+        printf("%10d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
+        break;
       }
     }
 

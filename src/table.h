@@ -30,7 +30,8 @@ struct Table {
 
   object::Object *lookUp(std::string n) {
     for (auto i : symbols)
-      if (i.first == n) return i.second;
+      if (i.first == n)
+        return i.second;
     return nullptr;
   }
 

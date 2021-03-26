@@ -1,8 +1,11 @@
-
 // LOCAL VARIABLE
 
 if 1 > -1
-    let x: int = 45
+    def x: int = 45
+
+    def () foo -> str
+        ret "Hello World!!"
+    end
 end
 
-putl("x", x)
+putl(x, foo())

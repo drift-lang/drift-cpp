@@ -1,15 +1,10 @@
 def Color
-    RED
-    GREEN
-    PINK
+    RED     // 0
+    GREEN   // 1
+    PINK    // 2
 end
 
-def x: Color = Color.RED
-x
-
-def x: int = Color.GREEN
-x
-
-x == Color.RED
+def x: Color = Color.RED // 0
+def x: int = Color.GREEN // 1
 
 puts(x, x == Color.RED, x == Color.GREEN, x == Color.PINK)
