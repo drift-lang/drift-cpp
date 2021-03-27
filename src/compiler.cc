@@ -19,7 +19,11 @@ ast::Stmt *Compiler::look() { return this->statements.at(this->position); }
 
 // compile statements to entities
 void Compiler::compile() {
+  // std::cout << "LINE: " << this->line << std::endl;
+
   while (this->position < this->statements.size()) {
+    this->line = this->lineno.at(this->position);
+    
     this->stmt(look()); // START
     this->position++;
   }
@@ -27,7 +31,10 @@ void Compiler::compile() {
 }
 
 // push bytecode to entity
-void Compiler::emitCode(byte::Code co) { this->now->codes.push_back(co); }
+void Compiler::emitCode(byte::Code co) {
+  this->now->codes.push_back(co);
+  this->now->lineno.push_back(this->line);
+}
 
 // push offset to entity
 void Compiler::emitOffset(int off) { this->now->offsets.push_back(off); }

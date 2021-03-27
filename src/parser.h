@@ -87,6 +87,9 @@ public:
   // final stmts list
   std::vector<ast::Stmt *> statements;
 
+  // final stmts line
+  std::vector<int> lineno;
+
   // do parsing
   void parse();
 

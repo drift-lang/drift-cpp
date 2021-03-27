@@ -1,0 +1,15 @@
+def Foo
+    def () call -> str
+        ret "OK"
+    end
+end
+
+putl(
+    new Foo.call(), new Foo.call(),
+    new Foo.call(), new Foo.call(),
+    new Foo.call(), new Foo.call(),
+    new Foo.call(), new Foo.call(),
+    new Foo.call(), new Foo.call(),
+    new Foo.call(), new Foo.call(),
+    new Foo.call(), new Foo.call() == "OK"
+)

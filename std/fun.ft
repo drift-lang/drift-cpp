@@ -11,14 +11,14 @@ def Fun
         def i: float = 1.5
         for i > -1.5
             s = ""
-
+        
             x = -1.5
             for x < 1.5
                 y = x * x + i * i - 1
 
                 if (y * y * y - 
                         x * x * i * i * i) < 0.0
-                    s += "*"
+                    s += "#"
                 nf
                     s += " "
                 end
@@ -30,20 +30,14 @@ def Fun
     end
 end
 
-def Color
-    RED
-    PINK
-end
-
 // ITS A JOKER!!
 def (repeat: int) joker
     def first: bool = T
-
+    
     do
         def x: int = repeat + 1 // Love you more forever
     for ->
-        //new Fun.love()
-        Fun.love()
+        new Fun.love()
         putl("第几次了？", x, " 次！！")
 
         if first
@@ -52,7 +46,7 @@ def (repeat: int) joker
         end
 
         out x - 1 == 0
-        sleep(2)
+        sleep(1)
 
         x -= 1
     end

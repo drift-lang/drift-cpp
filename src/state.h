@@ -24,8 +24,6 @@ struct State {
 
   int line = 1; // syntax lineno
   int kind;
-
-  std::vector<int> lineno;
 };
 
 #endif

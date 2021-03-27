@@ -303,6 +303,8 @@ public:
   // whole fram
   Frame *f;
 
+  bool newOut = false; // is new out?
+
   std::string rawStringer() override { return "<Whole '" + name + "'>"; }
   std::string stringer() override { return "<Whole '" + name + "'>"; }
 

@@ -46,3 +46,15 @@ bool sameValue(std::vector<std::string> &a, std::vector<std::string> &b) {
         return true;
   return false;
 }
+
+// generate a random strings with length
+std::string strRand(int len, bool upper) {
+  char *buf = (char *)malloc(sizeof(char) * len); // buffer
+  char c = upper ? 'A' : 'a';
+
+  for (int i = 0; i < len; i++)
+    buf[i] = c + rand() % 26;
+  buf[len] = '\0';
+
+  return std::string(buf);
+}

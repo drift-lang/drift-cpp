@@ -21,6 +21,7 @@
 #include "exception.h"
 #include "frame.h"
 #include "state.h"
+#include "util.h"
 
 struct builtin {
   std::string name;                      // builtin name

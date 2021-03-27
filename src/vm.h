@@ -16,6 +16,7 @@
 #define DRIFT_VM_H
 
 #include <algorithm>
+#include <cstring>
 
 #include "builtin.h"
 #include "entity.h"
@@ -72,12 +73,12 @@ private:
   object::Object *setOriginalValue(ast::Type *);
 
   int op = 0; // offset pointer
+  int lp = 0;
 
-  void addCounter(int *, int, int); // add counter for bytecode within jump
+  void addCounter(int *, int); // add counter for bytecode within jump
 
-  bool callWholeMethod = false;          // is current calling whole
-  std::string wholeName = "";            // name of current calling whole
-  std::vector<std::string> wholeInherit; // inherits of current whole
+  bool callWholeMethod = false;       // is current calling whole
+  object::Whole *callWhole = nullptr; // of current calling whole
 
   // loop exit and no return value return
   bool loopWasRet = false;

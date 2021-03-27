@@ -23,7 +23,7 @@ namespace byte {
 constexpr int len = 40;
 // bytecode type
 enum Code {
-  CONST,   // O
+  CONST,   // CONST
   ASSIGN,  // ASSIGN
   STORE,   // GLOBAL
   LOAD,    // LOAD

@@ -17,6 +17,8 @@
 // do parsing
 void Parser::parse() {
   while (!this->isEnd()) {
+    // line of each statement
+    this->lineno.push_back(look().line);
     // push to final list
     this->statements.push_back(this->stmt());
   }

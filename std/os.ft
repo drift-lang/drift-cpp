@@ -12,8 +12,12 @@ def (desc: str, deep + op: int) loop
         if i == op
             out ->
         end
-        
-        putl(i, desc)
+
+        if desc == ""
+            putl(i, randomStr(100, F))
+        nf     
+            putl(i, desc)
+        end
 
         i += 1
         sleep(deep)

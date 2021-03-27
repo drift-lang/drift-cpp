@@ -58,7 +58,7 @@ void run(std::string source) {
     // semantic
     auto semantic = new Analysis(&parser->statements, &state);
     // compiler
-    auto compiler = new Compiler(parser->statements);
+    auto compiler = new Compiler(parser->statements, parser->lineno);
     compiler->compile();
 
     if (DIS)
@@ -75,6 +75,9 @@ void run(std::string source) {
       mac = new vm(compiler->entities[0], &mods, REPL, DIS, &state);
     }
     mac->evaluate();
+
+    // if (DIS)
+    // mac->main()->tb.dissemble();
     //
   } catch (exp::Exp &e) {
     std::cout << e.stringer() << std::endl;
@@ -133,7 +136,7 @@ bool loadStdModules() {
       // semantic
       auto semantic = new Analysis(&parser->statements, &state);
       // compiler
-      auto compiler = new Compiler(parser->statements);
+      auto compiler = new Compiler(parser->statements, parser->lineno);
       compiler->compile();
 
       // vm

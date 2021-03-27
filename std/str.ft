@@ -62,5 +62,3 @@ def String <- Iter + And // implemention
         ret [val[0], val[1], val[2]]
     end
 end
-
-new String{val: "Hello World"}

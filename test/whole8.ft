@@ -1,23 +1,20 @@
 def Foo
     def x: int
+    def y: int
 
-    def () call
+    def () call -> int
         putl("HELLO WORLD!!")
+        ret x + y
     end
 end
 
-def x: Foo = Foo
+def f: Foo = new Foo
+f.x = 76
+f.y = 12
 
-Foo.call()
-x.call()
+// Foo.x = 65
 
-putl(Foo.x, x.x)
+putl("x = ", f.x, "y = ", f.y)
 
-def x: Foo = new Foo{x: 56}
-putl(x.x, Foo.x)
-
-x.call()
-
-Foo.x = 32
-
-putl(x.x, Foo.x)
+def p: Foo = new Foo{x: 12, y: 34}
+putl("x = ", p.x, "y = ", p.y)

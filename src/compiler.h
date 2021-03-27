@@ -27,6 +27,9 @@ class Compiler {
 private:
   int position = 0;
 
+  std::vector<int> lineno; // lineno
+  int line = 0;            // line of current stmt
+
   // after semantic analysis
   std::vector<ast::Stmt *> statements;
 
@@ -52,7 +55,10 @@ private:
   void stmt(ast::Stmt *); // statements
 
 public:
-  Compiler(std::vector<ast::Stmt *> statements) : statements(statements) {}
+  Compiler(std::vector<ast::Stmt *> statements, std::vector<int> lineno)
+      : statements(statements), lineno(lineno) {
+    this->line = lineno.front();
+  }
 
   // entities of compiled
   std::vector<Entity *> entities = {new Entity("main")};

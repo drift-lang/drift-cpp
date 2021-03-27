@@ -26,6 +26,9 @@ void vm::pushData(object::Object *obj) { top()->data.push(obj); }
 // pop the top of data stack
 object::Object *vm::popData() { return top()->data.pop(); }
 
+#define PUSH(obj) this->pushData(obj)
+#define POP this->popData
+
 // emit new name of table to the current frame
 void vm::emitTable(std::string name, object::Object *obj) {
   if (this->lookUp(name) != nullptr) {
@@ -83,7 +86,7 @@ int vm::retOffset() { return GET_OFFSET(op); }
 void vm::error(std::string message) {
   this->state->kind = exp::RUNTIME_ERROR;
   this->state->message = message;
-  this->state->line = -1;
+  this->state->line = top()->entity->lineno.at(this->lp); // line no of bytecode
 
   throw exp::Exp(state);
 }
@@ -157,6 +160,12 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
           if (static_cast<object::Whole *>(y)->name != name)
             error("type error in store and whole statement");
           break;
+        // other
+        default: {
+          if (this->lookUp(name) == nullptr) {
+            error("not defined type '" + name + "'");
+          }
+        }
         }
       }
     }
@@ -214,18 +223,30 @@ object::Object *vm::setOriginalValue(ast::Type *t) {
 }
 
 // add counter for bytecode within jump
-void vm::addCounter(int *ip, int begin, int end) {
-  bool reverse = begin > end; // condition
+void vm::addCounter(int *ip, int to) {
+  bool reverse = *ip > to; // condition
+  // std::cout << "JUMP: " << *ip << " TO: " << to << std::endl;
 
-  // std::cout << "BEGIN: " << begin << " END: " << end
-  //           << " REVERSE: " << reverse << " OP: " << this->op << std::endl;
+  if (reverse)
+    (*ip)--; // reverse skip current instruction
 
   while (
-      // condition
-      (reverse ? begin > end : begin < end)
+      /*
+       * condition
+       *
+       * reversal needs to be judged by the jump instruction itself,
+       * so its greater than or equal to
+       *
+       * forward, until the judgement instruction itself,
+       * do not do its own offset
+       *
+       * forward, it processes its own offset
+       */
+      (reverse ? *ip >= to : *ip < to)
       //
   ) {
-    switch (top()->entity->codes.at(begin)) {
+    switch (top()->entity->codes.at(*ip)) {
+      // offset of instruction processing
     case byte::LOAD:   // 1
     case byte::CONST:  // 1
     case byte::ASSIGN: // 1
@@ -234,9 +255,13 @@ void vm::addCounter(int *ip, int begin, int end) {
     case byte::F_JUMP: // 1
     case byte::CALL:   // 1
     case byte::GET:    // 1
+    case byte::SET:    // 1
     case byte::WHOLE:  // 1
     case byte::FUNC:   // 1
     case byte::NAME:   // 1
+    case byte::ENUM:   // 1
+    case byte::MOD:    // 1
+    case byte::USE:    // 1
     {
       if (reverse) {
         // ADD
@@ -261,25 +286,28 @@ void vm::addCounter(int *ip, int begin, int end) {
     }
     }
     // indexes
-    reverse ? begin-- : begin++;
+    reverse ? (*ip)-- : (*ip)++;
   }
 
-  // std::cout << "OP: " << this->op << std::endl;
-  *ip = end - 1; // for loop update
+  // std::cout << "OP: " << this->op << " IP: " << *ip << "+1" << std::endl;
+  if (!reverse)
+    (*ip)--; // for loop update
 }
 
 void vm::evaluate() { // EVALUATE
 
-#define BINARY_OP(T, L, OP, R) this->pushData(new T(L OP R));
+#define BINARY_OP(T, L, OP, R) PUSH(new T(L OP R));
 
   for (int ip = 0; ip < top()->entity->codes.size(); ip++) { // MAIN LOOP
+
+    this->lp = ip;
 
     // bytecode
     byte::Code co = top()->entity->codes.at(ip);
 
     switch (co) {
     case byte::CONST: { // CONST
-      this->pushData(this->retConstant());
+      PUSH(this->retConstant());
       this->op++;
     } break;
 
@@ -288,8 +316,8 @@ void vm::evaluate() { // EVALUATE
       //
 
     case byte::ADD: { // +
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> + <Int> <Float>
       if (x->kind() == object::INT) {
@@ -327,7 +355,7 @@ void vm::evaluate() { // EVALUATE
         if (l->longer || r->longer)
           error("cannot plus long string literal");
 
-        this->pushData(new object::Str(l->value + r->value));
+        PUSH(new object::Str(l->value + r->value));
       } else {
         // ERROR
         error("unsupport type to + operator");
@@ -335,8 +363,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::SUB: { // -
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> - <Int> <Float>
       if (x->kind() == object::INT) {
@@ -372,8 +400,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::MUL: { // *
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> * <Int> <Float>
       if (x->kind() == object::INT) {
@@ -409,8 +437,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::DIV: { // /
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> / <Int> <Float>
       if (x->kind() == object::INT) {
@@ -454,8 +482,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::SUR: { // %
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> % <Int>
       if (x->kind() == object::INT && y->kind() == object::INT) {
@@ -468,8 +496,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::GR: { // >
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> > <Int> <Float>
       if (x->kind() == object::INT) {
@@ -505,8 +533,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::GR_E: { // >=
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> >= <Int> <Float>
       if (x->kind() == object::INT) {
@@ -542,8 +570,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::LE: { // <
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> < <Int> <Float>
       if (x->kind() == object::INT) {
@@ -579,8 +607,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::LE_E: { // <=
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> <= <Int> <Float>
       if (x->kind() == object::INT) {
@@ -616,8 +644,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::E_E: { // ==
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> == <Int> <Float> <Bool>
       if (x->kind() == object::INT) {
@@ -637,11 +665,11 @@ void vm::evaluate() { // EVALUATE
           bool r = static_cast<object::Bool *>(y)->value;
 
           if (l > 0 && r)
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           else if (l < 0 && !r)
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           else
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
         } break;
         }
       }
@@ -663,11 +691,11 @@ void vm::evaluate() { // EVALUATE
           bool r = static_cast<object::Bool *>(y)->value;
 
           if (l > 0 && r)
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           else if (l < 0 && !r)
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           else
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
         } break;
         }
       }
@@ -677,38 +705,38 @@ void vm::evaluate() { // EVALUATE
         case object::INT:
           if (static_cast<object::Int *>(y)->value > 0 &&
               static_cast<object::Bool *>(x)->value)
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           else
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Float *>(y)->value > 0 &&
               static_cast<object::Bool *>(x)->value)
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           else
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           break;
         //
         case object::BOOL:
           bool p = static_cast<object::Bool *>(x)->value;
 
           if (static_cast<object::Bool *>(y)->value) // RIGHT IS T
-            this->pushData(new object::Bool(p == true));
+            PUSH(new object::Bool(p == true));
           else
-            this->pushData(new object::Bool(p == false));
+            PUSH(new object::Bool(p == false));
           break;
         }
       }
       // <Str> == <Str>
       else if (x->kind() == object::STR && y->kind() == object::STR) {
-        this->pushData(new object::Bool(static_cast<object::Str *>(x)->value ==
-                                        static_cast<object::Str *>(y)->value));
+        PUSH(new object::Bool(static_cast<object::Str *>(x)->value ==
+                              static_cast<object::Str *>(y)->value));
       }
       // <Char> == <Char>
       else if (x->kind() == object::CHAR && y->kind() == object::CHAR) {
-        this->pushData(new object::Bool(static_cast<object::Char *>(x)->value ==
-                                        static_cast<object::Char *>(y)->value));
+        PUSH(new object::Bool(static_cast<object::Char *>(x)->value ==
+                              static_cast<object::Char *>(y)->value));
       } else {
         // ERROR
         error("unsupport type to == operator");
@@ -716,8 +744,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::N_E: { // !=
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> != <Int> <Float> <Bool>
       if (x->kind() == object::INT) {
@@ -737,11 +765,11 @@ void vm::evaluate() { // EVALUATE
           bool r = static_cast<object::Bool *>(y)->value;
 
           if (l > 0 && r)
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           else if (l < 0 && !r)
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           else
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
         } break;
         }
       }
@@ -763,11 +791,11 @@ void vm::evaluate() { // EVALUATE
           bool r = static_cast<object::Bool *>(y)->value;
 
           if (l > 0 && r)
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           else if (l < 0 && !r)
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           else
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
         } break;
         }
       }
@@ -777,40 +805,40 @@ void vm::evaluate() { // EVALUATE
         case object::INT:
           if (static_cast<object::Int *>(y)->value > 0 &&
               static_cast<object::Bool *>(x)->value) {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           } else {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Float *>(y)->value > 0 &&
               static_cast<object::Bool *>(x)->value) {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           } else {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Bool *>(y)->value &&
               static_cast<object::Bool *>(x)->value) {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           } else {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           }
           break;
         }
       }
       // <Str> != <Str>
       else if (x->kind() == object::STR && y->kind() == object::STR) {
-        this->pushData(new object::Bool(static_cast<object::Str *>(x)->value !=
-                                        static_cast<object::Str *>(y)->value));
+        PUSH(new object::Bool(static_cast<object::Str *>(x)->value !=
+                              static_cast<object::Str *>(y)->value));
       }
       // <Char> != <Char>
       else if (x->kind() == object::CHAR && y->kind() == object::CHAR) {
-        this->pushData(new object::Bool(static_cast<object::Char *>(x)->value !=
-                                        static_cast<object::Char *>(y)->value));
+        PUSH(new object::Bool(static_cast<object::Char *>(x)->value !=
+                              static_cast<object::Char *>(y)->value));
       } else {
         // ERROR
         error("unsupport type to == operator");
@@ -818,8 +846,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::AND: { // &
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> & <Int> <Float> <Bool>
       if (x->kind() == object::INT) {
@@ -827,27 +855,27 @@ void vm::evaluate() { // EVALUATE
         case object::INT:
           if (static_cast<object::Int *>(x)->value > 0 &&
               static_cast<object::Int *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Int *>(x)->value > 0 &&
               static_cast<object::Float *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Int *>(x)->value > 0 &&
               static_cast<object::Bool *>(y)->value) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         }
@@ -858,27 +886,27 @@ void vm::evaluate() { // EVALUATE
         case object::INT:
           if (static_cast<object::Float *>(x)->value > 0 &&
               static_cast<object::Int *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Float *>(x)->value > 0 &&
               static_cast<object::Float *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Float *>(x)->value > 0 &&
               static_cast<object::Bool *>(y)->value) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         }
@@ -889,27 +917,27 @@ void vm::evaluate() { // EVALUATE
         case object::INT:
           if (static_cast<object::Bool *>(x)->value &&
               static_cast<object::Int *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Bool *>(x)->value &&
               static_cast<object::Float *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Bool *>(x)->value &&
               static_cast<object::Bool *>(y)->value) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         }
@@ -921,8 +949,8 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::OR: { // |
-      object::Object *y = this->popData();
-      object::Object *x = this->popData();
+      object::Object *y = POP();
+      object::Object *x = POP();
 
       // <Int> & <Int> <Float> <Bool>
       if (x->kind() == object::INT) {
@@ -930,27 +958,27 @@ void vm::evaluate() { // EVALUATE
         case object::INT:
           if (static_cast<object::Int *>(x)->value > 0 ||
               static_cast<object::Int *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Int *>(x)->value > 0 ||
               static_cast<object::Float *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Int *>(x)->value > 0 ||
               static_cast<object::Bool *>(y)->value) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         }
@@ -961,27 +989,27 @@ void vm::evaluate() { // EVALUATE
         case object::INT:
           if (static_cast<object::Float *>(x)->value > 0 ||
               static_cast<object::Int *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Float *>(x)->value > 0 ||
               static_cast<object::Float *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Float *>(x)->value > 0 ||
               static_cast<object::Bool *>(y)->value) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         }
@@ -992,27 +1020,27 @@ void vm::evaluate() { // EVALUATE
         case object::INT:
           if (static_cast<object::Bool *>(x)->value ||
               static_cast<object::Int *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Bool *>(x)->value ||
               static_cast<object::Float *>(y)->value > 0) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Bool *>(x)->value ||
               static_cast<object::Bool *>(y)->value) {
-            this->pushData(new object::Bool(true));
+            PUSH(new object::Bool(true));
           } else {
-            this->pushData(new object::Bool(false));
+            PUSH(new object::Bool(false));
           }
           break;
         }
@@ -1028,23 +1056,20 @@ void vm::evaluate() { // EVALUATE
       //
 
     case byte::BANG: { // !
-      object::Object *obj = this->popData();
+      object::Object *obj = POP();
 
       // !<Int> <Float> <Bool>
       if (obj->kind() == object::INT) {
-        this->pushData(static_cast<object::Int *>(obj)->value
-                           ? new object::Bool(false)
-                           : new object::Bool(true));
+        PUSH(static_cast<object::Int *>(obj)->value ? new object::Bool(false)
+                                                    : new object::Bool(true));
         //
       } else if (obj->kind() == object::FLOAT) {
-        this->pushData(static_cast<object::Float *>(obj)->value
-                           ? new object::Bool(false)
-                           : new object::Bool(true));
+        PUSH(static_cast<object::Float *>(obj)->value ? new object::Bool(false)
+                                                      : new object::Bool(true));
         //
       } else if (obj->kind() == object::BOOL) {
-        this->pushData(static_cast<object::Bool *>(obj)->value
-                           ? new object::Bool(false)
-                           : new object::Bool(true));
+        PUSH(static_cast<object::Bool *>(obj)->value ? new object::Bool(false)
+                                                     : new object::Bool(true));
         //
       } else {
         error("only number and boolean type to bang operator");
@@ -1052,18 +1077,17 @@ void vm::evaluate() { // EVALUATE
     } break;
 
     case byte::NOT: { // -
-      object::Object *obj = this->popData();
+      object::Object *obj = POP();
 
       if (obj->kind() != object::INT && obj->kind() != object::FLOAT)
         error("only number type to unary operator");
 
       if (obj->kind() == object::FLOAT) {
-        this->pushData(
-            new object::Float(-static_cast<object::Float *>(obj)->value));
+        PUSH(new object::Float(-static_cast<object::Float *>(obj)->value));
         break;
       }
 
-      this->pushData(new object::Int(-static_cast<object::Int *>(obj)->value));
+      PUSH(new object::Int(-static_cast<object::Int *>(obj)->value));
     } break;
 
     case byte::STORE: { // STORE
@@ -1076,7 +1100,7 @@ void vm::evaluate() { // EVALUATE
       if (top()->entity->codes.at(ip - 1) == byte::ORIG) { // ORIGINAL
         obj = this->setOriginalValue(type);                // VALUE
       } else {
-        obj = this->popData(); // OBJECT
+        obj = POP(); // OBJECT
       }
 
       if (type->kind() == ast::T_BOOL) {
@@ -1099,17 +1123,18 @@ void vm::evaluate() { // EVALUATE
         object::Func *f = new object::Func;
         f->name = name;
 
-        this->pushData(f);
+        PUSH(f);
         this->op++;
         break;
       }
 
       object::Object *obj = this->lookUp(name); // OBJECT
+      // std::cout << "L: " << obj << " NAME: " << name << std::endl;
 
       if (obj == nullptr) {
-        // LOAD INHERIT
-        if (!this->wholeInherit.empty()) {
-          for (auto i : this->wholeInherit) {
+        // LOAD SUBCLASS FUNCTION
+        if (this->callWholeMethod && this->callWhole != nullptr) {
+          for (auto i : this->callWhole->inherit) {
             object::Whole *w =
                 static_cast<object::Whole *>(this->lookUpMainFrame(i));
 
@@ -1124,7 +1149,7 @@ void vm::evaluate() { // EVALUATE
           error("not defined name '" + name + "'");
       }
 
-      this->pushData(obj);
+      PUSH(obj);
       this->op++;
     } break;
 
@@ -1134,10 +1159,10 @@ void vm::evaluate() { // EVALUATE
       object::Array *arr = new object::Array;
       // emit elements
       for (int i = 0; i < count; i++) {
-        arr->elements.push_back(this->popData());
+        arr->elements.push_back(POP());
       }
 
-      this->pushData(arr);
+      PUSH(arr);
       this->op++;
     } break;
 
@@ -1147,10 +1172,10 @@ void vm::evaluate() { // EVALUATE
       object::Tuple *tup = new object::Tuple;
       // emit elements
       for (int i = 0; i < count; i++) {
-        tup->elements.push_back(this->popData());
+        tup->elements.push_back(POP());
       }
 
-      this->pushData(tup);
+      PUSH(tup);
       this->op++;
     } break;
 
@@ -1160,19 +1185,19 @@ void vm::evaluate() { // EVALUATE
       object::Map *map = new object::Map;
       // emit elements
       for (int i = 0; i < count - 2; i++) {
-        object::Object *y = this->popData();
-        object::Object *x = this->popData();
+        object::Object *y = POP();
+        object::Object *x = POP();
 
         map->elements.insert(std::make_pair(x, y));
       }
 
-      this->pushData(map);
+      PUSH(map);
       this->op++;
     } break;
 
     case byte::ASSIGN: {
-      std::string name = this->retName();    // NAME
-      object::Object *obj = this->popData(); // OBJ
+      std::string name = this->retName(); // NAME
+      object::Object *obj = POP();        // OBJ
 
       // std::cout << "ASS: " << name << " OBJ: " << obj->stringer()
       //           << std::endl;
@@ -1188,9 +1213,8 @@ void vm::evaluate() { // EVALUATE
     case byte::F_JUMP:
     case byte::T_JUMP: {
       int off = this->retOffset(); // TO
-      int now = ip;                // TEMP
 
-      if (co == byte::JUMP && this->loopWasRet && off < now) {
+      if (co == byte::JUMP && this->loopWasRet && off < ip) {
         this->loopWasRet = false;
         this->op++;
         break;
@@ -1198,14 +1222,14 @@ void vm::evaluate() { // EVALUATE
 
       // JUMP
       if (co == byte::JUMP) {
-        this->addCounter(&ip, now, off);
+        this->addCounter(&ip, off);
         //
       } else {
         // T
-        if (static_cast<object::Bool *>(this->popData())->value) {
+        if (static_cast<object::Bool *>(POP())->value) {
           if (co == byte::T_JUMP) {
             //
-            this->addCounter(&ip, now, off); // T_JUMP
+            this->addCounter(&ip, off); // T_JUMP
           } else {
             this->op++; // NO
           }
@@ -1213,7 +1237,7 @@ void vm::evaluate() { // EVALUATE
           // F
           if (co == byte::F_JUMP) {
             //
-            this->addCounter(&ip, now, off); // F_JUMP
+            this->addCounter(&ip, off); // F_JUMP
           } else {
             this->op++; // NO
           }
@@ -1233,13 +1257,12 @@ void vm::evaluate() { // EVALUATE
 
       Stack<object::Object *> arguments;
       while (args-- > 0 && top()->data.len() != 1) { // TOP IS FUNC OBJ
-        arguments.push(this->popData());             // ARGUMENT
+        arguments.push(POP());                       // ARGUMENT
       }
 
       // std::cout << "ARGS: " << arguments.len() << std::endl;
 
-      object::Func *f =
-          static_cast<object::Func *>(this->popData()); // FUNCTION
+      object::Func *f = static_cast<object::Func *>(POP()); // FUNCTION
       // std::cout << "CALL: " << f->name << std::endl;
 
       if (isBuiltinName(f->name)) {
@@ -1252,8 +1275,8 @@ void vm::evaluate() { // EVALUATE
         break;
       }
 
-      if (disMode)
-        f->entity->dissemble();
+      /* if (disMode)
+        f->entity->dissemble(); */
 
       Frame *fra = new Frame(f->entity); // FRAME
 
@@ -1261,11 +1284,12 @@ void vm::evaluate() { // EVALUATE
         error("wrong number of parameters");
 
       // SET TABLE SYMBOL
-      if (this->callWholeMethod) {
+      if (this->callWholeMethod)
+        // std::cout << "CALL " << (this->callWhole->name) << std::endl;
+
         // CALL WHOLE
-        fra->tb = static_cast<object::Whole *>(this->lookUp(wholeName))->f->tb;
-        this->callWholeMethod = false; // END
-      } else
+        fra->tb = this->callWhole->f->tb;
+      else
         // GLOBAL
         fra->tb.symbols = top()->tb.symbols;
 
@@ -1290,7 +1314,6 @@ void vm::evaluate() { // EVALUATE
       this->op = 0;
       this->frames.push_back(fra); // NEW FRAME
       this->evaluate();
-      // std::cout << "CALL END" << std::endl;
 
       this->frames.pop_back(); // POP
 
@@ -1300,7 +1323,7 @@ void vm::evaluate() { // EVALUATE
           error("missing return value");
         // TYPE CHECKER
         this->typeChecker(f->ret, top()->ret);
-        this->pushData(top()->ret); // PUSH
+        PUSH(top()->ret); // PUSH
 
         top()->ret = nullptr;
       }
@@ -1310,12 +1333,19 @@ void vm::evaluate() { // EVALUATE
               "return value");
       }
 
+      // CALL WHOLE METHOD
+      if (this->callWholeMethod) {
+        // CLEAR
+        this->callWholeMethod = false;
+        this->callWhole = nullptr;
+      }
+
       this->op = ++t; // NEXT
     } break;
 
     case byte::INDEX: { // INDEX
-      object::Object *obj = this->popData();
-      object::Object *idx = this->popData();
+      object::Object *obj = POP();
+      object::Object *idx = POP();
 
       // GET
       switch (obj->kind()) {
@@ -1333,7 +1363,7 @@ void vm::evaluate() { // EVALUATE
           error("array out of bounds, index: " + std::to_string(x->value) +
                 " max: " + std::to_string(y->elements.size() - 1));
         }
-        this->pushData(y->elements.at(x->value)); // PUSH
+        PUSH(y->elements.at(x->value)); // PUSH
       } break;
       //
       case object::MAP: {
@@ -1356,7 +1386,7 @@ void vm::evaluate() { // EVALUATE
           error("map does not have this key: " + idx->stringer());
         }
 
-        this->pushData(iter->second); // PUSH
+        PUSH(iter->second); // PUSH
       } break;
       //
       case object::STR: {
@@ -1373,15 +1403,15 @@ void vm::evaluate() { // EVALUATE
                 " max: " + std::to_string(s->value.size() - 1));
         }
 
-        this->pushData(new object::Char(s->value.at(i->value)));
+        PUSH(new object::Char(s->value.at(i->value)));
       } break;
       }
     } break;
 
     case byte::REPLACE: { // REPLACE
-      object::Object *obj = this->popData();
-      object::Object *idx = this->popData();
-      object::Object *val = this->popData();
+      object::Object *obj = POP();
+      object::Object *idx = POP();
+      object::Object *val = POP();
 
       // SET
       switch (obj->kind()) {
@@ -1445,7 +1475,7 @@ void vm::evaluate() { // EVALUATE
 
     case byte::GET: { // GET
       std::string name = this->retName();
-      object::Object *obj = this->popData();
+      object::Object *obj = POP();
 
       switch (obj->kind()) {
       case object::TUPLE: {
@@ -1469,7 +1499,7 @@ void vm::evaluate() { // EVALUATE
           error("tuple out of bounds, index: " + std::to_string(i) +
                 " max: " + std::to_string(t->elements.size() - 1));
         }
-        this->pushData(t->elements.at(i));
+        PUSH(t->elements.at(i));
       } break;
       //
       case object::ENUM: {
@@ -1483,70 +1513,52 @@ void vm::evaluate() { // EVALUATE
           error("nonexistent member '" + name + "'");
         }
 
-        this->pushData(new object::Int(iter->first));
+        PUSH(new object::Int(iter->first));
       } break;
       //
       case object::WHOLE: {
         object::Whole *w = static_cast<object::Whole *>(obj);
+        // std::cout << "G: " << w << " NAME: " << name << std::endl;
 
-        if (w->f->tb.symbols.count(name) != 0) {
-          auto o = w->f->tb.symbols[name];
+        if (!w->newOut)
+          error("should new one first");
 
-          if (o->kind() == object::FUNC) {
-            this->callWholeMethod = true; // FOR CALL AND LOAD
+        // GET TO
+        object::Object *op = w->f->tb.lookUp(name);
 
-            this->wholeName = w->name;
-            this->wholeInherit = w->inherit;
-          }
-
-          this->pushData(o);
-        } else {
+        if (op == nullptr)
           error("nonexistent member '" + name + "'");
+
+        if (op->kind() == object::FUNC) {
+          this->callWholeMethod = true;
+          this->callWhole = w; // CALL WHOLE METHOD
         }
+
+        PUSH(op);
       } break;
-      //
-      case object::MODS: {
-        object::Mods *m = static_cast<object::Mods *>(obj);
-        object::Object *obj = nullptr;
-
-        // SEARCH PUBLIC NAME
-        for (auto i : m->mods) {
-          obj = i->f->tb.lookUp(name);
-
-          if (obj != nullptr) {
-            break;
-          }
-        }
-
-        // NOT FOUND
-        if (obj == nullptr) {
-          error("the module '" + m->name + "' not have name '" + name + "'");
-        }
-        this->pushData(obj);
-      } break;
-
       default:
         error("nonexistent member '" + name + "'");
       }
-
       this->op++;
     } break;
 
     case byte::SET: { // SET
-      object::Object *w = this->popData();
+      object::Object *w = POP();
       std::string name = this->retName(); // NAME
 
       if (w->kind() != object::WHOLE)
         error("the value type is not whole object");
 
       object::Whole *n = static_cast<object::Whole *>(w);
+      // std::cout << "S: " << n << " NAME: " << name << std::endl;
 
+      if (!n->newOut)
+        error("should new one first");
       if (n->f->tb.lookUp(name) == nullptr)
         error("no member '" + name + "' to set");
 
-      n->f->tb.emit(name, this->popData()); // SET
+      n->f->tb.emit(name, POP()); // SET
 
-      this->emitTable(n->name, n); // REPLACE
       this->op++;
     } break;
 
@@ -1561,8 +1573,36 @@ void vm::evaluate() { // EVALUATE
       object::Whole *w =
           static_cast<object::Whole *>(this->retConstant()); // OBJECT
 
-      if (this->disMode)
-        w->entity->dissemble();
+      /* if (this->disMode)
+        w->entity->dissemble(); */
+
+      this->emitTable(w->name, w); // STORE
+      this->op++;
+    } break;
+
+    case byte::NAME: { // NAME
+      PUSH(new object::Str(this->retName()));
+      this->op++;
+    } break;
+
+    case byte::NEW: { // NEW
+      std::string name = this->retName();
+
+      this->op++;
+      int count = this->retOffset(); // COUNT
+
+      object::Object *obj = this->lookUp(name); // OBJECT
+      if (obj == nullptr || obj->kind() != object::WHOLE)
+        error("not defined whole of '" + name + "'");
+
+      int size = sizeof(object::Whole); // 112
+                                        // std::cout << size << std::endl;
+
+      object::Whole *r = static_cast<object::Whole *>(obj);
+      object::Whole *w = (object::Whole *)malloc(size);
+
+      memcpy(w, r, size); // MEM COPY
+      // std::cout << "N: " << w << " <- " << r << std::endl;
 
       // EVALUATE IT
       w->f = new Frame(w->entity);
@@ -1575,31 +1615,10 @@ void vm::evaluate() { // EVALUATE
 
       this->frames.pop_back(); // POP
 
-      this->emitTable(w->name, w); // STORE
-      this->op = ++t;
-    } break;
-
-    case byte::NAME: { // NAME
-      this->pushData(new object::Str(this->retName()));
-      this->op++;
-    } break;
-
-    case byte::NEW: { // NEW
-      std::string name = this->retName();
-
-      this->op++;
-      int count = this->retOffset(); // COUNT
-
-      object::Object *obj = this->lookUp(name); // OBJECT
-      if (obj == nullptr)
-        error("not defined whole of '" + name + "'");
-
-      object::Whole *w = static_cast<object::Whole *>(obj);
-
       // SET CONSTRUCTOR
       while (count > 0) {
-        object::Object *v = this->popData();
-        object::Object *k = this->popData();
+        object::Object *v = POP();
+        object::Object *k = POP();
         // STORE
         w->f->tb.emit(static_cast<object::Str *>(k)->value, v);
         count -= 2;
@@ -1608,14 +1627,16 @@ void vm::evaluate() { // EVALUATE
       // INHERIT
       if (!w->inherit.empty()) {
         for (auto i : w->inherit) {
-          if (this->lookUp(i) == nullptr)
-            error("inheritance '" + i + "' dose not exist");
 
-          if (this->lookUp(i)->kind() != object::WHOLE)
+          object::Object *obj = this->lookUp(i);
+
+          if (obj == nullptr)
+            error("inheritance '" + i + "' dose not exist");
+          if (obj->kind() != object::WHOLE)
             error("only whole object can be inherited");
 
           // INTERFACE
-          object::Whole *it = static_cast<object::Whole *>(this->lookUp(i));
+          object::Whole *it = static_cast<object::Whole *>(obj);
 
           for (std::tuple<std::string, ast::FaceArg, ast::Type *> i :
                it->interface) {
@@ -1677,8 +1698,10 @@ void vm::evaluate() { // EVALUATE
         }
       }
 
-      this->pushData(w); // PUSH
-      this->op++;        // NEXT
+      w->newOut = true; // TO NEW
+
+      PUSH(w);        // PUSH
+      this->op = ++t; // NEXT
     } break;
 
     case byte::MOD: { // MOD
@@ -1704,9 +1727,8 @@ void vm::evaluate() { // EVALUATE
       if (top()->entity->title != "main") {
         // TO PREVIOUS FRAME
         if (co != byte::RET_N)
-          this->frames.at(this->frames.size() - 2)->ret =
-              this->popData();            // VALUE
-        ip = top()->entity->codes.size(); // CATCH
+          this->frames.at(this->frames.size() - 2)->ret = POP(); // VALUE
+        ip = top()->entity->codes.size();                        // CATCH
       }
 
       // loop exit and no return value return

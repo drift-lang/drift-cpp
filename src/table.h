@@ -36,6 +36,14 @@ struct Table {
   }
 
   void emit(std::string n, object::Object *o) { symbols[n] = o; }
+
+  void dissemble() {
+    printf("SYMBOL: \n");
+    for (auto i : symbols) {
+      printf("%20s: %40s %10p\n", i.first.c_str(),
+             i.second->rawStringer().c_str(), i.second);
+    }
+  }
 };
 
 #endif

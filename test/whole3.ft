@@ -1,7 +1,12 @@
-def () x end
-def () y end
-def () z end
+def Foo
+    def () show
+        puts("SHOW TIME!!")
+    end
+end
 
-x()
-y()
-z()
+do
+    def i: int = 0
+for i < 100
+    new Foo.show()
+    i += 1
+end

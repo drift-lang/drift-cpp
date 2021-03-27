@@ -35,6 +35,8 @@ struct Entity {
   std::vector<std::string> names;          // names
   std::vector<ast::Type *> types;          // type of variables
 
+  std::vector<int> lineno; // line no of each bytecode
+
   std::vector<int> jumpOffsets;
 
   // output entity data
@@ -51,17 +53,17 @@ struct Entity {
 
       switch (co) {
       case byte::CONST: {
-        printf("%10d: %s %10d %s\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++),
+        printf("%10d %5d: %s %10d %s\n", ip, lineno.at(ip),
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                constants.at(offsets.at(op))->rawStringer().c_str());
       } break;
       case byte::ASSIGN: {
-        printf("%10d: %s %9d '%s'\n", ip,
+        printf("%10d %5d: %s %9d '%s'\n", ip, lineno.at(ip),
                byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                names.at(offsets.at(op)).c_str());
       } break;
       case byte::STORE: {
-        printf("%10d: %s %10d '%s' %d %s\n", ip,
+        printf("%10d %5d: %s %10d '%s' %d %s\n", ip, lineno.at(ip),
                byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
                names.at(offsets.at(op)).c_str(), offsets.at(op + 1),
                types.at(offsets.at(op + 1))->stringer().c_str());
@@ -69,85 +71,86 @@ struct Entity {
       } break;
       case byte::LOAD:
       case byte::NAME: {
-        printf("%10d: %s %11d '%s'\n", ip,
+        printf("%10d %5d: %s %11d '%s'\n", ip, lineno.at(ip),
                byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                names.at(offsets.at(op)).c_str());
       } break;
       case byte::FUNC:
       case byte::ENUM: {
-        printf("%10d: %s %11d %s\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++),
+        printf("%10d %5d: %s %11d %s\n", ip, lineno.at(ip),
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                constants.at(offsets.at(op))->rawStringer().c_str());
       } break;
       case byte::WHOLE: {
-        printf("%10d: %s %10d %s\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++),
+        printf("%10d %5d: %s %10d %s\n", ip, lineno.at(ip),
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                constants.at(offsets.at(op))->rawStringer().c_str());
       } break;
       case byte::GET:
       case byte::SET:
       case byte::MOD:
       case byte::USE: {
-        printf("%10d: %s %12d '%s'\n", ip,
+        printf("%10d %5d: %s %12d '%s'\n", ip, lineno.at(ip),
                byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),
                names.at(offsets.at(op)).c_str());
       } break;
       case byte::CALL: {
-        printf("%10d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
+        printf("%10d %5d: %s %11d\n", ip, lineno.at(ip),
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++));
       } break;
       case byte::B_ARR:
       case byte::B_TUP:
       case byte::B_MAP: {
-        printf("%10d: %s %10d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
+        printf("%10d %5d: %s %10d\n", ip, lineno.at(ip),
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++));
       } break;
       case byte::F_JUMP:
       case byte::T_JUMP: {
-        printf("%10d: %s %9d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
+        printf("%10d %5d: %s %9d\n", ip, lineno.at(ip),
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++));
       } break;
       case byte::JUMP: {
-        printf("%10d: %s %11d\n", ip, byte::codeString[codes.at(ip)].c_str(),
-               offsets.at(op++));
+        printf("%10d %5d: %s %11d\n", ip, lineno.at(ip),
+               byte::codeString[codes.at(ip)].c_str(), offsets.at(op++));
       } break;
       case byte::NEW: {
-        printf("%10d: %s %12d '%s' %d\n", ip,
+        printf("%10d %5d: %s %12d '%s' %d\n", ip, lineno.at(ip),
                byte::codeString[codes.at(ip)].c_str(), offsets.at(op),
                names.at(offsets.at(op)).c_str(), offsets.at(op + 1));
         op += 2;
       } break;
       default:
-        printf("%10d: %s\n", ip, byte::codeString[codes.at(ip)].c_str());
+        printf("%10d %5d: %s\n", ip, lineno.at(ip),
+               byte::codeString[codes.at(ip)].c_str());
         break;
       }
     }
 
-    std::cout << "CONSTANT: " << std::endl;
-    if (constants.empty()) {
-      printf("%20s\n", "EMPTY");
-    } else {
-      for (int i = 0; i < constants.size(); i++) {
-        printf("%20d: %s\n", i, constants.at(i)->rawStringer().c_str());
-      }
-    }
+    // std::cout << "CONSTANT: " << std::endl;
+    // if (constants.empty()) {
+    //   printf("%20s\n", "EMPTY");
+    // } else {
+    //   for (int i = 0; i < constants.size(); i++) {
+    //     printf("%20d: %s\n", i, constants.at(i)->rawStringer().c_str());
+    //   }
+    // }
 
-    std::cout << "NAME: " << std::endl;
-    if (names.empty()) {
-      printf("%20s\n", "EMPTY");
-    } else {
-      for (int i = 0; i < names.size(); i++) {
-        if (i % 4 == 0) {
-          printf("%20d: '%s'\t", i, names.at(i).c_str());
-        } else {
-          printf("%5d: '%s' \t", i, names.at(i).c_str());
-        }
-        if ((i + 1) % 4 == 0) {
-          printf("\n");
-        }
-      }
-      printf("\n");
-    }
+    // std::cout << "NAME: " << std::endl;
+    // if (names.empty()) {
+    //   printf("%20s\n", "EMPTY");
+    // } else {
+    //   for (int i = 0; i < names.size(); i++) {
+    //     if (i % 4 == 0) {
+    //       printf("%20d: '%s'\t", i, names.at(i).c_str());
+    //     } else {
+    //       printf("%5d: '%s' \t", i, names.at(i).c_str());
+    //     }
+    //     if ((i + 1) % 4 == 0) {
+    //       printf("\n");
+    //     }
+    //   }
+    //   printf("\n");
+    // }
 
     // std::cout << "OFFSET: " << std::endl;
     // if (offsets.empty()) {
@@ -166,14 +169,14 @@ struct Entity {
     //     printf("\n");
     // }
 
-    std::cout << "TYPE: " << std::endl;
-    if (types.empty()) {
-      printf("%20s\n", "EMPTY");
-    } else {
-      for (int i = 0; i < types.size(); i++) {
-        printf("%20d: %s\n", i, types.at(i)->stringer().c_str());
-      }
-    }
+    // std::cout << "TYPE: " << std::endl;
+    // if (types.empty()) {
+    //   printf("%20s\n", "EMPTY");
+    // } else {
+    //   for (int i = 0; i < types.size(); i++) {
+    //     printf("%20d: %s\n", i, types.at(i)->stringer().c_str());
+    //   }
+    // }
   }
 };
 

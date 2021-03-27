@@ -124,12 +124,83 @@ void bsleep(object::Object *obj, Frame *) {
 #endif
 }
 
-constexpr int l = 5;                        // length of builtin names
-static builtin bu[l] = {{"puts", puts},     // print to screen
-                        {"put", put},       // print to screen but no new line
-                        {"putl", putl},     // print to screen and end new line
-                        {"len", len},       // return the length of object
-                        {"sleep", bsleep}}; // sleep time
+// type
+void type(object::Object *obj, Frame *f) {
+  object::Func *fu = static_cast<object::Func *>(obj);
+
+  if (fu->builtin.empty() || fu->builtin.size() > 1)
+    error("the <type> function receives one object");
+
+#define PUSH(obj) f->data.push(obj)
+  switch (fu->builtin.front()->kind()) {
+  case object::INT:
+    PUSH(new object::Str("int"));
+    break;
+  case object::FLOAT:
+    PUSH(new object::Str("float"));
+    break;
+  case object::STR:
+    PUSH(new object::Str("str"));
+    break;
+  case object::CHAR:
+    PUSH(new object::Str("char"));
+    break;
+  case object::BOOL:
+    PUSH(new object::Str("bool"));
+    break;
+  case object::ARRAY:
+    PUSH(new object::Str("array"));
+    break;
+  case object::TUPLE:
+    PUSH(new object::Str("tuple"));
+    break;
+  case object::MAP:
+    PUSH(new object::Str("map"));
+    break;
+  case object::FUNC:
+    PUSH(new object::Str("func"));
+    break;
+  case object::ENUM:
+    PUSH(new object::Str("enum"));
+    break;
+  case object::WHOLE:
+    PUSH(new object::Str("whole"));
+    break;
+  }
+#undef PUSH
+}
+
+// generate a random string with length
+void randomStr(object::Object *obj, Frame *f) {
+  object::Func *fu = static_cast<object::Func *>(obj);
+
+  if (fu->builtin.empty() || fu->builtin.size() != 2)
+    error("the <randomStr> function receives two object");
+
+  object::Object *x = fu->builtin.back(); // length
+  fu->builtin.pop_back();
+
+  object::Object *y = fu->builtin.back(); // is upper
+
+  if (x->kind() != object::INT || y->kind() != object::BOOL)
+    error("error arguments for <randomStr> function need (<Int>, <Bool>) to "
+          "call");
+
+  object::Int *i = static_cast<object::Int *>(fu->builtin.front());
+
+  f->data.push(new object::Str(
+      strRand(static_cast<object::Int *>(x)->value,
+              static_cast<object::Bool *>(y)->value))); // GENERATE
+}
+
+constexpr int l = 7;                       // length of builtin names
+static builtin bu[l] = {{"puts", puts},    // print to screen
+                        {"put", put},      // print to screen but no new line
+                        {"putl", putl},    // print to screen and end new line
+                        {"len", len},      // return the length of object
+                        {"sleep", bsleep}, // sleep time
+                        {"type", type},    // type checker
+                        {"randomStr", randomStr}}; // random string generator
 
 // return it is builtin function name
 bool isBuiltinName(std::string name) {
@@ -152,7 +223,7 @@ void regBuiltinName(Frame *f) {
   f->tb.emit("F", new object::Bool(0));
 
   f->tb.emit("_VERSION_", new object::Str("DRIFT 0.0.1"));
-  f->tb.emit("_AUTHOR_", new object::Str("BINGXIO - 黄菁"));
+  f->tb.emit("_AUTHOR_", new object::Str("BINGXIO - HJ"));
   f->tb.emit("_LICENSE_", new object::Str("GPL 3.0"));
   f->tb.emit("_WEBSITE_", new object::Str("https://drift-lang.fun/"));
 }

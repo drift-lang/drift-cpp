@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <ctime>
 
 // return whether the string is all numbers
 bool isNumberStr(const std::string);
@@ -27,5 +28,8 @@ void fileString(const char *, std::string *);
 
 // return the whether a value is the same
 bool sameValue(std::vector<std::string> &, std::vector<std::string> &);
+
+// generate a random strings with length
+std::string strRand(int, bool);
 
 #endif
