@@ -294,6 +294,123 @@ void vm::addCounter(int *ip, int to) {
     (*ip)--; // for loop update
 }
 
+// to execute the whole
+void vm::newWhole(std::string name, int count, bool inner) {
+  // std::cout << "NEW: " << name << std::endl;
+  object::Object *obj =
+      inner ? this->lookUpMainFrame(name) : this->lookUp(name); // OBJECT
+
+  if (obj == nullptr || obj->kind() != object::WHOLE)
+    error("not defined whole of '" + name + "'");
+
+  int size = sizeof(object::Whole); // 112
+                                    // std::cout << size << std::endl;
+
+  object::Whole *r = static_cast<object::Whole *>(obj);
+  object::Whole *w = (object::Whole *)malloc(size);
+
+  memcpy(w, r, size); // MEM COPY
+  // std::cout << "N: " << w << " <- " << r << std::endl;
+
+  // EVALUATE IT
+  w->f = new Frame(w->entity);
+
+  int t = this->op; // TEMP OFFSET
+
+  this->op = 0;
+  this->frames.push_back(w->f); // GO
+  this->evaluate();
+
+  this->frames.pop_back(); // POP
+
+  // SET CONSTRUCTOR
+  while (count > 0) {
+    object::Object *v = POP();
+    object::Object *k = POP();
+    // STORE
+    w->f->tb.emit(static_cast<object::Str *>(k)->value, v);
+    count -= 2;
+  }
+
+  // INHERIT
+  if (!w->inherit.empty()) {
+    for (auto i : w->inherit) {
+
+      object::Object *obj = this->lookUp(i);
+
+      if (obj == nullptr)
+        error("inheritance '" + i + "' dose not exist");
+      if (obj->kind() != object::WHOLE)
+        error("only whole object can be inherited");
+
+      // INTERFACE
+      object::Whole *it = static_cast<object::Whole *>(obj);
+
+      for (std::tuple<std::string, ast::FaceArg, ast::Type *> i :
+           it->interface) {
+        // std::cout << std::get<0>(i) << std::endl;
+
+        // TO TABLE SYMBOL
+        std::map<std::string, object::Object *>::iterator iter;
+
+        // std::cout << w->f->tb.symbols.size() << std::endl;
+
+        for (iter = w->f->tb.symbols.begin(); iter != w->f->tb.symbols.end();
+             iter++) {
+          //  NAME
+          if (iter->first == std::get<0>(i)) {
+            // std::cout << "NAME: " << iter->first <<
+            // std::endl;
+            //
+            if (iter->second->kind() != object::FUNC) {
+              error("subclass inheritance is not "
+                    "function");
+            }
+
+            object::Func *f = static_cast<object::Func *>(iter->second);
+
+            // RETURN
+            if (f->ret->kind() != std::get<2>(i)->kind()) {
+              error("bad return type for subclass "
+                    "inheritance");
+            }
+            // ARGUMENT
+            if (std::get<1>(i).size() != f->arguments.size()) {
+              error("inconsistent arguments for "
+                    "subclass inheritance");
+            }
+            // TYPE
+            auto x = std::get<1>(i).begin(); // T
+            auto y = f->arguments.begin();   // K, T
+
+            while (y != f->arguments.end()) {
+              //
+              if ((*x)->kind() != y->second->kind()) {
+                error("subclass inheritance "
+                      "parameter " +
+                      y->second->stringer() + " no " + (*x)->stringer());
+              }
+              *x++; // NEXT
+              *y++; // NEXT
+            }
+            break;
+          };
+        }
+
+        // NOT FOUND
+        if (iter == w->f->tb.symbols.end()) {
+          error("not inherited method '" + std::get<0>(i) + "' of subclass");
+        }
+      }
+    }
+  }
+
+  w->newOut = true; // TO NEW
+
+  PUSH(w);        // PUSH
+  this->op = ++t; // NEXT
+}
+
 void vm::evaluate() { // EVALUATE
 
 #define BINARY_OP(T, L, OP, R) PUSH(new T(L OP R));
@@ -475,10 +592,9 @@ void vm::evaluate() { // EVALUATE
                     static_cast<object::Float *>(y)->value);
         } break;
         }
-      } else {
+      } else
         // ERROR
         error("unsupport type to / operator");
-      }
     } break;
 
     case byte::SUR: { // %
@@ -526,10 +642,9 @@ void vm::evaluate() { // EVALUATE
                     static_cast<object::Float *>(y)->value);
           break;
         }
-      } else {
+      } else
         // ERROR
         error("unsupport type to > operator");
-      }
     } break;
 
     case byte::GR_E: { // >=
@@ -563,10 +678,9 @@ void vm::evaluate() { // EVALUATE
                     static_cast<object::Float *>(y)->value);
           break;
         }
-      } else {
+      } else
         // ERROR
         error("unsupport type to >= operator");
-      }
     } break;
 
     case byte::LE: { // <
@@ -600,10 +714,9 @@ void vm::evaluate() { // EVALUATE
                     static_cast<object::Float *>(y)->value);
           break;
         }
-      } else {
+      } else
         // ERROR
         error("unsupport type to < operator");
-      }
     } break;
 
     case byte::LE_E: { // <=
@@ -637,10 +750,9 @@ void vm::evaluate() { // EVALUATE
                     static_cast<object::Float *>(y)->value);
           break;
         }
-      } else {
+      } else
         // ERROR
         error("unsupport type to <= operator");
-      }
     } break;
 
     case byte::E_E: { // ==
@@ -729,18 +841,16 @@ void vm::evaluate() { // EVALUATE
         }
       }
       // <Str> == <Str>
-      else if (x->kind() == object::STR && y->kind() == object::STR) {
+      else if (x->kind() == object::STR && y->kind() == object::STR)
         PUSH(new object::Bool(static_cast<object::Str *>(x)->value ==
                               static_cast<object::Str *>(y)->value));
-      }
       // <Char> == <Char>
-      else if (x->kind() == object::CHAR && y->kind() == object::CHAR) {
+      else if (x->kind() == object::CHAR && y->kind() == object::CHAR)
         PUSH(new object::Bool(static_cast<object::Char *>(x)->value ==
                               static_cast<object::Char *>(y)->value));
-      } else {
+      else
         // ERROR
         error("unsupport type to == operator");
-      }
     } break;
 
     case byte::N_E: { // !=
@@ -804,45 +914,40 @@ void vm::evaluate() { // EVALUATE
         switch (y->kind()) {
         case object::INT:
           if (static_cast<object::Int *>(y)->value > 0 &&
-              static_cast<object::Bool *>(x)->value) {
+              static_cast<object::Bool *>(x)->value)
             PUSH(new object::Bool(false));
-          } else {
+          else
             PUSH(new object::Bool(true));
-          }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Float *>(y)->value > 0 &&
-              static_cast<object::Bool *>(x)->value) {
+              static_cast<object::Bool *>(x)->value)
             PUSH(new object::Bool(false));
-          } else {
+          else
             PUSH(new object::Bool(true));
-          }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Bool *>(y)->value &&
-              static_cast<object::Bool *>(x)->value) {
+              static_cast<object::Bool *>(x)->value)
             PUSH(new object::Bool(false));
-          } else {
+          else
             PUSH(new object::Bool(true));
-          }
           break;
         }
       }
       // <Str> != <Str>
-      else if (x->kind() == object::STR && y->kind() == object::STR) {
+      else if (x->kind() == object::STR && y->kind() == object::STR)
         PUSH(new object::Bool(static_cast<object::Str *>(x)->value !=
                               static_cast<object::Str *>(y)->value));
-      }
       // <Char> != <Char>
-      else if (x->kind() == object::CHAR && y->kind() == object::CHAR) {
+      else if (x->kind() == object::CHAR && y->kind() == object::CHAR)
         PUSH(new object::Bool(static_cast<object::Char *>(x)->value !=
                               static_cast<object::Char *>(y)->value));
-      } else {
+      else
         // ERROR
         error("unsupport type to == operator");
-      }
     } break;
 
     case byte::AND: { // &
@@ -854,29 +959,26 @@ void vm::evaluate() { // EVALUATE
         switch (y->kind()) {
         case object::INT:
           if (static_cast<object::Int *>(x)->value > 0 &&
-              static_cast<object::Int *>(y)->value > 0) {
+              static_cast<object::Int *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Int *>(x)->value > 0 &&
-              static_cast<object::Float *>(y)->value > 0) {
+              static_cast<object::Float *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Int *>(x)->value > 0 &&
-              static_cast<object::Bool *>(y)->value) {
+              static_cast<object::Bool *>(y)->value)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         }
       }
@@ -885,29 +987,26 @@ void vm::evaluate() { // EVALUATE
         switch (y->kind()) {
         case object::INT:
           if (static_cast<object::Float *>(x)->value > 0 &&
-              static_cast<object::Int *>(y)->value > 0) {
+              static_cast<object::Int *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Float *>(x)->value > 0 &&
-              static_cast<object::Float *>(y)->value > 0) {
+              static_cast<object::Float *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Float *>(x)->value > 0 &&
-              static_cast<object::Bool *>(y)->value) {
+              static_cast<object::Bool *>(y)->value)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         }
       }
@@ -916,29 +1015,26 @@ void vm::evaluate() { // EVALUATE
         switch (y->kind()) {
         case object::INT:
           if (static_cast<object::Bool *>(x)->value &&
-              static_cast<object::Int *>(y)->value > 0) {
+              static_cast<object::Int *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Bool *>(x)->value &&
-              static_cast<object::Float *>(y)->value > 0) {
+              static_cast<object::Float *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Bool *>(x)->value &&
-              static_cast<object::Bool *>(y)->value) {
+              static_cast<object::Bool *>(y)->value)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         }
       }
@@ -957,29 +1053,26 @@ void vm::evaluate() { // EVALUATE
         switch (y->kind()) {
         case object::INT:
           if (static_cast<object::Int *>(x)->value > 0 ||
-              static_cast<object::Int *>(y)->value > 0) {
+              static_cast<object::Int *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Int *>(x)->value > 0 ||
-              static_cast<object::Float *>(y)->value > 0) {
+              static_cast<object::Float *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Int *>(x)->value > 0 ||
-              static_cast<object::Bool *>(y)->value) {
+              static_cast<object::Bool *>(y)->value)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         }
       }
@@ -988,29 +1081,26 @@ void vm::evaluate() { // EVALUATE
         switch (y->kind()) {
         case object::INT:
           if (static_cast<object::Float *>(x)->value > 0 ||
-              static_cast<object::Int *>(y)->value > 0) {
+              static_cast<object::Int *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Float *>(x)->value > 0 ||
-              static_cast<object::Float *>(y)->value > 0) {
+              static_cast<object::Float *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Float *>(x)->value > 0 ||
-              static_cast<object::Bool *>(y)->value) {
+              static_cast<object::Bool *>(y)->value)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         }
       }
@@ -1019,36 +1109,32 @@ void vm::evaluate() { // EVALUATE
         switch (y->kind()) {
         case object::INT:
           if (static_cast<object::Bool *>(x)->value ||
-              static_cast<object::Int *>(y)->value > 0) {
+              static_cast<object::Int *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::FLOAT:
           if (static_cast<object::Bool *>(x)->value ||
-              static_cast<object::Float *>(y)->value > 0) {
+              static_cast<object::Float *>(y)->value > 0)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         //
         case object::BOOL:
           if (static_cast<object::Bool *>(x)->value ||
-              static_cast<object::Bool *>(y)->value) {
+              static_cast<object::Bool *>(y)->value)
             PUSH(new object::Bool(true));
-          } else {
+          else
             PUSH(new object::Bool(false));
-          }
           break;
         }
       }
       // ERROR
-      else {
+      else
         error("only number and boolean type to | operator");
-      }
     } break;
 
       //
@@ -1059,21 +1145,17 @@ void vm::evaluate() { // EVALUATE
       object::Object *obj = POP();
 
       // !<Int> <Float> <Bool>
-      if (obj->kind() == object::INT) {
+      if (obj->kind() == object::INT)
         PUSH(static_cast<object::Int *>(obj)->value ? new object::Bool(false)
                                                     : new object::Bool(true));
-        //
-      } else if (obj->kind() == object::FLOAT) {
+      else if (obj->kind() == object::FLOAT)
         PUSH(static_cast<object::Float *>(obj)->value ? new object::Bool(false)
                                                       : new object::Bool(true));
-        //
-      } else if (obj->kind() == object::BOOL) {
+      else if (obj->kind() == object::BOOL)
         PUSH(static_cast<object::Bool *>(obj)->value ? new object::Bool(false)
                                                      : new object::Bool(true));
-        //
-      } else {
+      else
         error("only number and boolean type to bang operator");
-      }
     } break;
 
     case byte::NOT: { // -
@@ -1086,7 +1168,6 @@ void vm::evaluate() { // EVALUATE
         PUSH(new object::Float(-static_cast<object::Float *>(obj)->value));
         break;
       }
-
       PUSH(new object::Int(-static_cast<object::Int *>(obj)->value));
     } break;
 
@@ -1134,16 +1215,22 @@ void vm::evaluate() { // EVALUATE
       if (obj == nullptr) {
         // LOAD SUBCLASS FUNCTION
         if (this->callWholeMethod && this->callWhole != nullptr) {
+          // std::cout << "CALL WHOLE" << std::endl;
           for (auto i : this->callWhole->inherit) {
             object::Whole *w =
                 static_cast<object::Whole *>(this->lookUpMainFrame(i));
 
-            obj = w->f->tb.lookUp(name);
+            if (!w->newOut)
+              this->newWhole(w->name, 0, true); // PUSH NEW WHOLE
+            obj =
+                static_cast<object::Whole *>(POP())->f->tb.lookUp(name); // LOOK
 
-            if (obj == nullptr)
-              error("not defined name '" + name + "'");
-            if (obj->kind() != object::FUNC)
-              error("only parent class methods can be called");
+            if (obj != nullptr) {
+              // LOAD FUNCTION BY INHERIT WHOLE
+              if (obj->kind() != object::FUNC)
+                error("only parent class methods can be called");
+              break;
+            }
           }
         } else
           error("not defined name '" + name + "'");
@@ -1158,9 +1245,8 @@ void vm::evaluate() { // EVALUATE
 
       object::Array *arr = new object::Array;
       // emit elements
-      for (int i = 0; i < count; i++) {
+      for (int i = 0; i < count; i++)
         arr->elements.push_back(POP());
-      }
 
       PUSH(arr);
       this->op++;
@@ -1171,9 +1257,8 @@ void vm::evaluate() { // EVALUATE
 
       object::Tuple *tup = new object::Tuple;
       // emit elements
-      for (int i = 0; i < count; i++) {
+      for (int i = 0; i < count; i++)
         tup->elements.push_back(POP());
-      }
 
       PUSH(tup);
       this->op++;
@@ -1260,10 +1345,8 @@ void vm::evaluate() { // EVALUATE
         arguments.push(POP());                       // ARGUMENT
       }
 
-      // std::cout << "ARGS: " << arguments.len() << std::endl;
-
       object::Func *f = static_cast<object::Func *>(POP()); // FUNCTION
-      // std::cout << "CALL: " << f->name << std::endl;
+      // std::cout << "CALL OF: " << f->name << std::endl;
 
       if (isBuiltinName(f->name)) {
         while (arguments.len()) {
@@ -1275,8 +1358,8 @@ void vm::evaluate() { // EVALUATE
         break;
       }
 
-      /* if (disMode)
-        f->entity->dissemble(); */
+      if (disMode)
+        f->entity->dissemble();
 
       Frame *fra = new Frame(f->entity); // FRAME
 
@@ -1573,8 +1656,8 @@ void vm::evaluate() { // EVALUATE
       object::Whole *w =
           static_cast<object::Whole *>(this->retConstant()); // OBJECT
 
-      /* if (this->disMode)
-        w->entity->dissemble(); */
+      if (this->disMode)
+        w->entity->dissemble();
 
       this->emitTable(w->name, w); // STORE
       this->op++;
@@ -1591,117 +1674,7 @@ void vm::evaluate() { // EVALUATE
       this->op++;
       int count = this->retOffset(); // COUNT
 
-      object::Object *obj = this->lookUp(name); // OBJECT
-      if (obj == nullptr || obj->kind() != object::WHOLE)
-        error("not defined whole of '" + name + "'");
-
-      int size = sizeof(object::Whole); // 112
-                                        // std::cout << size << std::endl;
-
-      object::Whole *r = static_cast<object::Whole *>(obj);
-      object::Whole *w = (object::Whole *)malloc(size);
-
-      memcpy(w, r, size); // MEM COPY
-      // std::cout << "N: " << w << " <- " << r << std::endl;
-
-      // EVALUATE IT
-      w->f = new Frame(w->entity);
-
-      int t = this->op; // TEMP OFFSET
-
-      this->op = 0;
-      this->frames.push_back(w->f); // GO
-      this->evaluate();
-
-      this->frames.pop_back(); // POP
-
-      // SET CONSTRUCTOR
-      while (count > 0) {
-        object::Object *v = POP();
-        object::Object *k = POP();
-        // STORE
-        w->f->tb.emit(static_cast<object::Str *>(k)->value, v);
-        count -= 2;
-      }
-
-      // INHERIT
-      if (!w->inherit.empty()) {
-        for (auto i : w->inherit) {
-
-          object::Object *obj = this->lookUp(i);
-
-          if (obj == nullptr)
-            error("inheritance '" + i + "' dose not exist");
-          if (obj->kind() != object::WHOLE)
-            error("only whole object can be inherited");
-
-          // INTERFACE
-          object::Whole *it = static_cast<object::Whole *>(obj);
-
-          for (std::tuple<std::string, ast::FaceArg, ast::Type *> i :
-               it->interface) {
-            // std::cout << std::get<0>(i) << std::endl;
-
-            // TO TABLE SYMBOL
-            std::map<std::string, object::Object *>::iterator iter;
-
-            // std::cout << w->f->tb.symbols.size() << std::endl;
-
-            for (iter = w->f->tb.symbols.begin();
-                 iter != w->f->tb.symbols.end(); iter++) {
-              //  NAME
-              if (iter->first == std::get<0>(i)) {
-                // std::cout << "NAME: " << iter->first <<
-                // std::endl;
-                //
-                if (iter->second->kind() != object::FUNC) {
-                  error("subclass inheritance is not "
-                        "function");
-                }
-
-                object::Func *f = static_cast<object::Func *>(iter->second);
-
-                // RETURN
-                if (f->ret->kind() != std::get<2>(i)->kind()) {
-                  error("bad return type for subclass "
-                        "inheritance");
-                }
-                // ARGUMENT
-                if (std::get<1>(i).size() != f->arguments.size()) {
-                  error("inconsistent arguments for "
-                        "subclass inheritance");
-                }
-                // TYPE
-                auto x = std::get<1>(i).begin(); // T
-                auto y = f->arguments.begin();   // K, T
-
-                while (y != f->arguments.end()) {
-                  //
-                  if ((*x)->kind() != y->second->kind()) {
-                    error("subclass inheritance "
-                          "parameter " +
-                          y->second->stringer() + " no " + (*x)->stringer());
-                  }
-                  *x++; // NEXT
-                  *y++; // NEXT
-                }
-                break;
-              };
-            }
-
-            // NOT FOUND
-            if (iter == w->f->tb.symbols.end()) {
-              error("not inherited method '" + std::get<0>(i) +
-                    "' of subclass");
-            }
-          }
-        }
-      }
-
-      w->newOut = true; // TO NEW
-
-      PUSH(w);        // PUSH
-      this->op = ++t; // NEXT
+      this->newWhole(name, count, false);
     } break;
 
     case byte::MOD: { // MOD

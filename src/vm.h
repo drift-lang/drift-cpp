@@ -92,6 +92,8 @@ private:
   // throw an exception
   inline void error(std::string);
 
+  void newWhole(std::string, int, bool); // to execute the whole
+
 public:
   explicit vm(Entity *m, std::vector<object::Module *> *mods, bool replMode,
               bool disMode, State *state) {
