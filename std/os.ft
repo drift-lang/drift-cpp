@@ -7,7 +7,7 @@ mod os
  */
 def (desc: str, deep + op: int) loop
     do
-        let i: int = 0
+        def i: int = 0
     for ->
         if i == op
             out ->

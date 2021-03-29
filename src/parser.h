@@ -20,6 +20,7 @@
 #include "ast.h"
 #include "exception.h"
 #include "state.h"
+#include "type.h"
 
 // parser structure
 class Parser {
@@ -69,7 +70,7 @@ private:
   ast::BlockStmt *block(token::Kind x, token::Kind y = token::EFF,
                         token::Kind z = token::EFF);
 
-  ast::Type *type(bool previous = false); // parse types
+  Type *type(bool previous = false); // parse types
 
   // throw an exception
   inline void error(exp::Kind, std::string);

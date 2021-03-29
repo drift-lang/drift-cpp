@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "ast.h"
+#include "type.h"
 #include "object.h"
 #include "opcode.h"
 
@@ -33,7 +34,7 @@ struct Entity {
   std::vector<int> offsets;                // offset of bytecode
   std::vector<object::Object *> constants; // constant
   std::vector<std::string> names;          // names
-  std::vector<ast::Type *> types;          // type of variables
+  std::vector<Type *> types;          // type of variables
 
   std::vector<int> lineno; // line no of each bytecode
 
@@ -89,6 +90,7 @@ struct Entity {
       case byte::GET:
       case byte::SET:
       case byte::MOD:
+      case byte::DEL:
       case byte::USE: {
         printf("%10d %5d: %s %12d '%s'\n", ip, lineno.at(ip),
                byte::codeString[codes.at(ip)].c_str(), offsets.at(op++),

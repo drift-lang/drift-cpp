@@ -27,6 +27,7 @@
 #include "opcode.h"
 #include "state.h"
 #include "util.h"
+#include "type.h"
 
 // structure
 class vm {
@@ -55,7 +56,7 @@ private:
   object::Object *retConstant();
 
   // first to end iterator
-  ast::Type *retType();
+  Type *retType();
 
   // first to end iterator
   std::string retName();
@@ -64,13 +65,13 @@ private:
   int retOffset();
 
   // are the comparison types the same
-  void typeChecker(ast::Type *, object::Object *);
+  void typeChecker(Type *, object::Object *);
 
   // are two values of same type equal
   bool objValueEquation(object::Object *, object::Object *);
 
   // generate default values
-  object::Object *setOriginalValue(ast::Type *);
+  object::Object *setOriginalValue(Type *);
 
   int op = 0; // offset pointer
   int lp = 0;
@@ -93,6 +94,8 @@ private:
   inline void error(std::string);
 
   void newWhole(std::string, int, bool); // to execute the whole
+  void checkInterface(object::Whole *,
+                      object::Whole *); // to check interface of whole
 
 public:
   explicit vm(Entity *m, std::vector<object::Module *> *mods, bool replMode,

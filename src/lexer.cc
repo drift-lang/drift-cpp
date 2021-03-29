@@ -332,7 +332,6 @@ void Lexer::lexSymbol() {
   case '_':
     tok.kind = token::UNDERLINE;
     break;
-    break;
 
   default:
     error(exp::UNKNOWN_SYMBOL, "unknown symbol: " + std::to_string(now()));

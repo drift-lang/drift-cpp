@@ -23,7 +23,7 @@ void Compiler::compile() {
 
   while (this->position < this->statements.size()) {
     this->line = this->lineno.at(this->position);
-    
+
     this->stmt(look()); // START
     this->position++;
   }
@@ -61,7 +61,7 @@ void Compiler::emitName(std::string v) {
 }
 
 // push names type to entity
-void Compiler::emitType(ast::Type *t) {
+void Compiler::emitType(Type *t) {
   this->now->types.push_back(t);
   this->emitOffset(this->itf++);
 }
@@ -605,6 +605,11 @@ void Compiler::stmt(ast::Stmt *stmt) {
 
     this->emitCode(byte::ENUM);
     this->emitConstant(obj); // push to constant object
+  } break;
+  //
+  case ast::STMT_DEL: {
+    this->emitCode(byte::DEL);
+    this->emitName(static_cast<ast::DelStmt *>(stmt)->name.literal); // name
   } break;
   //
   default:

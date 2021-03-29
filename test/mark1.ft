@@ -1,0 +1,8 @@
+// MARK 1
+
+do
+    def i: int = 0
+for i < 10000000
+    putl("i = ", i)
+    i += 1
+end

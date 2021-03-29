@@ -16,6 +16,7 @@
 #define DRIFT_OBJECT_H
 
 #include "ast.h"
+#include "type.h"
 
 struct Entity;
 struct Frame;
@@ -276,7 +277,7 @@ public:
   std::string name; // function name
 
   ast::FuncArg arguments; // function args
-  ast::Type *ret;         // function return
+  Type *ret;         // function return
 
   Entity *entity; // function entity
 
@@ -296,7 +297,7 @@ public:
   Entity *entity; // whole entity
 
   // interface definition
-  std::vector<std::tuple<std::string, ast::FaceArg, ast::Type *>> interface;
+  std::vector<std::tuple<std::string, ast::FaceArg, Type *>> interface;
   // inherit definition
   std::vector<std::string> inherit;
 

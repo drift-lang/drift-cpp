@@ -1,6 +1,12 @@
-def x: []int = [1, 2, 3]
-def i: int = 0
+def x: [18]int = [1, 1]
 
-x[i] = 88
+do
+    def i: int = 2
+for i < len(x)
+    x[i] = x[i - 1] + x[i - 2]
+    i += 1
+end
 
-puts(i, x)
+del i
+
+puts(x)

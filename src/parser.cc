@@ -374,29 +374,25 @@ ast::Expr *Parser::primary() {
 ast::Stmt *Parser::stmt() {
   switch (this->look().kind) {
   // definition statement
-  case token::DEF:
-  case token::LET: {
+  case token::DEF: {
     this->position++;
 
-    token::Kind k = previous().kind;
+    // TODO: local
+    // bool local = look(token::MUL); // local
 
-    // let and name decoration
-    if (look().kind != token::IDENT && k == token::LET) {
-      error(exp::UNEXPECTED, "let name decoration can only be an ident");
-    }
     // variable
     if (look(token::IDENT) && look().kind == token::COLON) {
       token::Token name = previous();
       this->position++; // skip colon symbol
 
-      ast::Type *T = this->type();
+      Type *T = this->type();
 
       // value of variable
       if (look(token::EQ))
         // there is an initial value
-        return new ast::VarStmt(name, T, this->expr(), k == token::LET);
+        return new ast::VarStmt(name, T, this->expr());
       else
-        return new ast::VarStmt(name, T, k == token::LET);
+        return new ast::VarStmt(name, T);
     }
     // function or interface
     else if (look(token::L_PAREN)) {
@@ -407,7 +403,7 @@ ast::Stmt *Parser::stmt() {
       // name
       token::Token name;
       // return
-      ast::Type *ret = nullptr;
+      Type *ret = nullptr;
       // cache multiple parameters
       std::vector<token::Token *> temp;
 
@@ -460,7 +456,7 @@ ast::Stmt *Parser::stmt() {
           funcArgs.insert(std::make_pair(K, this->type()));
         } else {
           // multip
-          ast::Type *T = this->type();
+          Type *T = this->type();
 
           for (auto i : temp) {
             funcArgs.insert(std::make_pair(i, T));
@@ -484,6 +480,12 @@ ast::Stmt *Parser::stmt() {
         //
         // current parsing interface statement
         interfaceStmt = true;
+      }
+      // anonymouse function
+      else if (look(token::R_ARROW)) {
+        return new ast::FuncStmt(
+            funcArgs, token::Token{.kind = token::EFF, .literal = "anonymouse"},
+            this->type(), this->block(token::END));
       }
       // error
       else {
@@ -632,6 +634,15 @@ ast::Stmt *Parser::stmt() {
 
     return new ast::InheritStmt(names);
   } break;
+  // del
+  case token::DEL: {
+    this->position++;
+    //
+    if (!look(token::IDENT)) {
+      error(exp::UNEXPECTED, "del name must be an identifier");
+    }
+    return new ast::DelStmt(previous());
+  } break;
   //
   default:
     // expression statement
@@ -678,7 +689,7 @@ inline void Parser::error(exp::Kind kind, std::string message) {
 }
 
 //  type analysis
-ast::Type *Parser::type(bool previous) {
+Type *Parser::type(bool previous) {
   token::Token now = *this->look(previous);
   // type
   if (now.kind == token::IDENT) {
@@ -686,57 +697,83 @@ ast::Type *Parser::type(bool previous) {
     this->position++;
     // T1
     if (now.literal == S_INT)
-      return new ast::Int();
+      return new Int();
     // T2
     if (now.literal == S_FLOAT)
-      return new ast::Float();
+      return new Float();
     // T3
     if (now.literal == S_STR)
-      return new ast::Str;
+      return new Str;
     // T4
     if (now.literal == S_CHAR)
-      return new ast::Char();
+      return new Char();
     // T5
     if (now.literal == S_BOOL)
-      return new ast::Bool;
+      return new Bool;
     // user define type
-    return new ast::User(now);
+    return new User(now);
   }
   // T6
   if (now.kind == token::L_BRACKET) {
     this->position++; // skip left [ symbol
 
+    int count = -1;
+
+    // set default original value
+    if (look(token::NUM)) {
+      count = atoi(this->previous().literal.c_str());
+    }
+
     if (!look(token::R_BRACKET)) {
       error(exp::UNEXPECTED, "expect ']' after left square bracket");
     }
-    return new ast::Array(this->type());
+    return new Array(this->type(), count);
   }
   // T7
   if (now.kind == token::LESS) {
     this->position++; // skip left < symbol
     // key
-    ast::Type *T1 = this->type();
+    Type *T1 = this->type();
 
     if (!look(token::COMMA)) {
       error(exp::UNEXPECTED, "expect ',' after key of map");
     }
-    ast::Type *T2 = this->type();
+    Type *T2 = this->type();
 
     if (!look(token::GREATER)) {
       error(exp::UNEXPECTED, "expect '>' after value of map");
     }
-    return new ast::Map(T1, T2);
+    return new Map(T1, T2);
   }
   // T8
   if (now.kind == token::L_PAREN) {
     this->position++; // skip left ( symbol
 
-    ast::Type *T = this->type();
+    Type *T = this->type();
 
     if (!look(token::R_PAREN)) {
       error(exp::UNEXPECTED, "expect ')' after tuple define");
     }
-    return new ast::Tuple(T);
+    return new Tuple(T);
+  }
+  // T9
+  if (now.kind == token::OR) {
+    this->position++; // skip left | symbol
+
+    std::vector<Type *> arguments; // function arguments
+    Type *ret = nullptr;           // function return
+
+    while (!look(token::OR)) {
+      arguments.push_back(this->type());
+
+      if (look(token::COMMA)) {
+        continue;
+      }
+    }
+    if (look(token::R_ARROW)) {
+      ret = this->type();
+    }
+    return new Func(arguments, ret);
   }
   error(exp::INVALID_SYNTAX, "invalid type");
   //

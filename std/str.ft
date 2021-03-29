@@ -1,31 +1,28 @@
 mod str
 
 def Iter
-    /*
-     * return the count of character in string
-     */
     def (char) *count -> int
 
-    def () *first -> char  // return first char of string
-    def () *back  -> char  // return back char of string
-    def () *size  -> int   // return size of string
+    def () *first -> char
+    def () *back  -> char
+    def () *size  -> int
 end
 
 def And
-    def (str) *add -> str    // add two string
-    def () *split  -> []char // split string to array
+    def (str) *add -> str
+    def () *split  -> []char
 end
 
-def String <- Iter + And // implemention
-    def val: str // constructor
+def String <- Iter + And
+    def val: str
 
     def (x: char) count -> int
         if len(val) == 0
             ret 0
         end
         do
-            def i: int      // index
-            def c: int      // count
+            def i: int
+            def c: int
 
             def l: int = len(val)
         for l > i
@@ -34,30 +31,25 @@ def String <- Iter + And // implemention
             end
             l -= 1
         end
-        ret c // return the count
+        ret c
     end
 
-    // add two string and return it
     def (x: str) add -> str
-        ret x + val
+        ret val + x
     end
 
-    // return first char of string
     def () first -> char
         ret val[0]
     end
 
-    // return back char of string
     def () back -> char
         ret val[len(val) - 1]
     end
 
-    // return size of string
     def () size -> int
         ret len(val)
     end
 
-    // split string
     def () split -> []char
         ret [val[0], val[1], val[2]]
     end

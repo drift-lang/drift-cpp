@@ -7,7 +7,7 @@ SRC = $(wildcard ${DIR_SRC}/*.cc)
 TMP = $(wildcard $(DIR_TMP)/*.o)
 
 all:
-	${CC} -std=c++20 -c $(foreach i, $(SRC), $(i))
+	${CC} -std=c++20 -c -Os $(foreach i, $(SRC), $(i))
 
 install:
 	$(shell mkdir ${DIR_TMP})

@@ -1,0 +1,6 @@
+// MAP
+def (elem: <int, str>) foo
+    putl(len(elem), elem)
+end
+
+foo({1: "OP", 4: "KL", 2: "US"})

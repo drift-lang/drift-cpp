@@ -7,17 +7,17 @@ void initializeKeyword(std::map<std::string, token::Kind> *map) {
   map->insert(std::make_pair("use", USE)); // 1
   map->insert(std::make_pair("def", DEF)); // 2
   map->insert(std::make_pair("ret", RET)); // 3
-  map->insert(std::make_pair("let", LET)); // 4
-  map->insert(std::make_pair("end", END)); // 5
-  map->insert(std::make_pair("if", IF));   // 6
-  map->insert(std::make_pair("ef", EF));   // 7
-  map->insert(std::make_pair("nf", NF));   // 8
-  map->insert(std::make_pair("for", FOR)); // 9
-  map->insert(std::make_pair("do", DO));   // 10
-  map->insert(std::make_pair("out", OUT)); // 11
-  map->insert(std::make_pair("tin", TIN)); // 12
-  map->insert(std::make_pair("new", NEW)); // 13
-  map->insert(std::make_pair("mod", MOD)); // 14
+  map->insert(std::make_pair("end", END)); // 4
+  map->insert(std::make_pair("if", IF));   // 5
+  map->insert(std::make_pair("ef", EF));   // 6
+  map->insert(std::make_pair("nf", NF));   // 7
+  map->insert(std::make_pair("for", FOR)); // 8
+  map->insert(std::make_pair("do", DO));   // 9
+  map->insert(std::make_pair("out", OUT)); // 10
+  map->insert(std::make_pair("tin", TIN)); // 11
+  map->insert(std::make_pair("new", NEW)); // 12
+  map->insert(std::make_pair("mod", MOD)); // 13
+  map->insert(std::make_pair("del", DEL)); // 14
 }
 
 token::Kind getKeyword(std::map<std::string, token::Kind> m,

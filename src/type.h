@@ -29,6 +29,7 @@ enum TypeKind {
   T_ARRAY, // []<T>
   T_MAP,   // <T1, T2>
   T_TUPLE, // (T)
+  T_FUNC,  // |A| -> R
   T_USER,  // user
 };
 
@@ -95,9 +96,17 @@ class Array : public Type {
 public:
   Type *T; // type for elements
 
-  explicit Array(Type *T) : T(T) {}
+  int count; // defaule built original value
 
-  std::string stringer() override { return "<Array T=" + T->stringer() + " >"; }
+  explicit Array(Type *T, int count) : T(T), count(count) {}
+
+  std::string stringer() override {
+    if (count != -1) {
+      return "<Array T=" + T->stringer() + " Count=" + std::to_string(count) +
+             ">";
+    }
+    return "<Array T=" + T->stringer() + ">";
+  }
 
   TypeKind kind() override { return T_ARRAY; }
 };
@@ -112,7 +121,7 @@ public:
   explicit Map(Type *T1, Type *T2) : T1(T1), T2(T2) {}
 
   std::string stringer() override {
-    return "<Map T1=" + T1->stringer() + " T2=" + T2->stringer() + " >";
+    return "<Map T1=" + T1->stringer() + " T2=" + T2->stringer() + ">";
   }
 
   TypeKind kind() override { return T_MAP; }
@@ -126,9 +135,29 @@ public:
 
   explicit Tuple(Type *T) : T(T) {}
 
-  std::string stringer() override { return "<Tuple T=" + T->stringer() + " >"; }
+  std::string stringer() override { return "<Tuple T=" + T->stringer() + ">"; }
 
   TypeKind kind() override { return T_TUPLE; }
+};
+
+// function
+class Func : public Type {
+public:
+  std::vector<Type *> arguments; // function arguments
+  Type *ret;                     // function return
+
+  explicit Func(std::vector<Type *> arguments, Type *ret)
+      : arguments(arguments), ret(ret) {}
+
+  std::string stringer() override {
+    if (ret == nullptr) {
+      return "<Func A=" + std::to_string(arguments.size()) + " R=NONE>";
+    }
+    return "<Func A=" + std::to_string(arguments.size()) +
+           " R=" + ret->stringer() + ">";
+  }
+
+  TypeKind kind() override { return T_FUNC; }
 };
 
 // user definition type
@@ -140,7 +169,7 @@ public:
   explicit User(token::Token name) { this->name = std::move(name); }
 
   std::string stringer() override {
-    return "<User Name='" + name.literal + "' >";
+    return "<User Name='" + name.literal + "'>";
   }
 
   TypeKind kind() override { return T_USER; }

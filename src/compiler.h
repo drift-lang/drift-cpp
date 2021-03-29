@@ -18,6 +18,7 @@
 #include <algorithm>
 
 #include "ast.h"
+#include "type.h"
 #include "entity.h"
 #include "object.h"
 #include "opcode.h"
@@ -43,7 +44,7 @@ private:
   void emitOffset(int);                // push offset to entity
   void emitConstant(object::Object *); // push constant to entity
   void emitName(std::string);          // push name to entity
-  void emitType(ast::Type *);          // push names type to entity
+  void emitType(Type *);          // push names type to entity
 
   void emitJumpOffset(int);
 

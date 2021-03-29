@@ -79,17 +79,17 @@ enum Kind {
   USE, // 1
   DEF, // 2
   RET, // 3
-  LET, // 4
-  END, // 5
-  IF,  // 6
-  EF,  // 7
-  NF,  // 8
-  FOR, // 9
-  DO,  // 10
-  OUT, // 11
-  TIN, // 12
-  NEW, // 13
-  MOD  // 14
+  END, // 4
+  IF,  // 5
+  EF,  // 6
+  NF,  // 7
+  FOR, // 8
+  DO,  // 9
+  OUT, // 10
+  TIN, // 11
+  NEW, // 12
+  MOD, // 13
+  DEL, // 14
 };
 
 // returns a string of each type
@@ -108,10 +108,10 @@ static std::string kindString[len] = {
     "R_BRACE",   "L_PAREN",   "R_PAREN",
     "L_BRACKET", "R_BRACKET", "UNDERLINE",
     "EFF",       "USE",       "DEF",
-    "RET",       "LET",       "END",
-    "IF",        "EF",        "NF",
-    "FOR",       "DO",        "OUT",
-    "TIN",       "NEW",       "MOD",
+    "RET",       "END",       "IF",
+    "EF",        "NF",        "FOR",
+    "DO",        "OUT",       "TIN",
+    "NEW",       "MOD",       "DEL",
 };
 
 //  token structure

@@ -2,10 +2,22 @@
 
 if 1 > -1
     def x: int = 45
+    def p: int = 12
 
     def () foo -> str
         ret "Hello World!!"
     end
 end
 
-putl(x, foo())
+// del p
+// del foo
+
+putl(x, foo(), p)
+
+def Foo
+    def () call -> str
+        ret "Hello Drift!!"
+    end
+end
+
+puts(new Foo.call(), foo())

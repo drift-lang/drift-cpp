@@ -26,8 +26,8 @@ void vm::pushData(object::Object *obj) { top()->data.push(obj); }
 // pop the top of data stack
 object::Object *vm::popData() { return top()->data.pop(); }
 
-#define PUSH(obj) this->pushData(obj)
-#define POP this->popData
+#define PUSH(obj) this->pushData(obj) // PUSH
+#define POP this->popData             // POP
 
 // emit new name of table to the current frame
 void vm::emitTable(std::string name, object::Object *obj) {
@@ -74,7 +74,7 @@ object::Object *vm::retConstant() {
 }
 
 // first to end
-ast::Type *vm::retType() { return top()->entity->types.at(GET_OFFSET(op)); }
+Type *vm::retType() { return top()->entity->types.at(GET_OFFSET(op)); }
 
 // first to end
 std::string vm::retName() { return top()->entity->names.at(GET_OFFSET(op)); }
@@ -92,11 +92,15 @@ void vm::error(std::string message) {
 }
 
 // are the comparison types the same
-void vm::typeChecker(ast::Type *x, object::Object *y) {
+void vm::typeChecker(Type *x, object::Object *y) {
   switch (x->kind()) {
   // array
-  case ast::T_ARRAY: {
-    ast::Array *T = static_cast<ast::Array *>(x);
+  case T_ARRAY: {
+    Array *T = static_cast<Array *>(x);
+
+    if (y->kind() != object::ARRAY)
+      error("type error not found array");
+
     object::Array *arr = static_cast<object::Array *>(y);
 
     for (auto i : arr->elements)
@@ -104,8 +108,12 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
     break;
   }
   // tuple
-  case ast::T_TUPLE: {
-    ast::Tuple *T = static_cast<ast::Tuple *>(x);
+  case T_TUPLE: {
+    Tuple *T = static_cast<Tuple *>(x);
+
+    if (y->kind() != object::TUPLE)
+      error("type error not found tuple");
+
     object::Tuple *tup = static_cast<object::Tuple *>(y);
 
     for (auto i : tup->elements)
@@ -113,8 +121,12 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
     break;
   }
   // map
-  case ast::T_MAP: {
-    ast::Map *T = static_cast<ast::Map *>(x);
+  case T_MAP: {
+    Map *T = static_cast<Map *>(x);
+
+    if (y->kind() != object::MAP)
+      error("type error not found map");
+
     object::Map *map = static_cast<object::Map *>(y);
 
     for (auto &i : map->elements) {
@@ -123,26 +135,66 @@ void vm::typeChecker(ast::Type *x, object::Object *y) {
     }
     break;
   }
+  // func
+  case T_FUNC: {
+    Func *T = static_cast<Func *>(x);
+
+    if (y->kind() != object::FUNC)
+      error("type error not found function");
+
+    object::Func *f = static_cast<object::Func *>(y);
+
+    if (f->arguments.size() != T->arguments.size())
+      error("wrong number of parameters");
+
+    if (f->ret != nullptr && T->ret != nullptr)
+      if (f->ret->kind() != T->ret->kind())
+        error("wrong return type");
+
+    std::map<token::Token *, Type *>::iterator iter =
+        f->arguments.begin(); // ITER
+
+    for (int i = 0; i < T->arguments.size(); i += 1, iter++) {
+      // CATCH
+      if (T->arguments.at(i)->kind() != iter->second->kind())
+        error("wrong argument type with function");
+    }
+    break;
+  }
   // other
   default: {
     // base
     if (
         // int
-        (x->kind() == ast::T_INT && y->kind() != object::INT) ||
+        (x->kind() == T_INT && y->kind() != object::INT) ||
         // float
-        (x->kind() == ast::T_FLOAT && y->kind() != object::FLOAT) ||
+        (x->kind() == T_FLOAT && y->kind() != object::FLOAT) ||
         // str
-        (x->kind() == ast::T_STR && y->kind() != object::STR) ||
+        (x->kind() == T_STR && y->kind() != object::STR) ||
         // char
-        (x->kind() == ast::T_CHAR && y->kind() != object::CHAR) ||
+        (x->kind() == T_CHAR && y->kind() != object::CHAR) ||
         // bool
-        (x->kind() == ast::T_BOOL && y->kind() != object::INT)) {
+        (x->kind() == T_BOOL && y->kind() != object::INT)) {
+
+      // type transfer
+      //
+      // int -> float
+      //
+      if (x->kind() == T_FLOAT && y->kind() == object::INT) {
+        *y = object::Float(static_cast<object::Int *>(y)->value);
+        return;
+      }
+      // float -> int
+      if (x->kind() == T_INT && y->kind() == object::FLOAT) {
+        *y = object::Int(static_cast<object::Float *>(y)->value);
+        return;
+      }
       error("type error, require: " + x->stringer() +
             ", found: " + y->rawStringer());
     } else {
       // user
-      if (x->kind() == ast::T_USER) {
-        std::string name = static_cast<ast::User *>(x)->name.literal;
+      if (x->kind() == T_USER) {
+        std::string name = static_cast<User *>(x)->name.literal;
 
         switch (y->kind()) {
         // function
@@ -196,24 +248,24 @@ bool vm::objValueEquation(object::Object *x, object::Object *y) {
 }
 
 // generate default value
-object::Object *vm::setOriginalValue(ast::Type *t) {
+object::Object *vm::setOriginalValue(Type *t) {
   switch (t->kind()) {
-  case ast::T_INT:
+  case T_INT:
     return new object::Int(0);
-  case ast::T_FLOAT:
+  case T_FLOAT:
     return new object::Float(0.0);
-  case ast::T_STR:
+  case T_STR:
     return new object::Str("");
-  case ast::T_CHAR:
+  case T_CHAR:
     return new object::Char(0);
-  case ast::T_BOOL:
+  case T_BOOL:
     return new object::Int(0); // default conversion
 
-  case ast::T_ARRAY:
+  case T_ARRAY:
     return new object::Array();
-  case ast::T_TUPLE:
+  case T_TUPLE:
     return new object::Tuple();
-  case ast::T_MAP:
+  case T_MAP:
     return new object::Map();
 
   default:
@@ -335,7 +387,6 @@ void vm::newWhole(std::string name, int count, bool inner) {
   // INHERIT
   if (!w->inherit.empty()) {
     for (auto i : w->inherit) {
-
       object::Object *obj = this->lookUp(i);
 
       if (obj == nullptr)
@@ -344,71 +395,61 @@ void vm::newWhole(std::string name, int count, bool inner) {
         error("only whole object can be inherited");
 
       // INTERFACE
-      object::Whole *it = static_cast<object::Whole *>(obj);
-
-      for (std::tuple<std::string, ast::FaceArg, ast::Type *> i :
-           it->interface) {
-        // std::cout << std::get<0>(i) << std::endl;
-
-        // TO TABLE SYMBOL
-        std::map<std::string, object::Object *>::iterator iter;
-
-        // std::cout << w->f->tb.symbols.size() << std::endl;
-
-        for (iter = w->f->tb.symbols.begin(); iter != w->f->tb.symbols.end();
-             iter++) {
-          //  NAME
-          if (iter->first == std::get<0>(i)) {
-            // std::cout << "NAME: " << iter->first <<
-            // std::endl;
-            //
-            if (iter->second->kind() != object::FUNC) {
-              error("subclass inheritance is not "
-                    "function");
-            }
-
-            object::Func *f = static_cast<object::Func *>(iter->second);
-
-            // RETURN
-            if (f->ret->kind() != std::get<2>(i)->kind()) {
-              error("bad return type for subclass "
-                    "inheritance");
-            }
-            // ARGUMENT
-            if (std::get<1>(i).size() != f->arguments.size()) {
-              error("inconsistent arguments for "
-                    "subclass inheritance");
-            }
-            // TYPE
-            auto x = std::get<1>(i).begin(); // T
-            auto y = f->arguments.begin();   // K, T
-
-            while (y != f->arguments.end()) {
-              //
-              if ((*x)->kind() != y->second->kind()) {
-                error("subclass inheritance "
-                      "parameter " +
-                      y->second->stringer() + " no " + (*x)->stringer());
-              }
-              *x++; // NEXT
-              *y++; // NEXT
-            }
-            break;
-          };
-        }
-
-        // NOT FOUND
-        if (iter == w->f->tb.symbols.end()) {
-          error("not inherited method '" + std::get<0>(i) + "' of subclass");
-        }
-      }
+      this->checkInterface(static_cast<object::Whole *>(obj), w);
     }
   }
 
   w->newOut = true; // TO NEW
 
-  PUSH(w);        // PUSH
-  this->op = ++t; // NEXT
+  PUSH(w);                    // PUSH
+  this->op = inner ? t : ++t; // NEXT
+}
+
+// to check interface of whole
+void vm::checkInterface(object::Whole *it, object::Whole *se) {
+  for (std::tuple<std::string, ast::FaceArg, Type *> i : it->interface) {
+    // TO TABLE SYMBOL
+    std::map<std::string, object::Object *>::iterator iter;
+
+    for (iter = se->f->tb.symbols.begin(); iter != se->f->tb.symbols.end();
+         iter++) {
+      //  NAME
+      if (iter->first == std::get<0>(i)) {
+        // std::cout << "NAME: " << iter->first <<
+        // std::endl;
+        //
+        if (iter->second->kind() != object::FUNC)
+          error("subclass inheritance is not function");
+
+        object::Func *f = static_cast<object::Func *>(iter->second);
+
+        // RETURN
+        if (f->ret->kind() != std::get<2>(i)->kind())
+          error("bad return type for subclass inheritance");
+        // ARGUMENT
+        if (std::get<1>(i).size() != f->arguments.size())
+          error("inconsistent arguments for subclass inheritance");
+
+        // TYPE
+        auto x = std::get<1>(i).begin(); // T
+        auto y = f->arguments.begin();   // K, T
+
+        while (y != f->arguments.end()) {
+          //
+          if ((*x)->kind() != y->second->kind())
+            error("subclass inheritance parameter " + y->second->stringer() +
+                  " no " + (*x)->stringer());
+          *x++; // NEXT
+          *y++; // NEXT
+        }
+        break;
+      };
+    }
+
+    // NOT FOUND
+    if (iter == se->f->tb.symbols.end())
+      error("not inherited method '" + std::get<0>(i) + "' of subclass");
+  }
 }
 
 void vm::evaluate() { // EVALUATE
@@ -1175,8 +1216,10 @@ void vm::evaluate() { // EVALUATE
       object::Object *obj;
       std::string name = this->retName(); // TO NAME
 
+      // std::cout << "STORE: " << name << std::endl;
+
       this->op++;
-      ast::Type *type = this->retType(); // TO TYPE
+      Type *type = this->retType(); // TO TYPE
 
       if (top()->entity->codes.at(ip - 1) == byte::ORIG) { // ORIGINAL
         obj = this->setOriginalValue(type);                // VALUE
@@ -1184,11 +1227,22 @@ void vm::evaluate() { // EVALUATE
         obj = POP(); // OBJECT
       }
 
-      if (type->kind() == ast::T_BOOL) {
+      if (type->kind() == T_BOOL) {
         // transfrom integer to boolean
         obj = new object::Bool(static_cast<object::Int *>(obj)->value);
       } else {
         this->typeChecker(type, obj); // TYPE CHECKER
+      }
+
+      // set default original elements
+      if (type->kind() == T_ARRAY) {
+        Array *T = static_cast<Array *>(type);
+        object::Array *a = static_cast<object::Array *>(obj);
+
+        for (int i = a->elements.size(); i < T->count; i += 1) {
+          a->elements.insert(a->elements.begin() + i,
+                             this->setOriginalValue(T->T)); // TO ORIGINAL VALUE
+        }
       }
 
       this->emitTable(name, obj); // STORE
@@ -1269,7 +1323,7 @@ void vm::evaluate() { // EVALUATE
 
       object::Map *map = new object::Map;
       // emit elements
-      for (int i = 0; i < count - 2; i++) {
+      for (int i = 0; i < count / 2; i++) {
         object::Object *y = POP();
         object::Object *x = POP();
 
@@ -1333,7 +1387,14 @@ void vm::evaluate() { // EVALUATE
     case byte::FUNC: { // FUNCTION
       object::Func *f =
           static_cast<object::Func *>(this->retConstant()); // OBJECT
-      this->emitTable(f->name, f);                          // STORE
+
+      // ANONYMOUSE FUNCTION
+      if (f->name == "anonymouse") {
+        this->pushData(f);
+        break;
+      }
+
+      this->emitTable(f->name, f); // STORE
       this->op++;
     } break;
 
@@ -1382,7 +1443,7 @@ void vm::evaluate() { // EVALUATE
       // std::cout << "CALL ARGS: " << arguments.len() << std::endl;
 
       // ARGUMENT
-      for (std::map<token::Token *, ast::Type *>::reverse_iterator iter =
+      for (std::map<token::Token *, Type *>::reverse_iterator iter =
                f->arguments.rbegin();
            //  REVERSE EMIT
            iter != f->arguments.rend(); iter++) {
@@ -1691,6 +1752,16 @@ void vm::evaluate() { // EVALUATE
 
       // STORE
       this->emitModule(m);
+      this->op++;
+    } break;
+
+    case byte::DEL: { // DEL
+      std::string name = this->retName();
+
+      if (this->lookUp(name) == nullptr)
+        error("not defined name '" + name + "'");
+
+      top()->tb.remove(name);
       this->op++;
     } break;
 

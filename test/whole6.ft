@@ -2,13 +2,24 @@ def Foo
     def (int) *add -> int
 
     def () f -> str
-        ret "X"
+        def x: int = -1
+
+        if x > 0
+            ret "OK"
+        nf
+            ret "NO"
+        end
     end
 end
 
 def Bar <- Foo
     def () a -> str
         ret f()
+        //ret w()
+    end
+
+    def () w -> str
+        ret "OP"
     end
 
     def (x: int) add -> int
