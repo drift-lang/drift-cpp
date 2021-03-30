@@ -15,10 +15,10 @@
 #ifndef DRIFT_UTIL_H
 #define DRIFT_UTIL_H
 
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <ctime>
 
 // return whether the string is all numbers
 bool isNumberStr(const std::string);

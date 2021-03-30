@@ -1,0 +1,10 @@
+def x: int = 45
+def y: str = "THE X IS $x OK!!"
+
+puts(x, y, "Hello $x $x             $x  -$x")
+
+def (x: int, y: bool, z: str) foo -> <int, str>
+    ret {2: "K", 9: "T", 4: z}
+end
+
+puts("THE FOO IS $foo", foo(1, T, "M"))

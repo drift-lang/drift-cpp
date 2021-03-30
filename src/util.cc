@@ -17,8 +17,7 @@
 // return whether the string is all numbers
 bool isNumberStr(const std::string str) {
   for (int i = 0; i < str.size(); i++)
-    if (!std::isdigit(str.at(i)))
-      return false;
+    if (!std::isdigit(str.at(i))) return false;
   return true;
 }
 
@@ -42,8 +41,7 @@ void fileString(const char *path, std::string *to) {
 bool sameValue(std::vector<std::string> &a, std::vector<std::string> &b) {
   for (auto i : a)
     for (auto k : b)
-      if (i == k)
-        return true;
+      if (i == k) return true;
   return false;
 }
 
@@ -52,8 +50,7 @@ std::string strRand(int len, bool upper) {
   char *buf = (char *)malloc(sizeof(char) * len); // buffer
   char c = upper ? 'A' : 'a';
 
-  for (int i = 0; i < len; i++)
-    buf[i] = c + rand() % 26;
+  for (int i = 0; i < len; i++) buf[i] = c + rand() % 26;
   buf[len] = '\0';
 
   return std::string(buf);

@@ -98,12 +98,9 @@ void len(object::Object *obj, Frame *f) {
     f->data.push(
         new object::Int(static_cast<object::Str *>(obj)->value.size()));
     break;
-  case object::CHAR:
-    f->data.push(new object::Int(1));
-    break;
+  case object::CHAR: f->data.push(new object::Int(1)); break;
 
-  default:
-    error(obj->stringer() + " not contain length type");
+  default: error(obj->stringer() + " not contain length type");
   }
 }
 
@@ -133,39 +130,17 @@ void type(object::Object *obj, Frame *f) {
 
 #define PUSH(obj) f->data.push(obj)
   switch (fu->builtin.front()->kind()) {
-  case object::INT:
-    PUSH(new object::Str("int"));
-    break;
-  case object::FLOAT:
-    PUSH(new object::Str("float"));
-    break;
-  case object::STR:
-    PUSH(new object::Str("str"));
-    break;
-  case object::CHAR:
-    PUSH(new object::Str("char"));
-    break;
-  case object::BOOL:
-    PUSH(new object::Str("bool"));
-    break;
-  case object::ARRAY:
-    PUSH(new object::Str("array"));
-    break;
-  case object::TUPLE:
-    PUSH(new object::Str("tuple"));
-    break;
-  case object::MAP:
-    PUSH(new object::Str("map"));
-    break;
-  case object::FUNC:
-    PUSH(new object::Str("func"));
-    break;
-  case object::ENUM:
-    PUSH(new object::Str("enum"));
-    break;
-  case object::WHOLE:
-    PUSH(new object::Str("whole"));
-    break;
+  case object::INT: PUSH(new object::Str("int")); break;
+  case object::FLOAT: PUSH(new object::Str("float")); break;
+  case object::STR: PUSH(new object::Str("str")); break;
+  case object::CHAR: PUSH(new object::Str("char")); break;
+  case object::BOOL: PUSH(new object::Str("bool")); break;
+  case object::ARRAY: PUSH(new object::Str("array")); break;
+  case object::TUPLE: PUSH(new object::Str("tuple")); break;
+  case object::MAP: PUSH(new object::Str("map")); break;
+  case object::FUNC: PUSH(new object::Str("func")); break;
+  case object::ENUM: PUSH(new object::Str("enum")); break;
+  case object::WHOLE: PUSH(new object::Str("whole")); break;
   }
 #undef PUSH
 }
@@ -205,16 +180,14 @@ static builtin bu[l] = {{"puts", puts},    // print to screen
 // return it is builtin function name
 bool isBuiltinName(std::string name) {
   for (int i = 0; i < l; i++)
-    if (bu[i].name == name)
-      return true;
+    if (bu[i].name == name) return true;
   return false;
 }
 
 // if its builtin function to call it
 void builtinFuncCall(std::string name, object::Object *obj, Frame *f) {
   for (int i = 0; i < l; i++)
-    if (bu[i].name == name)
-      bu[i].to(obj, f); // CALL
+    if (bu[i].name == name) bu[i].to(obj, f); // CALL
 }
 
 // regist the name of builtin

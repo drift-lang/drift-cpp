@@ -42,8 +42,7 @@ void vm::emitTable(std::string name, object::Object *obj) {
 // emit some objects in module to the current frame
 void vm::emitModule(std::vector<object::Module *> m) {
   for (auto i : m)
-    for (auto k : i->f->tb.symbols)
-      this->emitTable(k.first, k.second);
+    for (auto k : i->f->tb.symbols) this->emitTable(k.first, k.second);
 }
 
 // look up a name
@@ -98,34 +97,29 @@ void vm::typeChecker(Type *x, object::Object *y) {
   case T_ARRAY: {
     Array *T = static_cast<Array *>(x);
 
-    if (y->kind() != object::ARRAY)
-      error("type error not found array");
+    if (y->kind() != object::ARRAY) error("type error not found array");
 
     object::Array *arr = static_cast<object::Array *>(y);
 
-    for (auto i : arr->elements)
-      this->typeChecker(T->T, i);
+    for (auto i : arr->elements) this->typeChecker(T->T, i);
     break;
   }
   // tuple
   case T_TUPLE: {
     Tuple *T = static_cast<Tuple *>(x);
 
-    if (y->kind() != object::TUPLE)
-      error("type error not found tuple");
+    if (y->kind() != object::TUPLE) error("type error not found tuple");
 
     object::Tuple *tup = static_cast<object::Tuple *>(y);
 
-    for (auto i : tup->elements)
-      this->typeChecker(T->T, i);
+    for (auto i : tup->elements) this->typeChecker(T->T, i);
     break;
   }
   // map
   case T_MAP: {
     Map *T = static_cast<Map *>(x);
 
-    if (y->kind() != object::MAP)
-      error("type error not found map");
+    if (y->kind() != object::MAP) error("type error not found map");
 
     object::Map *map = static_cast<object::Map *>(y);
 
@@ -139,8 +133,7 @@ void vm::typeChecker(Type *x, object::Object *y) {
   case T_FUNC: {
     Func *T = static_cast<Func *>(x);
 
-    if (y->kind() != object::FUNC)
-      error("type error not found function");
+    if (y->kind() != object::FUNC) error("type error not found function");
 
     object::Func *f = static_cast<object::Func *>(y);
 
@@ -148,8 +141,7 @@ void vm::typeChecker(Type *x, object::Object *y) {
       error("wrong number of parameters");
 
     if (f->ret != nullptr && T->ret != nullptr)
-      if (f->ret->kind() != T->ret->kind())
-        error("wrong return type");
+      if (f->ret->kind() != T->ret->kind()) error("wrong return type");
 
     std::map<token::Token *, Type *>::iterator iter =
         f->arguments.begin(); // ITER
@@ -187,6 +179,10 @@ void vm::typeChecker(Type *x, object::Object *y) {
       // float -> int
       if (x->kind() == T_INT && y->kind() == object::FLOAT) {
         *y = object::Int(static_cast<object::Float *>(y)->value);
+        return;
+      }
+      // bool -> bool
+      if (x->kind() == T_BOOL && y->kind() == object::BOOL) {
         return;
       }
       error("type error, require: " + x->stringer() +
@@ -250,26 +246,17 @@ bool vm::objValueEquation(object::Object *x, object::Object *y) {
 // generate default value
 object::Object *vm::setOriginalValue(Type *t) {
   switch (t->kind()) {
-  case T_INT:
-    return new object::Int(0);
-  case T_FLOAT:
-    return new object::Float(0.0);
-  case T_STR:
-    return new object::Str("");
-  case T_CHAR:
-    return new object::Char(0);
-  case T_BOOL:
-    return new object::Int(0); // default conversion
+  case T_INT: return new object::Int(0);
+  case T_FLOAT: return new object::Float(0.0);
+  case T_STR: return new object::Str("");
+  case T_CHAR: return new object::Char(0);
+  case T_BOOL: return new object::Int(0); // default conversion
 
-  case T_ARRAY:
-    return new object::Array();
-  case T_TUPLE:
-    return new object::Tuple();
-  case T_MAP:
-    return new object::Map();
+  case T_ARRAY: return new object::Array();
+  case T_TUPLE: return new object::Tuple();
+  case T_MAP: return new object::Map();
 
-  default:
-    error("this type cannot generate a default value");
+  default: error("this type cannot generate a default value");
   }
   return nullptr;
 }
@@ -279,8 +266,7 @@ void vm::addCounter(int *ip, int to) {
   bool reverse = *ip > to; // condition
   // std::cout << "JUMP: " << *ip << " TO: " << to << std::endl;
 
-  if (reverse)
-    (*ip)--; // reverse skip current instruction
+  if (reverse) (*ip)--; // reverse skip current instruction
 
   while (
       /*
@@ -342,8 +328,7 @@ void vm::addCounter(int *ip, int to) {
   }
 
   // std::cout << "OP: " << this->op << " IP: " << *ip << "+1" << std::endl;
-  if (!reverse)
-    (*ip)--; // for loop update
+  if (!reverse) (*ip)--; // for loop update
 }
 
 // to execute the whole
@@ -389,8 +374,7 @@ void vm::newWhole(std::string name, int count, bool inner) {
     for (auto i : w->inherit) {
       object::Object *obj = this->lookUp(i);
 
-      if (obj == nullptr)
-        error("inheritance '" + i + "' dose not exist");
+      if (obj == nullptr) error("inheritance '" + i + "' dose not exist");
       if (obj->kind() != object::WHOLE)
         error("only whole object can be inherited");
 
@@ -465,7 +449,50 @@ void vm::evaluate() { // EVALUATE
 
     switch (co) {
     case byte::CONST: { // CONST
-      PUSH(this->retConstant());
+      object::Object *obj = this->retConstant();
+
+      // STRING TEMPLATE
+      if (obj->kind() == object::STR) {
+        object::Str *s = static_cast<object::Str *>(obj);
+
+        char *data = s->value.data();
+        int count = 0;
+
+        while (*data++ != '\0')
+          if (*data == '$') count++; // GET COUNT OF $
+
+        while (count-- > 0) {
+
+          for (int i = 0; i < s->value.size(); i++) {
+            if (s->value.at(i) == '$') {
+              i++; // SKIP LEFR $
+
+              // TO NAME
+              std::string n;
+
+              // GET NAME
+              while (i < s->value.size() && isalpha(s->value.at(i))) {
+                n.push_back(s->value.at(i));
+                i++;
+              }
+
+              if (n.empty()) error("string template need a ident name");
+              object::Object *o = this->lookUp(n); // OBJECT
+
+              if (o == nullptr) error("not defined name '" + n + "'");
+
+              int p = i - n.size() - 1; // START
+
+              s->value.erase(p, n.size() + 1);   // REMOVE
+              s->value.insert(p, o->stringer()); // INSERT
+
+              break; // NEXT
+            }
+          }
+        }
+      }
+
+      PUSH(obj);
       this->op++;
     } break;
 
@@ -510,8 +537,7 @@ void vm::evaluate() { // EVALUATE
         object::Str *l = static_cast<object::Str *>(x);
         object::Str *r = static_cast<object::Str *>(y);
 
-        if (l->longer || r->longer)
-          error("cannot plus long string literal");
+        if (l->longer || r->longer) error("cannot plus long string literal");
 
         PUSH(new object::Str(l->value + r->value));
       } else {
@@ -1227,12 +1253,7 @@ void vm::evaluate() { // EVALUATE
         obj = POP(); // OBJECT
       }
 
-      if (type->kind() == T_BOOL) {
-        // transfrom integer to boolean
-        obj = new object::Bool(static_cast<object::Int *>(obj)->value);
-      } else {
-        this->typeChecker(type, obj); // TYPE CHECKER
-      }
+      this->typeChecker(type, obj); // TYPE CHECKER
 
       // set default original elements
       if (type->kind() == T_ARRAY) {
@@ -1274,8 +1295,7 @@ void vm::evaluate() { // EVALUATE
             object::Whole *w =
                 static_cast<object::Whole *>(this->lookUpMainFrame(i));
 
-            if (!w->newOut)
-              this->newWhole(w->name, 0, true); // PUSH NEW WHOLE
+            if (!w->newOut) this->newWhole(w->name, 0, true); // PUSH NEW WHOLE
             obj =
                 static_cast<object::Whole *>(POP())->f->tb.lookUp(name); // LOOK
 
@@ -1299,8 +1319,7 @@ void vm::evaluate() { // EVALUATE
 
       object::Array *arr = new object::Array;
       // emit elements
-      for (int i = 0; i < count; i++)
-        arr->elements.push_back(POP());
+      for (int i = 0; i < count; i++) arr->elements.push_back(POP());
 
       PUSH(arr);
       this->op++;
@@ -1311,8 +1330,7 @@ void vm::evaluate() { // EVALUATE
 
       object::Tuple *tup = new object::Tuple;
       // emit elements
-      for (int i = 0; i < count; i++)
-        tup->elements.push_back(POP());
+      for (int i = 0; i < count; i++) tup->elements.push_back(POP());
 
       PUSH(tup);
       this->op++;
@@ -1419,8 +1437,7 @@ void vm::evaluate() { // EVALUATE
         break;
       }
 
-      if (disMode)
-        f->entity->dissemble();
+      if (disMode) f->entity->dissemble();
 
       Frame *fra = new Frame(f->entity); // FRAME
 
@@ -1463,8 +1480,7 @@ void vm::evaluate() { // EVALUATE
 
       if (f->ret != nullptr) {
         // RETURN
-        if (top()->ret == nullptr)
-          error("missing return value");
+        if (top()->ret == nullptr) error("missing return value");
         // TYPE CHECKER
         this->typeChecker(f->ret, top()->ret);
         PUSH(top()->ret); // PUSH
@@ -1501,8 +1517,7 @@ void vm::evaluate() { // EVALUATE
         auto x = static_cast<object::Int *>(idx);   // INDEX
         auto y = static_cast<object::Array *>(obj); // TO
 
-        if (y->elements.empty())
-          error("empty element of array");
+        if (y->elements.empty()) error("empty element of array");
         if (x->value >= y->elements.size()) {
           error("array out of bounds, index: " + std::to_string(x->value) +
                 " max: " + std::to_string(y->elements.size() - 1));
@@ -1513,8 +1528,7 @@ void vm::evaluate() { // EVALUATE
       case object::MAP: {
         object::Map *m = static_cast<object::Map *>(obj);
 
-        if (m->elements.empty())
-          error("empty element of map");
+        if (m->elements.empty()) error("empty element of map");
         if (m->elements.begin()->first->kind() != idx->kind()) {
           error("wrong key index");
         }
@@ -1664,14 +1678,12 @@ void vm::evaluate() { // EVALUATE
         object::Whole *w = static_cast<object::Whole *>(obj);
         // std::cout << "G: " << w << " NAME: " << name << std::endl;
 
-        if (!w->newOut)
-          error("should new one first");
+        if (!w->newOut) error("should new one first");
 
         // GET TO
         object::Object *op = w->f->tb.lookUp(name);
 
-        if (op == nullptr)
-          error("nonexistent member '" + name + "'");
+        if (op == nullptr) error("nonexistent member '" + name + "'");
 
         if (op->kind() == object::FUNC) {
           this->callWholeMethod = true;
@@ -1680,8 +1692,7 @@ void vm::evaluate() { // EVALUATE
 
         PUSH(op);
       } break;
-      default:
-        error("nonexistent member '" + name + "'");
+      default: error("nonexistent member '" + name + "'");
       }
       this->op++;
     } break;
@@ -1696,8 +1707,7 @@ void vm::evaluate() { // EVALUATE
       object::Whole *n = static_cast<object::Whole *>(w);
       // std::cout << "S: " << n << " NAME: " << name << std::endl;
 
-      if (!n->newOut)
-        error("should new one first");
+      if (!n->newOut) error("should new one first");
       if (n->f->tb.lookUp(name) == nullptr)
         error("no member '" + name + "' to set");
 
@@ -1717,8 +1727,7 @@ void vm::evaluate() { // EVALUATE
       object::Whole *w =
           static_cast<object::Whole *>(this->retConstant()); // OBJECT
 
-      if (this->disMode)
-        w->entity->dissemble();
+      if (this->disMode) w->entity->dissemble();
 
       this->emitTable(w->name, w); // STORE
       this->op++;
@@ -1747,8 +1756,7 @@ void vm::evaluate() { // EVALUATE
       std::string name = this->retName();
       std::vector<object::Module *> m = getModule(this->mods, name);
 
-      if (m.empty())
-        error("not defined module '" + name + "'");
+      if (m.empty()) error("not defined module '" + name + "'");
 
       // STORE
       this->emitModule(m);
@@ -1776,8 +1784,7 @@ void vm::evaluate() { // EVALUATE
       }
 
       // loop exit and no return value return
-      if (co == byte::RET_N)
-        this->loopWasRet = true;
+      if (co == byte::RET_N) this->loopWasRet = true;
 
       // MODULE
       if (!top()->mod.empty()) {

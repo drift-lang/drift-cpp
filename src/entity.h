@@ -19,9 +19,9 @@
 #include <vector>
 
 #include "ast.h"
-#include "type.h"
 #include "object.h"
 #include "opcode.h"
+#include "type.h"
 
 // entity structure
 struct Entity {
@@ -34,7 +34,7 @@ struct Entity {
   std::vector<int> offsets;                // offset of bytecode
   std::vector<object::Object *> constants; // constant
   std::vector<std::string> names;          // names
-  std::vector<Type *> types;          // type of variables
+  std::vector<Type *> types;               // type of variables
 
   std::vector<int> lineno; // line no of each bytecode
 

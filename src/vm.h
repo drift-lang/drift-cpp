@@ -26,8 +26,8 @@
 #include "object.h"
 #include "opcode.h"
 #include "state.h"
-#include "util.h"
 #include "type.h"
+#include "util.h"
 
 // structure
 class vm {

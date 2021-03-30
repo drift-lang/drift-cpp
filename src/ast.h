@@ -181,8 +181,7 @@ public:
     if (!arguments.empty()) {
       str << " Args=(";
 
-      for (auto &i : arguments)
-        str << i->stringer() << " ";
+      for (auto &i : arguments) str << i->stringer() << " ";
       str << ")";
     } else
       str << " Args=()";
@@ -260,8 +259,7 @@ public:
 
     str << "<ArrayExpr { Elements=[";
     if (!elements.empty()) {
-      for (auto &i : elements)
-        str << i->stringer() << " ";
+      for (auto &i : elements) str << i->stringer() << " ";
     }
 
     str << "] }>";
@@ -309,8 +307,7 @@ public:
 
     str << "<TupleExpr { Elements=(";
     if (!elements.empty()) {
-      for (auto &i : elements)
-        str << i->stringer() << " ";
+      for (auto &i : elements) str << i->stringer() << " ";
     }
 
     str << ") }>";
@@ -443,8 +440,7 @@ public:
     if (!block.empty()) {
       str << "Block=";
 
-      for (auto &i : block)
-        str << i->stringer() << " ";
+      for (auto &i : block) str << i->stringer() << " ";
     }
 
     str << " }>";
@@ -490,8 +486,7 @@ public:
     std::stringstream str;
 
     str << "<IfStmt { Condition=" << condition->stringer();
-    if (ifBranch != nullptr)
-      str << " IfBranch=" << ifBranch->stringer();
+    if (ifBranch != nullptr) str << " IfBranch=" << ifBranch->stringer();
     if (!efBranch.empty()) {
       str << " EfBranch=";
 
@@ -499,8 +494,7 @@ public:
         str << "K : " << i.first->stringer() << ", V : " << i.second->stringer()
             << " ";
     }
-    if (nfBranch != nullptr)
-      str << " NfBranch=" << nfBranch->stringer();
+    if (nfBranch != nullptr) str << " NfBranch=" << nfBranch->stringer();
 
     str << " }>";
     return str.str();
@@ -753,8 +747,7 @@ public:
     // args
     if (!arguments.empty()) {
       str << "(";
-      for (auto &i : arguments)
-        str << "T : '" << i->stringer() << " ";
+      for (auto &i : arguments) str << "T : '" << i->stringer() << " ";
       str << ")";
     } else
       str << "()";

@@ -277,7 +277,7 @@ public:
   std::string name; // function name
 
   ast::FuncArg arguments; // function args
-  Type *ret;         // function return
+  Type *ret;              // function return
 
   Entity *entity; // function entity
 

@@ -27,8 +27,7 @@ void Analysis::analysisStmt(ast::Stmt *stmt) {
   case ast::STMT_WHOLE: {
     ast::WholeStmt *w = static_cast<ast::WholeStmt *>(stmt);
 
-    if (w->body->block.empty())
-      break;
+    if (w->body->block.empty()) break;
 
     ast::Stmt *f = w->body->block.at(0); // first statement
 
@@ -81,8 +80,7 @@ void Analysis::analysisStmt(ast::Stmt *stmt) {
     }
   } break;
   //
-  default:
-    break;
+  default: break;
   }
 }
 
@@ -161,8 +159,7 @@ void Analysis::analysisExpr(ast::Expr *expr) {
         error(exp::TYPE_ERROR, "unsupported operand", l.line);
       }
     } break;
-    default:
-      break;
+    default: break;
     }
   } break;
   case ast::EXPR_GROUP: {
@@ -200,7 +197,6 @@ void Analysis::analysisExpr(ast::Expr *expr) {
     this->analysisExpr(assign->value);
   } break;
   //
-  default:
-    break;
+  default: break;
   }
 }

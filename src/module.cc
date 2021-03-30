@@ -34,7 +34,6 @@ std::vector<object::Module *> getModule(std::vector<object::Module *> *mods,
                                         std::string name) {
   std::vector<object::Module *> m; // multiple modules
   for (auto i : *mods)
-    if (i->name == name)
-      m.push_back(i);
+    if (i->name == name) m.push_back(i);
   return m;
 }

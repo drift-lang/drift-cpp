@@ -26,8 +26,7 @@ std::vector<std::string> *getAllFileWithPath(std::string path) {
   std::vector<std::string> *files = new std::vector<std::string>();
   // std::cout << "GET: " << path << std::endl;
 
-  if ((dir = opendir(path.c_str())) == NULL)
-    return nullptr;
+  if ((dir = opendir(path.c_str())) == NULL) return nullptr;
 
   while ((p = readdir(dir)) != NULL) {
     // folder
