@@ -82,9 +82,7 @@ public:
 
   explicit LiteralExpr(token::Token tok) { this->token = std::move(tok); }
 
-  std::string stringer() override {
-    return "<LiteralExpr { Token='" + token.literal + "' }>";
-  }
+  std::string stringer() override { return token.literal; }
 
   Kind kind() override { return EXPR_LITERAL; }
 };
@@ -104,8 +102,8 @@ public:
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<BinaryExpr { Left=" << left->stringer() << " Operator='"
-        << op.literal << "' Right=" << right->stringer() << " }>";
+    str << "<BE L=" << left->stringer() << " P='" << op.literal
+        << "' R=" << right->stringer() << ">";
 
     return str.str();
   }
@@ -121,7 +119,7 @@ public:
   explicit GroupExpr(Expr *expr) : expr(expr) {}
 
   std::string stringer() override {
-    return "<GroupExpr { Expr=" + this->expr->stringer() + " }>";
+    return "<GE E=" + this->expr->stringer() + ">";
   }
 
   Kind kind() override { return EXPR_GROUP; }
@@ -140,8 +138,7 @@ public:
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<UnaryExpr { Token='" << token.literal
-        << "' Expr=" << expr->stringer() << " }>";
+    str << "<UE T='" << token.literal << "' E=" << expr->stringer() << ">";
 
     return str.str();
   }
@@ -156,9 +153,7 @@ public:
 
   explicit NameExpr(token::Token tok) { this->token = std::move(tok); }
 
-  std::string stringer() override {
-    return "<NameExpr { Token='" + token.literal + "' }>";
-  }
+  std::string stringer() override { return "<NE T='" + token.literal + "'>"; }
 
   Kind kind() override { return EXPR_NAME; }
 };
@@ -176,17 +171,17 @@ public:
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<CallExpr { Callee=" << callee->stringer();
+    str << "<CE C=" << callee->stringer();
 
     if (!arguments.empty()) {
-      str << " Args=(";
+      str << " A=(";
 
       for (auto &i : arguments) str << i->stringer() << " ";
       str << ")";
     } else
-      str << " Args=()";
+      str << " A=()";
 
-    str << " }>";
+    str << ">";
     return str.str();
   }
 
@@ -205,8 +200,7 @@ public:
   }
 
   std::string stringer() override {
-    return "<GetExpr { Expr=" + expr->stringer() + " Get='" + name.literal +
-           "' }>";
+    return "<GE E=" + expr->stringer() + " G='" + name.literal + "'>";
   }
 
   Kind kind() override { return EXPR_GET; }
@@ -224,8 +218,8 @@ public:
   }
 
   std::string stringer() override {
-    return "<SetExpr { Expr='" + expr->stringer() + " Name='" + name.literal +
-           "' Value=" + value->stringer() + " }>";
+    return "<SE E='" + expr->stringer() + " N='" + name.literal +
+           "' V=" + value->stringer() + ">";
   }
 
   Kind kind() override { return EXPR_SET; }
@@ -240,8 +234,7 @@ public:
   explicit AssignExpr(Expr *e, Expr *v) : expr(e), value(v) {}
 
   std::string stringer() override {
-    return "<AssignExpr { Expr='" + expr->stringer() +
-           "' Value=" + value->stringer() + " }>";
+    return "<AE E='" + expr->stringer() + "' V=" + value->stringer() + ">";
   }
 
   Kind kind() override { return EXPR_ASSIGN; }
@@ -257,12 +250,12 @@ public:
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<ArrayExpr { Elements=[";
+    str << "<AE ES=[";
     if (!elements.empty()) {
       for (auto &i : elements) str << i->stringer() << " ";
     }
 
-    str << "] }>";
+    str << "]>";
     return str.str();
   }
 
@@ -281,14 +274,14 @@ public:
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<MapExpr { Elements={";
+    str << "<ME ES={";
     if (!elements.empty()) {
       for (auto &i : elements)
         str << "K : " << i.first->stringer() << ", V : " << i.second->stringer()
             << " ";
     }
 
-    str << "} }>";
+    str << "}>";
     return str.str();
   }
 
@@ -305,12 +298,12 @@ public:
   std::string stringer() override {
     std::stringstream str;
 
-    str << "<TupleExpr { Elements=(";
+    str << "<TE ES=(";
     if (!elements.empty()) {
       for (auto &i : elements) str << i->stringer() << " ";
     }
 
-    str << ") }>";
+    str << ")>";
     return str.str();
   }
 
@@ -326,8 +319,7 @@ public:
   explicit IndexExpr(Expr *l, Expr *r) : left(l), right(r) {}
 
   std::string stringer() override {
-    return "<IndexExpr { Left=" + left->stringer() +
-           " Right=" + right->stringer() + " }>";
+    return "<IE L=" + left->stringer() + " R=" + right->stringer() + ">";
   }
 
   Kind kind() override { return EXPR_INDEX; }
@@ -347,13 +339,13 @@ public:
 
   std::string stringer() override {
     if (builder.empty()) {
-      return "<NewExpr { Name='" + name.literal + "' Builder=NONE }>";
+      return "<NE N='" + name.literal + "' B=NONE>";
     }
     std::stringstream str;
 
-    str << "<NewExpr { Name='" << name.literal << "'";
+    str << "<NE N='" << name.literal << "'";
     if (!builder.empty()) {
-      str << " Builder=(";
+      str << " B=(";
 
       for (auto i : builder) {
         str << "K : '" << i.first->literal << "' V : " << i.second->stringer();
