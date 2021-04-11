@@ -1,79 +1,81 @@
 mod fun
 
 def Fun
-    // MY LOVE!!
-    def () love
-        def x: float
-        def y: float
+  // MY LOVE!!
+  def () love
+    def x: float
+    def y: float
 
-        def s: str
-
-        def i: float = 1.5
-        for i > -1.5
-            s = ""
-        
-            x = -1.5
-            for x < 1.5
-                y = x * x + i * i - 1
-
-                if (y * y * y - 
-                        x * x * i * i * i) < 0.0
-                    s += "#"
-                nf
-                    s += " "
-                end
-                x += 0.05
-            end
-            puts(s) // PRINT
-            i -= 0.1
-        end
+    def s: str
+/*
+    for i: float = 1.5; i > -1.5; i -= 0.1
     end
+*/
+    def i: float = 1.5
+    for i > -1.5
+      s = ""
+        
+      x = -1.5
+      for x < 1.5
+        y = x * x + i * i - 1
+
+        if (y * y * y - x * x * i * i * i) < 0.0
+          s += "#"
+        nf
+          s += " "
+        end
+        x += 0.05
+      end
+      puts(s) // PRINT
+      i -= 0.1
+    end
+  end
 end
 
 // ITS A JOKER!!
 def (repeat: int) joker
-    def first: bool = T
+  def first: bool = T
     
-    do
-        def x: int = repeat + 1 // Love you more forever
-    for ->
-        new Fun.love()
-        putl("第几次了？", x, " 次！！")
+  do
+    def x: int = repeat + 1 // Love you more forever
+  for ->
+    new Fun.love()
+    putl("第几次了？", x, " 次！！")
 
-        if first
-            putl("FIRST..")
-            first = !first
-        end
-
-        out x - 1 == 0
-        sleep(1)
-
-        x -= 1
+    if first
+      putl("FIRST..")
+      first = !first
     end
-    putl("END..")
+
+    out x - 1 == 0
+    sleep(1)
+
+    x -= 1
+  end
+  putl("END..")
 end
 
 // litter
 def () heart
-    def x: []str = [
-        "",
-        "    ** ** ", 
-        "   *  *  *", 
-        "    *   *", 
-        "      *",
-        ""
-    ]
-    do
-        def i: int = len(x)
-    for i > 0
-        putl(x[len(x) - i])
-        i -= 1
-    end
+  def x: []str = [
+    "",
+    "    ** ** ", 
+    "   *  *  *", 
+    "    *   *", 
+    "      *",
+    ""
+  ]
+  do
+    def i: int = len(x)
+  for i > 0
+    putl(x[len(x) - i])
+    i -= 1
+  end
 end
 
 // return the raw string of heart
 def () rawHeart -> str
-    ret `
+  ret `
     ** **
    *  .  *      LOVE ?
     *   *

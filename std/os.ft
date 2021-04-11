@@ -6,20 +6,20 @@ mod os
  * op:   结束
  */
 def (desc: str, deep + op: int) loop
-    do
-        def i: int = 0
-    for ->
-        if i == op
-            out ->
-        end
-
-        if desc == ""
-            putl(i, randomStr(100, F))
-        nf     
-            putl(i, desc)
-        end
-
-        i += 1
-        sleep(deep)
+  do
+    def i: int = 0
+  for ->
+    if i == op
+      out ->
     end
+
+    if desc == ""
+      putl(i, randomStr(100, F))
+    nf     
+      putl(i, desc)
+    end
+
+    i += 1
+    sleep(deep)
+  end
 end

@@ -1,56 +1,56 @@
 mod str
 
 def Iter
-    def (char) *count -> int
+  def (char) *count -> int
 
-    def () *first -> char
-    def () *back  -> char
-    def () *size  -> int
+  def () *first -> char
+  def () *back  -> char
+  def () *size  -> int
 end
 
 def And
-    def (str) *add -> str
-    def () *split  -> []char
+  def (str) *add -> str
+  def () *split  -> []char
 end
 
 def String <- Iter + And
-    def val: str
+  def val: str
 
-    def (x: char) count -> int
-        if len(val) == 0
-            ret 0
-        end
-        do
-            def i: int
-            def c: int
-
-            def l: int = len(val)
-        for l > i
-            if val[len(val) - l] == x
-                c += 1
-            end
-            l -= 1
-        end
-        ret c
+  def (x: char) count -> int
+    if len(val) == 0
+      ret 0
     end
+    do
+      def i: int
+      def c: int
 
-    def (x: str) add -> str
-        ret val + x
+      def l: int = len(val)
+    for l > i
+      if val[len(val) - l] == x
+        c += 1
+      end
+      l -= 1
     end
+    ret c
+  end
 
-    def () first -> char
-        ret val[0]
-    end
+  def (x: str) add -> str
+    ret val + x
+  end
 
-    def () back -> char
-        ret val[len(val) - 1]
-    end
+  def () first -> char
+    ret val[0]
+  end
 
-    def () size -> int
-        ret len(val)
-    end
+  def () back -> char
+    ret val[len(val) - 1]
+  end
 
-    def () split -> []char
-        ret [val[0], val[1], val[2]]
-    end
+  def () size -> int
+    ret len(val)
+  end
+
+  def () split -> []char
+    ret [val[0], val[1], val[2]]
+  end
 end
