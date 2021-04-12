@@ -12,11 +12,11 @@ def Fun
     end
 */
     def i: float = 1.5
-    for i > -1.5
+    aop i > -1.5
       s = ""
         
       x = -1.5
-      for x < 1.5
+      aop x < 1.5
         y = x * x + i * i - 1
 
         if (y * y * y - x * x * i * i * i) < 0.0
@@ -35,10 +35,9 @@ end
 // ITS A JOKER!!
 def (repeat: int) joker
   def first: bool = T
-    
-  do
-    def x: int = repeat + 1 // Love you more forever
-  for ->
+  def x: int = repeat + 1 // Love you more forever
+
+  aop ->
     new Fun.love()
     putl("第几次了？", x, " 次！！")
 
@@ -65,9 +64,8 @@ def () heart
     "      *",
     ""
   ]
-  do
-    def i: int = len(x)
-  for i > 0
+  def i: int = len(x)
+  aop i > 0
     putl(x[len(x) - i])
     i -= 1
   end

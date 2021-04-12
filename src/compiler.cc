@@ -377,7 +377,7 @@ void Compiler::stmt(ast::Stmt *stmt) {
 
     int original = now->codes.size(); // original state: for callback loops
 
-    // DEAD LOOP
+    /* // DEAD LOOP
     if (f->condition == nullptr) this->stmt(f->block);
     // condition and block
     else {
@@ -394,7 +394,7 @@ void Compiler::stmt(ast::Stmt *stmt) {
 
     this->emitCode(byte::JUMP); // back to original state
     this->emitOffset(original);
-    this->emitJumpOffset(original); // jump offset
+    this->emitJumpOffset(original); // jump offset */
 
     // replace placeholder
     for (std::vector<int>::iterator iter = now->offsets.begin();
@@ -412,11 +412,42 @@ void Compiler::stmt(ast::Stmt *stmt) {
     }
   } break;
   //
-  case ast::STMT_DO: {
-    ast::DoStmt *d = static_cast<ast::DoStmt *>(stmt);
+  case ast::STMT_AOP: {
+    ast::AopStmt *a = static_cast<ast::AopStmt *>(stmt);
 
-    this->stmt(d->block); // execute the do block first
-    this->stmt(d->stmt);  // then execute loop
+    int original = now->codes.size(); // original state
+
+    if (a->expr == nullptr) this->stmt(a->block); // skip condition
+    //
+    else {
+      this->expr(a->expr);
+      this->emitCode(byte::F_JUMP);
+      int ePos = now->offsets.size(); // skip loop for FALSE
+
+      this->stmt(a->block); // block
+                            // jump to next bytecode
+      this->insertPosOffset(ePos, now->codes.size() + 1); // TO: (F_JUMP)
+    }
+
+    this->emitCode(byte::JUMP); // back to original state
+    this->emitOffset(original); // offset
+
+    this->emitJumpOffset(original); // DEBUG
+
+    // replace placeholder
+    for (std::vector<int>::iterator iter = now->offsets.begin();
+         iter != now->offsets.end(); iter++) {
+      // out statement
+      if (*iter == -1) {
+        *iter = now->codes.size();
+        this->emitJumpOffset(now->codes.size());
+      }
+      // tin statement
+      if (*iter == -2) {
+        *iter = original;
+        this->emitJumpOffset(original);
+      }
+    }
   } break;
   //
   case ast::STMT_OUT: {
@@ -430,8 +461,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
     this->emitOffset(-1);
   } break;
   //
-  case ast::STMT_TIN: {
-    ast::TinStmt *t = static_cast<ast::TinStmt *>(stmt);
+  case ast::STMT_GO: {
+    ast::GoStmt *t = static_cast<ast::GoStmt *>(stmt);
 
     if (t->expr != nullptr) this->expr(t->expr);
 

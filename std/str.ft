@@ -20,12 +20,12 @@ def String <- Iter + And
     if len(val) == 0
       ret 0
     end
-    do
-      def i: int
-      def c: int
+    
+    def i: int
+    def c: int
 
-      def l: int = len(val)
-    for l > i
+    def l: int = len(val)
+    aop l > i
       if val[len(val) - l] == x
         c += 1
       end

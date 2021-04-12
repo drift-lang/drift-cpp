@@ -533,28 +533,38 @@ ast::Stmt *Parser::stmt() {
     }
     return new ast::IfStmt(condition, thenBranch, elem, nfBranch);
   } break;
-    // loop
+    // for loop
   case token::FOR: {
+    this->position++;
+
+    if (!look(token::IDENT)) {
+      error(exp::UNEXPECTED, "initializer for name muse be an identifier");
+    }
+
+    token::Token ident = this->previous(); // name
+    if (!look(token::COLON)) error(exp::UNEXPECTED, "expect ':' after name");
+
+    Type *T = this->type(); // type
+    if (!look(token::EQ)) error(exp::UNEXPECTED, "expect '=' after name");
+
+    ast::Expr *init = this->expr(); // init
+    if (!look(token::SEMICOLON))
+      error(exp::UNEXPECTED, "expect ';' after expression");
+
+    ast::Expr *cond = this->expr(); // condition
+    if (!look(token::SEMICOLON))
+      error(exp::UNEXPECTED, "expect ';' after expression");
+    //
+    return new ast::ForStmt(ident, T, init, cond, this->expr());
+  } break;
+    // aop loop
+  case token::AOP: {
     this->position++;
     // dead loop
     if (look(token::R_ARROW))
-      return new ast::ForStmt(nullptr, this->block(token::END));
-    // for condition
-    ast::Expr *condition = this->expr();
-    ast::BlockStmt *block = this->block(token::END);
+      return new ast::AopStmt(nullptr, this->block(token::END));
     //
-    return new ast::ForStmt(condition, block);
-  } break;
-    // do loop
-  case token::DO: {
-    this->position++;
-    // block
-    ast::BlockStmt *block = this->block(token::FOR);
-    // go back to the position of the `for` keyword
-    this->position--;
-    ast::Stmt *stmt = this->stmt();
-    //
-    return new ast::DoStmt(block, stmt);
+    return new ast::AopStmt(this->expr(), this->block(token::END));
   } break;
     // out in loop
     // out <expr>
@@ -567,16 +577,16 @@ ast::Stmt *Parser::stmt() {
     }
     return new ast::OutStmt(this->expr());
     break;
-    // tin in loop
-    // tin <expr>
-  case token::TIN:
+    // go in loop
+    // go <expr>
+  case token::GO:
     this->position++;
     //
     if (look(token::R_ARROW)) {
       // no condition
-      return new ast::TinStmt();
+      return new ast::GoStmt();
     }
-    return new ast::TinStmt(this->expr());
+    return new ast::GoStmt(this->expr());
     // mod
   case token::MOD:
     this->position++;

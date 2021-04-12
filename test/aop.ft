@@ -1,0 +1,11 @@
+
+// AOP LOOP
+
+def x: int = 25
+
+aop x != 0
+  putl(x, x + x)
+  x -= 1
+end
+
+putl("END!!", x)

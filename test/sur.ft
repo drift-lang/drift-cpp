@@ -1,13 +1,13 @@
 def x: int = 999
 
-for x > 0
-    //if x % 2 == 0
-        put(x)
-    //end
-    if (x + 8) % 9 == 0
-        putl()
-    end
-    x -= 1
+aop x > 0
+  //if x % 2 == 0
+    put(x)
+  //end
+  if (x + 8) % 9 == 0
+    putl()
+  end
+  x -= 1
 end
 
 putl()

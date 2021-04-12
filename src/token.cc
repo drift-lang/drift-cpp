@@ -12,14 +12,15 @@ void initializeKeyword(std::map<std::string, token::Kind> *map) {
   map->insert(std::make_pair("ef", EF));   // 6
   map->insert(std::make_pair("nf", NF));   // 7
   map->insert(std::make_pair("for", FOR)); // 8
-  map->insert(std::make_pair("do", DO));   // 9
+  map->insert(std::make_pair("aop", AOP)); // 9
   map->insert(std::make_pair("out", OUT)); // 10
-  map->insert(std::make_pair("tin", TIN)); // 11
+  map->insert(std::make_pair("go", GO));   // 11
   map->insert(std::make_pair("new", NEW)); // 12
   map->insert(std::make_pair("mod", MOD)); // 13
   map->insert(std::make_pair("del", DEL)); // 14
 }
 
+// Return the kind of token if its keyword
 token::Kind getKeyword(std::map<std::string, token::Kind> m,
                        const std::string &literal) {
   auto i = m.find(literal);

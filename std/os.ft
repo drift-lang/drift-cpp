@@ -6,9 +6,8 @@ mod os
  * op:   结束
  */
 def (desc: str, deep + op: int) loop
-  do
-    def i: int = 0
-  for ->
+  def i: int = 0
+  aop ->
     if i == op
       out ->
     end

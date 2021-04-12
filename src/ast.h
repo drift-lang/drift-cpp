@@ -45,9 +45,9 @@ enum Kind {
   STMT_BLOCK,     // BLOCK
   STMT_IF,        // IF
   STMT_FOR,       // FOR
-  STMT_DO,        // DO
+  STMT_AOP,       // AOP
   STMT_OUT,       // OUT
-  STMT_TIN,       // TIN
+  STMT_GO,        // GO
   STMT_FUNC,      // FUNC
   STMT_WHOLE,     // CLASS | ENUM
   STMT_AND,       // AND
@@ -496,63 +496,62 @@ public:
 };
 
 /**
- * for <expr>
+ * for <init>; <cond>; <update>
  *     <block>
  * end
  */
 class ForStmt : public Stmt {
 public:
-  Expr *condition;  // cond
-  BlockStmt *block; // stmt
+  token::Token name;
+  Type *T;
+  Expr *init;
 
-  explicit ForStmt(Expr *cond, BlockStmt *block) {
-    this->condition = cond;
-    this->block = block;
+  Expr *cond;
+  Expr *more;
+
+  explicit ForStmt(token::Token name, Type *T, Expr *init, Expr *cond,
+                   Expr *more) {
+    this->name = std::move(name);
+    this->T = T;
+    this->init = init;
+    this->cond = cond;
+    this->more = more;
   }
 
   std::string stringer() override {
-    std::stringstream str;
-
-    str << "<ForStmt { Condition=";
-    if (condition == nullptr)
-      str << "DEAD Block=";
-    else
-      str << condition->stringer() << " Block=";
-    str << block->stringer();
-
-    str << " }>";
-    return str.str();
+    return "<ForStmt {}>"; // TODO
   }
 
   Kind kind() override { return STMT_FOR; }
 };
 
 /**
- * do
- *     <block>
- * for <expr>
- *     <block>
+ * aop <expr> | ->
+ *  <block>
  * end
  */
-class DoStmt : public Stmt {
+class AopStmt : public Stmt {
 public:
-  BlockStmt *block; // first do block
-  Stmt *stmt;       // for statement
+  Expr *expr;       // expr
+  BlockStmt *block; // block
 
-  explicit DoStmt(BlockStmt *block, Stmt *stmt) {
+  explicit AopStmt(Expr *expr, BlockStmt *block) {
+    this->expr = expr;
     this->block = block;
-    this->stmt = stmt;
   }
 
   std::string stringer() override {
-    return "<DoStmt { Block=" + block->stringer() +
-           " Stmt=" + stmt->stringer() + " }>";
+    if (expr == nullptr) {
+      return "<AopStmt { Expr=DEAD Block=" + block->stringer() + "}>";
+    }
+    return "<AopStmt { Expr=" + expr->stringer() +
+           " Block=" + block->stringer() + " }>";
   }
 
-  Kind kind() override { return STMT_DO; }
+  Kind kind() override { return STMT_AOP; }
 };
 
-// out <expr>
+// out <expr> | ->
 class OutStmt : public Stmt {
 public:
   Expr *expr;
@@ -571,23 +570,23 @@ public:
   Kind kind() override { return STMT_OUT; }
 };
 
-// tin <expr>
-class TinStmt : public Stmt {
+// go <expr> | ->
+class GoStmt : public Stmt {
 public:
   Expr *expr;
 
-  TinStmt() { this->expr = nullptr; }
+  GoStmt() { this->expr = nullptr; }
 
-  explicit TinStmt(Expr *e) : expr(e) {}
+  explicit GoStmt(Expr *e) : expr(e) {}
 
   std::string stringer() override {
     if (expr == nullptr) {
-      return "<TinStmt {}>";
+      return "<GoStmt {}>";
     }
-    return "<TinStmt { Expr=" + expr->stringer() + " }>";
+    return "<GoStmt { Expr=" + expr->stringer() + " }>";
   }
 
-  Kind kind() override { return STMT_TIN; }
+  Kind kind() override { return STMT_GO; }
 };
 
 // mod <name>

@@ -266,6 +266,7 @@ void Lexer::lexSymbol() {
   case '$': tok.kind = token::DOLLAR; break;
   case '.': tok.kind = token::DOT; break;
   case ',': tok.kind = token::COMMA; break;
+  case ';': tok.kind = token::SEMICOLON; break;
   case '>':
     if (peekEmit(&tok, '=', token::GR_EQ, ">="))
       break;
@@ -274,8 +275,7 @@ void Lexer::lexSymbol() {
     break;
   case '<':
     if (peekEmit(&tok, '=', token::LE_EQ, "<=")) break;
-    if (peekEmit(&tok, '-', token::L_ARROW, "<-")) break;
-    if (peekEmit(&tok, '~', token::L_CURVED_ARROW, "<~"))
+    if (peekEmit(&tok, '-', token::L_ARROW, "<-"))
       break;
     else
       tok.kind = token::LESS;

@@ -22,7 +22,7 @@
 // tokens
 namespace token {
 // total number of token for drift
-constexpr int len = 54;
+constexpr int len = 55;
 // token type
 enum Kind {
   IDENT, // identifier literal
@@ -43,15 +43,15 @@ enum Kind {
   AS_DIV, // /=
   AS_SUR, // %=
 
-  R_ARROW,        // ->
-  L_ARROW,        // <-
-  L_CURVED_ARROW, // <~
+  R_ARROW, // ->
+  L_ARROW, // <-
 
-  DOLLAR, // $
-  DOT,    // .
-  COMMA,  // ,
-  COLON,  // :
-  EQ,     // =
+  DOLLAR,    // $
+  DOT,       // .
+  COMMA,     // ,
+  COLON,     // :
+  EQ,        // =
+  SEMICOLON, // ;
 
   GREATER, // >
   LESS,    // <
@@ -84,9 +84,9 @@ enum Kind {
   EF,  // 6
   NF,  // 7
   FOR, // 8
-  DO,  // 9
+  AOP, // 9
   OUT, // 10
-  TIN, // 11
+  GO,  // 11
   NEW, // 12
   MOD, // 13
   DEL, // 14
@@ -94,24 +94,15 @@ enum Kind {
 
 // returns a string of each type
 static std::string kindString[len] = {
-    "IDENT",     "NUM",       "STR",
-    "CHAR",      "FLOAT",     "ADD",
-    "SUB",       "MUL",       "DIV",
-    "SUR",       "AS_ADD",    "AS_SUB",
-    "AS_MUL",    "AS_DIV",    "AS_SUR",
-    "R_ARROW",   "L_ARROW",   "L_CURVED_ARROW",
-    "DOLLAR",    "DOT",       "COMMA",
-    "COLON",     "EQ",        "GREATER",
-    "LESS",      "GR_EQ",     "LE_EQ",
-    "ADDR",      "OR",        "BANG",
-    "BANG_EQ",   "EQ_EQ",     "L_BRACE",
-    "R_BRACE",   "L_PAREN",   "R_PAREN",
-    "L_BRACKET", "R_BRACKET", "UNDERLINE",
-    "EFF",       "USE",       "DEF",
-    "RET",       "END",       "IF",
-    "EF",        "NF",        "FOR",
-    "DO",        "OUT",       "TIN",
-    "NEW",       "MOD",       "DEL",
+    "IDENT",     "NUM",       "STR",       "CHAR",    "FLOAT",     "ADD",
+    "SUB",       "MUL",       "DIV",       "SUR",     "AS_ADD",    "AS_SUB",
+    "AS_MUL",    "AS_DIV",    "AS_SUR",    "R_ARROW", "L_ARROW",   "DOLLAR",
+    "DOT",       "COMMA",     "COLON",     "EQ",      "SEMICOLON", "GREATER",
+    "LESS",      "GR_EQ",     "LE_EQ",     "ADDR",    "OR",        "BANG",
+    "BANG_EQ",   "EQ_EQ",     "L_BRACE",   "R_BRACE", "L_PAREN",   "R_PAREN",
+    "L_BRACKET", "R_BRACKET", "UNDERLINE", "EFF",     "USE",       "DEF",
+    "RET",       "END",       "IF",        "EF",      "NF",        "FOR",
+    "AOP",       "OUT",       "GO",        "NEW",     "MOD",       "DEL",
 };
 
 //  token structure

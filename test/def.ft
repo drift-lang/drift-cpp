@@ -1,7 +1,7 @@
 def x: int = 45
 def y: int = 12
 
-for ->
+aop ->
     x += 1
     out x >= 100
 end
