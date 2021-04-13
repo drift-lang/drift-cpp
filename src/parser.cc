@@ -454,6 +454,7 @@ ast::Stmt *Parser::stmt() {
           for (auto i : temp) {
             funcArgs.insert(std::make_pair(i, T));
           }
+          temp.clear();
         }
         if (look(token::COMMA)) {
           continue;

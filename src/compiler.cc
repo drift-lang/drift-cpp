@@ -396,8 +396,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
 
     // first store to init variable
     this->emitCode(byte::STORE);
-    this->emitType(f->T);
     this->emitName(f->name.literal);
+    this->emitType(f->T);
 
     int original = now->codes.size(); // original state: for callback loops
 
