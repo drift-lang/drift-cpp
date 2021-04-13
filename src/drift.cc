@@ -85,7 +85,7 @@ void run(std::string source) {
 // FILE mode
 void runFile(const char *path) {
   std::string s;
-  fileString(path, &s);
+  if (!fileString(path, &s)) return;
 
   state.filePath = std::string(path); // current read file
 
@@ -119,7 +119,7 @@ bool loadStdModules() {
 
   for (auto i : *fs) {
     std::string s;
-    fileString(i.c_str(), &s);
+    if (!fileString(i.c_str(), &s)) return false;
 
     try {
       // lexer

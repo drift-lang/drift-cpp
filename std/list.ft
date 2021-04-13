@@ -1,11 +1,1 @@
 mod list
-
-def Foo
-  def () call -> int
-    ret 123
-  end
-end
-
-def () to
-  new Foo.call()
-end

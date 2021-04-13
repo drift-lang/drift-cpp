@@ -55,6 +55,8 @@ private:
   void expr(ast::Expr *); // expression
   void stmt(ast::Stmt *); // statements
 
+  void replaceHolder(int original); // replace placeHolder
+
 public:
   Compiler(std::vector<ast::Stmt *> statements, std::vector<int> lineno)
       : statements(statements), lineno(lineno) {

@@ -509,13 +509,17 @@ public:
   Expr *cond;
   Expr *more;
 
+  Stmt *body;
+
   explicit ForStmt(token::Token name, Type *T, Expr *init, Expr *cond,
-                   Expr *more) {
-    this->name = std::move(name);
-    this->T = T;
-    this->init = init;
-    this->cond = cond;
-    this->more = more;
+                   Expr *more, Stmt *body) {
+    this->name = std::move(name); // name
+    this->T = T;                  // type
+    this->init = init;            // initializer
+
+    this->cond = cond; // conditon
+    this->more = more; // update
+    this->body = body; // block
   }
 
   std::string stringer() override {

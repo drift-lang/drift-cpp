@@ -554,8 +554,11 @@ ast::Stmt *Parser::stmt() {
     ast::Expr *cond = this->expr(); // condition
     if (!look(token::SEMICOLON))
       error(exp::UNEXPECTED, "expect ';' after expression");
+
+    ast::Expr *more = this->expr(); // update
     //
-    return new ast::ForStmt(ident, T, init, cond, this->expr());
+    return new ast::ForStmt(ident, T, init, cond, more,
+                            this->block(token::END) /* block */);
   } break;
     // aop loop
   case token::AOP: {

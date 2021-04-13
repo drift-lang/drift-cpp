@@ -168,14 +168,16 @@ void randomStr(object::Object *obj, Frame *f) {
               static_cast<object::Bool *>(y)->value))); // GENERATE
 }
 
-constexpr int l = 7;                       // length of builtin names
-static builtin bu[l] = {{"puts", puts},    // print to screen
-                        {"put", put},      // print to screen but no new line
-                        {"putl", putl},    // print to screen and end new line
-                        {"len", len},      // return the length of object
-                        {"sleep", bsleep}, // sleep time
-                        {"type", type},    // type checker
-                        {"randomStr", randomStr}}; // random string generator
+constexpr int l = 7; // length of builtin names
+static builtin bu[l] = {
+    {"puts", puts},           // print to screen
+    {"put", put},             // print to screen but no new line
+    {"putl", putl},           // print to screen and end new line
+    {"len", len},             // return the length of object
+    {"sleep", bsleep},        // sleep time
+    {"type", type},           // type checker
+    {"randomStr", randomStr}, // random string generator
+};
 
 // return it is builtin function name
 bool isBuiltinName(std::string name) {

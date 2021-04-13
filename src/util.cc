@@ -22,19 +22,20 @@ bool isNumberStr(const std::string str) {
 }
 
 // read the string buffer into string
-void fileString(const char *path, std::string *to) {
+bool fileString(const char *path, std::string *to) {
   std::ifstream stream;
   stream.open(path);
 
   if (stream.fail()) {
     std::cout << "<Failed To Open File>" << std::endl;
-    return;
+    return false;
   }
 
   std::string source((std::istreambuf_iterator<char>(stream)),
                      (std::istreambuf_iterator<char>()));
   *to = source;
   stream.close();
+  return true;
 }
 
 // return the whether a value is the same

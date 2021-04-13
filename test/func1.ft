@@ -1,19 +1,14 @@
 def i: int = 1 // ONE PLUS
 
 def (x: int) foo -> int
-    if x == 8
-        ret -1
-    nf
-        i += 1
-        ret i * x
-    end
+  if x == 8
+    ret -1
+  nf
+    i += 1
+    ret i * x
+  end
 end
 
-def x: int = 0
-
-for ->
-    puts(foo(x))
-
-    out x == 10
-    x += 1
+for i: int = 0; i != 10; i += 1
+  puts(foo(i))
 end

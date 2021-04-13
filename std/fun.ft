@@ -3,31 +3,23 @@ mod fun
 def Fun
   // MY LOVE!!
   def () love
-    def x: float
     def y: float
-
     def s: str
-/*
+
     for i: float = 1.5; i > -1.5; i -= 0.1
-    end
-*/
-    def i: float = 1.5
-    aop i > -1.5
       s = ""
         
-      x = -1.5
-      aop x < 1.5
+      for x: int = -1.5; x < 1.5; x += 0.05
         y = x * x + i * i - 1
 
-        if (y * y * y - x * x * i * i * i) < 0.0
+        if (y * y * y - 
+            x * x * i * i * i) < 0.0
           s += "#"
         nf
           s += " "
         end
-        x += 0.05
       end
       puts(s) // PRINT
-      i -= 0.1
     end
   end
 end

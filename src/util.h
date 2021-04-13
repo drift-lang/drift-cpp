@@ -24,7 +24,7 @@
 bool isNumberStr(const std::string);
 
 // read the string buffer into string
-void fileString(const char *, std::string *);
+bool fileString(const char *, std::string *);
 
 // return the whether a value is the same
 bool sameValue(std::vector<std::string> &, std::vector<std::string> &);

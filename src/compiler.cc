@@ -82,6 +82,23 @@ void Compiler::insertPosOffset(int pos, int val) {
   this->emitJumpOffset(val);
 }
 
+// replace placeHolder
+void Compiler::replaceHolder(int original) {
+  for (std::vector<int>::iterator iter = now->offsets.begin();
+       iter != now->offsets.end(); iter++) {
+    // out statement
+    if (*iter == -1) {
+      *iter = now->codes.size();
+      this->emitJumpOffset(now->codes.size());
+    }
+    // tin statement
+    if (*iter == -2) {
+      *iter = original;
+      this->emitJumpOffset(original);
+    }
+  }
+}
+
 // expression
 void Compiler::expr(ast::Expr *expr) {
   switch (expr->kind()) {
@@ -375,41 +392,29 @@ void Compiler::stmt(ast::Stmt *stmt) {
   case ast::STMT_FOR: {
     ast::ForStmt *f = static_cast<ast::ForStmt *>(stmt);
 
+    this->expr(f->init); // initializer
+
+    // first store to init variable
+    this->emitCode(byte::STORE);
+    this->emitType(f->T);
+    this->emitName(f->name.literal);
+
     int original = now->codes.size(); // original state: for callback loops
 
-    /* // DEAD LOOP
-    if (f->condition == nullptr) this->stmt(f->block);
-    // condition and block
-    else {
-      this->expr(f->condition);
-      this->emitCode(byte::F_JUMP);
-      int ePos = now->offsets.size(); // skip loop for false
+    this->expr(f->cond); // condition
+    this->emitCode(byte::F_JUMP);
+    int ePos = now->offsets.size(); // skip loop for FALSE
 
-      this->stmt(f->block); // block
+    this->stmt(f->body); // block
+    this->expr(f->more); // update
 
-      // jump to next bytecode
-      this->insertPosOffset(ePos,
-                            now->codes.size() + 1); // TO: (F_JUMP)
-    }
+    this->insertPosOffset(ePos, now->codes.size() + 1); // TO: (F_JUMP)
 
-    this->emitCode(byte::JUMP); // back to original state
-    this->emitOffset(original);
-    this->emitJumpOffset(original); // jump offset */
+    this->emitCode(byte::JUMP);     // back to original state
+    this->emitOffset(original);     // offset
+    this->emitJumpOffset(original); // DEBUG
 
-    // replace placeholder
-    for (std::vector<int>::iterator iter = now->offsets.begin();
-         iter != now->offsets.end(); iter++) {
-      // out statement
-      if (*iter == -1) {
-        *iter = now->codes.size();
-        this->emitJumpOffset(now->codes.size());
-      }
-      // tin statement
-      if (*iter == -2) {
-        *iter = original;
-        this->emitJumpOffset(original);
-      }
-    }
+    this->replaceHolder(original); // REPLACE
   } break;
   //
   case ast::STMT_AOP: {
@@ -429,25 +434,11 @@ void Compiler::stmt(ast::Stmt *stmt) {
       this->insertPosOffset(ePos, now->codes.size() + 1); // TO: (F_JUMP)
     }
 
-    this->emitCode(byte::JUMP); // back to original state
-    this->emitOffset(original); // offset
-
+    this->emitCode(byte::JUMP);     // back to original state
+    this->emitOffset(original);     // offset
     this->emitJumpOffset(original); // DEBUG
 
-    // replace placeholder
-    for (std::vector<int>::iterator iter = now->offsets.begin();
-         iter != now->offsets.end(); iter++) {
-      // out statement
-      if (*iter == -1) {
-        *iter = now->codes.size();
-        this->emitJumpOffset(now->codes.size());
-      }
-      // tin statement
-      if (*iter == -2) {
-        *iter = original;
-        this->emitJumpOffset(original);
-      }
-    }
+    this->replaceHolder(original); // REPLACE
   } break;
   //
   case ast::STMT_OUT: {
