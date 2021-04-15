@@ -1,36 +1,36 @@
 mod fun
 
 def Fun
-  // MY LOVE!!
-  def () love
-    def y: float
-    def s: str
+    // MY LOVE!!
+    def () show
+        def y: float
+        def s: str
 
-    for i: float = 1.5; i > -1.5; i -= 0.1
-      s = ""
+        for i: float = 1.5; i > -1.5; i -= 0.1
+            s = ""
         
-      for x: int = -1.5; x < 1.5; x += 0.05
-        y = x * x + i * i - 1
+            for x: int = -1.5; x < 1.5; x += 0.05
+                y = x * x + i * i - 1
 
-        if (y * y * y - 
-            x * x * i * i * i) < 0.0
-          s += "#"
-        nf
-          s += " "
+                if (y * y * y - 
+                    x * x * i * i * i) < 0.0
+                    s += "#"
+                nf
+                    s += " "
+                end
+            end
+            puts(s) // PRINT
         end
-      end
-      puts(s) // PRINT
     end
-  end
 end
-
+/*
 // ITS A JOKER!!
 def (repeat: int) joker
   def first: bool = T
   def x: int = repeat + 1 // Love you more forever
 
   aop ->
-    new Fun.love()
+    new Fun.show()
     putl("第几次了？", x, " 次！！")
 
     if first
@@ -45,27 +45,27 @@ def (repeat: int) joker
   end
   putl("END..")
 end
-
+*/
 // litter
 def () heart
-  def x: []str = [
-    "",
-    "    ** ** ", 
-    "   *  *  *", 
-    "    *   *", 
-    "      *",
-    ""
-  ]
-  def i: int = len(x)
-  aop i > 0
-    putl(x[len(x) - i])
-    i -= 1
-  end
+    def x: []str = [
+        "",
+        "    ** ** ", 
+        "   *  *  *", 
+        "    *   *", 
+        "      *",
+        ""
+    ]
+    def i: int = len(x)
+    aop i > 0
+        putl(x[len(x) - i])
+        i -= 1
+    end
 end
 
 // return the raw string of heart
 def () rawHeart -> str
-  ret `
+    ret `
     ** **
    *  .  *      LOVE ?
     *   *

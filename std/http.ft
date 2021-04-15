@@ -1,10 +1,1 @@
 mod http
-
-def Status
-  OK
-  NotFound
-  BadRequest
-
-  InternalServerError
-  GatewayError
-end

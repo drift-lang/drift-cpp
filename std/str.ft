@@ -1,56 +1,38 @@
 mod str
 
-def Iter
-  def (char) *count -> int
-
-  def () *first -> char
-  def () *back  -> char
-  def () *size  -> int
+// Return the count of character in string
+def (src: str, tar: char) count -> int
+    def count: int
+        
+    for i: int = 0; i < len(src); i += 1
+        if src[i] == tar
+            count += 1
+        end
+    end
+    ret count
 end
 
-def And
-  def (str) *add -> str
-  def () *split  -> []char
+// Return the front character of string
+def (src: str) front -> char
+    ret src[0]
 end
 
-def String <- Iter + And
-  def val: str
+// Return the back character of string
+def (src: str) back -> char
+    ret src[len(src) - 1]
+end
 
-  def (x: char) count -> int
-    if len(val) == 0
-      ret 0
+// Loop to generate some random string
+def (lp: int) random_str -> []str
+    if lp > 20
+        ret []
+    nf
+        def res: [20]str
+                     
+        for i: int = 0; lp > 0; lp -= 1
+            res[i] = randomStr(20, T)
+            i += 1
+        end
     end
-    
-    def i: int
-    def c: int
-
-    def l: int = len(val)
-    aop l > i
-      if val[len(val) - l] == x
-        c += 1
-      end
-      l -= 1
-    end
-    ret c
-  end
-
-  def (x: str) add -> str
-    ret val + x
-  end
-
-  def () first -> char
-    ret val[0]
-  end
-
-  def () back -> char
-    ret val[len(val) - 1]
-  end
-
-  def () size -> int
-    ret len(val)
-  end
-
-  def () split -> []char
-    ret [val[0], val[1], val[2]]
-  end
+    ret res
 end
