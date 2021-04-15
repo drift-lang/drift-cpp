@@ -123,6 +123,10 @@ void Lexer::lexIdent() {
   tok.literal = literal.str();
   tok.line = this->line;
 
+  if (tok.kind == token::IDENT && tok.literal == "_") {
+    tok.kind = token::UNDERLINE; // single symbol
+  }
+
   this->tokens.push_back(tok);
 }
 

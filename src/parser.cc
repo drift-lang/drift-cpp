@@ -461,8 +461,18 @@ ast::Stmt *Parser::stmt() {
         }
       }
 
+      // anonymouse function
+      if (look(token::R_ARROW) || look(token::UNDERLINE)) {
+        return new ast::FuncStmt(
+            funcArgs, // argument
+            token::Token{.kind = token::EFF, .literal = "anonymouse"}, // name
+            previous().kind == token::R_ARROW ? this->type()
+                                              : nullptr, // return
+            this->block(token::END)                      // block
+        );
+      }
       // function
-      if (look(token::IDENT)) {
+      else if (look(token::IDENT)) {
         name = previous();
       }
       // interface
@@ -474,12 +484,6 @@ ast::Stmt *Parser::stmt() {
         //
         // current parsing interface statement
         interfaceStmt = true;
-      }
-      // anonymouse function
-      else if (look(token::R_ARROW)) {
-        return new ast::FuncStmt(
-            funcArgs, token::Token{.kind = token::EFF, .literal = "anonymouse"},
-            this->type(), this->block(token::END));
       }
       // error
       else {
@@ -772,9 +776,8 @@ Type *Parser::type(bool previous) {
         continue;
       }
     }
-    if (look(token::R_ARROW)) {
-      ret = this->type();
-    }
+
+    if (look(token::R_ARROW)) ret = this->type(); // return
     return new Func(arguments, ret);
   }
   error(exp::INVALID_SYNTAX, "invalid type");

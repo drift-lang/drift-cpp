@@ -390,12 +390,12 @@ void vm::newWhole(std::string name, int count, bool inner) {
 }
 
 // to check interface of whole
-void vm::checkInterface(object::Whole *it, object::Whole *se) {
-  for (std::tuple<std::string, ast::FaceArg, Type *> i : it->interface) {
+void vm::checkInterface(object::Whole *src, object::Whole *dst) {
+  for (std::tuple<std::string, ast::FaceArg, Type *> i : src->interface) {
     // TO TABLE SYMBOL
     std::map<std::string, object::Object *>::iterator iter;
 
-    for (iter = se->f->tb.symbols.begin(); iter != se->f->tb.symbols.end();
+    for (iter = dst->f->tb.symbols.begin(); iter != dst->f->tb.symbols.end();
          iter++) {
       //  NAME
       if (iter->first == std::get<0>(i)) {
@@ -408,8 +408,14 @@ void vm::checkInterface(object::Whole *it, object::Whole *se) {
         object::Func *f = static_cast<object::Func *>(iter->second);
 
         // RETURN
-        if (f->ret->kind() != std::get<2>(i)->kind())
-          error("bad return type for subclass inheritance");
+        if (std::get<2>(i) == nullptr && f->ret != nullptr)
+          error("its not have return type");
+
+        if (std::get<2>(i) != nullptr) {
+          if (std::get<2>(i)->kind() != f->ret->kind()) {
+            error("bad return type for subclass inheritance");
+          }
+        }
         // ARGUMENT
         if (std::get<1>(i).size() != f->arguments.size())
           error("inconsistent arguments for subclass inheritance");
@@ -431,8 +437,9 @@ void vm::checkInterface(object::Whole *it, object::Whole *se) {
     }
 
     // NOT FOUND
-    if (iter == se->f->tb.symbols.end())
+    if (iter == dst->f->tb.symbols.end()) {
       error("not inherited method '" + std::get<0>(i) + "' of subclass");
+    }
   }
 }
 
@@ -451,49 +458,60 @@ void vm::evaluate() { // EVALUATE
     case byte::CONST: { // CONST
       object::Object *obj = this->retConstant();
 
+      this->op++;
+
       // STRING TEMPLATE
       if (obj->kind() == object::STR) {
         object::Str *s = static_cast<object::Str *>(obj);
 
-        char *data = s->value.data();
-        int count = 0;
+        char *data = s->value.data(); // CHARS
+        int count = 0;                // COUNT
 
         while (*data++ != '\0')
           if (*data == '$') count++; // GET COUNT OF $
 
+        if (count == 0) { // NONE
+          PUSH(obj);
+          break;
+        }
+
+        object::Str *n = new object::Str(s->value); // NEW
+
         while (count-- > 0) {
 
-          for (int i = 0; i < s->value.size(); i++) {
-            if (s->value.at(i) == '$') {
-              i++; // SKIP LEFR $
+          for (int i = 0; i < n->value.size(); i++) {
+            if (n->value.at(i) == '$') {
+              i++; // SKIP LEFT $
 
               // TO NAME
-              std::string n;
+              std::string r;
 
               // GET NAME
-              while (i < s->value.size() && isalpha(s->value.at(i))) {
-                n.push_back(s->value.at(i));
+              while (i < n->value.size() && isalpha(n->value.at(i))) {
+                r.push_back(n->value.at(i));
                 i++;
               }
 
-              if (n.empty()) error("string template need a ident name");
-              object::Object *o = this->lookUp(n); // OBJECT
+              if (r.empty()) error("string template need a ident name");
+              object::Object *o = this->lookUp(r); // OBJECT
 
-              if (o == nullptr) error("not defined name '" + n + "'");
+              if (o == nullptr) error("not defined name '" + r + "'");
 
-              int p = i - n.size() - 1; // START
+              int p = i - r.size() - 1; // START
 
-              s->value.erase(p, n.size() + 1);   // REMOVE
-              s->value.insert(p, o->stringer()); // INSERT
+              n->value.erase(p, r.size() + 1);   // REMOVE
+              n->value.insert(p, o->stringer()); // INSERT
 
               break; // NEXT
             }
           }
         }
+
+        PUSH(n);
+        break;
       }
 
       PUSH(obj);
-      this->op++;
     } break;
 
       //

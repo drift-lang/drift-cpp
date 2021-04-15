@@ -27,6 +27,7 @@
       9.enum
       10.function
       11.whole
+      12.module
 */
 
 /*
@@ -151,26 +152,28 @@ end
 def (x: |int, int| -> int, a + b: int) sum -> int
   ret x(a, b) + x(a, b)
 end
-/*
+
 def () set -> |int|
-  ret def (x: int)
-    ret x * 2
+  ret def (x: int) _    /* ANONYMOUSE */
+    puts(x * 2)
   end
 end
-*/
-def (x: int) bar -> |int, int| -> []int
-    putl("x = ", x)
 
-    ret def (a + b: int) -> []int
-        ret [
-            a,
-            b,
-            a + b,
-            a - b,
-            a * b,
-            a / b
-        ]
-    end
+set()(8)
+
+def (x: int) bar -> |int, int| -> []int
+  putl("x = ", x)
+
+  ret def (a + b: int) -> []int   /* ANONYMOUSE */
+    ret [
+          a,
+          b,
+          a + b,
+          a - b,
+          a * b,
+          a / b
+    ]
+  end
 end
 
 put(
@@ -202,25 +205,40 @@ def Foo
   end
 end
 
-def Go
-  def () *test
+putl(new Foo.max(34, 12), new Foo.x, new Foo.y)
+
+def Kop
+  def () *more
 end
 
-def Bar <- Foo + Go
-  def () test
-    putl("TEST!!")
-  end
+def Oop <- Foo + Kop    /* INHERIT */
+  def () more end
 
-  def () bar
-    test()
+  def () bar 
+    putl(max(99, 98))   /* CALL INHERIT */
   end
 
   def (x: bool) what -> bool
-    ret !x
+    ret T
   end
 end
 
-def f: Foo = new Foo{x: 43}
-putl(f.x, f.y, f.max(2, 4))
+putl(new Oop.bar())
 
-def b: Bar = new Bar
+/*
+      Others:
+*/
+
+def x: int = 30
+def y: []int = [1, 2, 3]
+def z: [3]float
+
+putl("x = $x y = $y z = $z")
+
+aop ->
+  putl("x: $x  ") /* STRING TEMPLATE */
+  out x == 20
+  x -= 1
+end
+
+putl() // END

@@ -1,0 +1,25 @@
+{
+    "name": "drift-vscode",
+    "displayName": "drift-vscode",
+    "description": "",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.55.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "drift",
+            "aliases": ["Drift", "ft", "drift"],
+            "extensions": [".ft"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "drift",
+            "scopeName": "source.ft",
+            "path": "./syntaxes/drift.json"
+        }]
+    }
+}
