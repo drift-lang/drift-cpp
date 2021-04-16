@@ -2,9 +2,9 @@ mod math
 
 // Return the max of two numbers.
 def (a + b: int) max -> int
-    if a > b
-        ret a
-    nf
-        ret b
-    end
+  if a > b
+    ret a
+  nf
+    ret b
+  end
 end

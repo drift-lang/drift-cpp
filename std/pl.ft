@@ -1,0 +1,24 @@
+mod pl
+
+use math /* MATH MOD */
+
+// Return the function of max
+def () f_max -> |int, int| -> int
+  ret max
+end
+
+// Return function
+// 
+// f_nan()()()()() -> 2.53
+// 
+def () f_nan -> || -> || -> || -> float
+  ret def () -> ||
+    ret def () -> ||
+      ret def () -> ||
+        ret def () -> float
+          ret 2.53
+        end
+      end
+    end
+  end
+end

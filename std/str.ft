@@ -2,37 +2,37 @@ mod str
 
 // Return the count of character in string
 def (src: str, tar: char) count -> int
-    def count: int
-        
-    for i: int = 0; i < len(src); i += 1
-        if src[i] == tar
-            count += 1
-        end
+  def count: int
+  // ITERATOR
+  for i: int = 0; i < len(src); i += 1
+    if src[i] == tar
+      count += 1
     end
-    ret count
+  end
+  ret count
 end
 
 // Return the front character of string
 def (src: str) front -> char
-    ret src[0]
+  ret src[0]
 end
 
 // Return the back character of string
 def (src: str) back -> char
-    ret src[len(src) - 1]
+  ret src[len(src) - 1]
 end
 
 // Loop to generate some random string
 def (lp: int) random_str -> []str
-    if lp > 20
-        ret []
-    nf
-        def res: [20]str
+  if lp > 20
+    ret []
+  nf
+    def res: [20]str
                      
-        for i: int = 0; lp > 0; lp -= 1
-            res[i] = randomStr(20, T)
-            i += 1
-        end
+    for i: int = 0; lp > 0; lp -= 1
+      res[i] = randomStr(20, T)
+      i += 1
     end
-    ret res
+  end
+  ret res
 end
