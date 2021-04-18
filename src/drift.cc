@@ -45,13 +45,15 @@ void run(std::string source) {
     auto lex = new Lexer(source, &state);
 
     lex->tokenizer();
-    if (DEBUG) lex->dissembleTokens();
+    if (DEBUG)
+      lex->dissembleTokens();
 
     // parser
     auto parser = new Parser(lex->tokens, &state);
 
     parser->parse();
-    if (DEBUG) parser->dissembleStmts();
+    if (DEBUG)
+      parser->dissembleStmts();
 
     // semantic
     auto semantic = new Analysis(&parser->statements, &state);
@@ -60,7 +62,8 @@ void run(std::string source) {
     compiler->compile();
 
     if (DIS)
-      for (auto i : compiler->entities) i->dissemble();
+      for (auto i : compiler->entities)
+        i->dissemble();
 
     // vm
     if (REPL && mac != nullptr) {
@@ -85,7 +88,8 @@ void run(std::string source) {
 // FILE mode
 void runFile(const char *path) {
   std::string s;
-  if (!fileString(path, &s)) return;
+  if (!fileString(path, &s))
+    return;
 
   state.filePath = std::string(path); // current read file
 
@@ -119,7 +123,8 @@ bool loadStdModules() {
 
   for (auto i : *fs) {
     std::string s;
-    if (!fileString(i.c_str(), &s)) return false;
+    if (!fileString(i.c_str(), &s))
+      return false;
 
     try {
       // lexer
@@ -158,7 +163,8 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  if (!loadStdModules()) return 1; // load standard modules
+  if (!loadStdModules())
+    return 1; // load standard modules
 
   if (argc == 2) {
     // D

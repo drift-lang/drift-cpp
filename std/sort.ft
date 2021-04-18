@@ -1,1 +1,9 @@
 mod sort
+
+// Return the index of target number
+def (element: []int, target: int) search -> int
+  for def i: int = 0; i < len(element) /* & element[i] != target */; i += 1
+    out element[i] == target
+  end
+  ret i
+end

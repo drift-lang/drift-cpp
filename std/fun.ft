@@ -6,10 +6,10 @@ def Fun
     def y: float
     def s: str
 
-    for i: float = 1.5; i > -1.5; i -= 0.1
+    for def i: float = 1.5; i > -1.5; i -= 0.1
       s = ""
         
-      for x: int = -1.5; x < 1.5; x += 0.05
+      for def x: int = -1.5; x < 1.5; x += 0.05
         y = x * x + i * i - 1
 
         if (y * y * y - 

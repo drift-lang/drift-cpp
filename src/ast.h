@@ -176,7 +176,8 @@ public:
     if (!arguments.empty()) {
       str << " A=(";
 
-      for (auto &i : arguments) str << i->stringer() << " ";
+      for (auto &i : arguments)
+        str << i->stringer() << " ";
       str << ")";
     } else
       str << " A=()";
@@ -252,7 +253,8 @@ public:
 
     str << "<AE ES=[";
     if (!elements.empty()) {
-      for (auto &i : elements) str << i->stringer() << " ";
+      for (auto &i : elements)
+        str << i->stringer() << " ";
     }
 
     str << "]>";
@@ -300,7 +302,8 @@ public:
 
     str << "<TE ES=(";
     if (!elements.empty()) {
-      for (auto &i : elements) str << i->stringer() << " ";
+      for (auto &i : elements)
+        str << i->stringer() << " ";
     }
 
     str << ")>";
@@ -418,7 +421,7 @@ public:
   Kind kind() override { return STMT_VAR; }
 };
 
-// <expr>.. end
+// <expr>.. end | ?
 class BlockStmt : public Stmt {
 public:
   std::vector<Stmt *> block;
@@ -432,7 +435,8 @@ public:
     if (!block.empty()) {
       str << "Block=";
 
-      for (auto &i : block) str << i->stringer() << " ";
+      for (auto &i : block)
+        str << i->stringer() << " ";
     }
 
     str << " }>";
@@ -478,7 +482,8 @@ public:
     std::stringstream str;
 
     str << "<IfStmt { Condition=" << condition->stringer();
-    if (ifBranch != nullptr) str << " IfBranch=" << ifBranch->stringer();
+    if (ifBranch != nullptr)
+      str << " IfBranch=" << ifBranch->stringer();
     if (!efBranch.empty()) {
       str << " EfBranch=";
 
@@ -486,7 +491,8 @@ public:
         str << "K : " << i.first->stringer() << ", V : " << i.second->stringer()
             << " ";
     }
-    if (nfBranch != nullptr) str << " NfBranch=" << nfBranch->stringer();
+    if (nfBranch != nullptr)
+      str << " NfBranch=" << nfBranch->stringer();
 
     str << " }>";
     return str.str();
@@ -502,24 +508,17 @@ public:
  */
 class ForStmt : public Stmt {
 public:
-  token::Token name;
-  Type *T;
-  Expr *init;
+  Stmt *init; // initializer
+  Stmt *cond; // condition
+  Stmt *more; // update
 
-  Expr *cond;
-  Expr *more;
+  BlockStmt *block; // block
 
-  Stmt *body;
-
-  explicit ForStmt(token::Token name, Type *T, Expr *init, Expr *cond,
-                   Expr *more, Stmt *body) {
-    this->name = std::move(name); // name
-    this->T = T;                  // type
-    this->init = init;            // initializer
-
-    this->cond = cond; // conditon
-    this->more = more; // update
-    this->body = body; // block
+  explicit ForStmt(Stmt *init, Stmt *cond, Stmt *more, BlockStmt *block) {
+    this->init = init;
+    this->cond = cond;
+    this->more = more;
+    this->block = block;
   }
 
   std::string stringer() override {
@@ -742,7 +741,8 @@ public:
     // args
     if (!arguments.empty()) {
       str << "(";
-      for (auto &i : arguments) str << "T : '" << i->stringer() << " ";
+      for (auto &i : arguments)
+        str << "T : '" << i->stringer() << " ";
       str << ")";
     } else
       str << "()";

@@ -4,7 +4,7 @@ mod str
 def (src: str, tar: char) count -> int
   def count: int
   // ITERATOR
-  for i: int = 0; i < len(src); i += 1
+  for def i: int = 0; i < len(src); i += 1
     if src[i] == tar
       count += 1
     end
@@ -29,7 +29,7 @@ def (lp: int) random_str -> []str
   nf
     def res: [20]str
                      
-    for i: int = 0; lp > 0; lp -= 1
+    for def i: int = 0; lp > 0; lp -= 1
       res[i] = randomStr(20, T)
       i += 1
     end

@@ -2,6 +2,8 @@
 
 <p align="center" style="font-weight: bold;">Refined, minimalist, modern, beautiful</p>
 
+<center><img src="./misc/DRIFT.svg"></center>
+
 - Fourteen keywords
 - Twelve object types
 - Bytecode virtual machine

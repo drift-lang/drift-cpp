@@ -227,13 +227,15 @@ ast::Expr *Parser::call() {
     } else if (look(token::DOT)) {
       token::Token name = look();
 
-      if (isEnd()) error(exp::UNEXPECTED, "missing name and found EFF");
+      if (isEnd())
+        error(exp::UNEXPECTED, "missing name and found EFF");
       this->position++; // skip name token
       expr = new ast::GetExpr(expr, name);
       // index for array
     } else if (look(token::L_BRACKET)) {
       // empty index
-      if (look(token::R_BRACKET)) error(exp::UNEXPECTED, "null index");
+      if (look(token::R_BRACKET))
+        error(exp::UNEXPECTED, "null index");
       // index
       auto index = this->expr();
 
@@ -255,13 +257,15 @@ ast::Expr *Parser::primary() {
       look(token::CHAR))
     return new ast::LiteralExpr(this->previous());
   // name expr
-  if (look(token::IDENT)) return new ast::NameExpr(previous());
+  if (look(token::IDENT))
+    return new ast::NameExpr(previous());
   // group expr
   if (look(token::L_PAREN)) {
     // vector for tuple and group expression
     std::vector<ast::Expr *> elem;
     // empty tuple expr
-    if (look(token::R_PAREN)) return new ast::TupleExpr(elem);
+    if (look(token::R_PAREN))
+      return new ast::TupleExpr(elem);
     // tuple or group ?
     elem.push_back(this->expr());
 
@@ -302,7 +306,8 @@ ast::Expr *Parser::primary() {
   if (look(token::L_BRACE)) {
     std::map<ast::Expr *, ast::Expr *> elem;
     // empty map expr
-    if (look(token::R_BRACE)) return new ast::MapExpr(elem);
+    if (look(token::R_BRACE))
+      return new ast::MapExpr(elem);
 
     while (true) {
       ast::Expr *K = this->expr();
@@ -334,7 +339,8 @@ ast::Expr *Parser::primary() {
 
     std::map<token::Token *, ast::Expr *> builder; // fields
 
-    if (!look(token::L_BRACE)) return new ast::NewExpr(name, builder);
+    if (!look(token::L_BRACE))
+      return new ast::NewExpr(name, builder);
 
     while (true) {
       if (!look(token::IDENT)) {
@@ -432,7 +438,8 @@ ast::Stmt *Parser::stmt() {
           faceArgs.push_back(this->type(true)); // parse previous token to type
           interfaceStmt = true;                 // set
 
-          if (look().kind == token::COMMA) this->position++;
+          if (look().kind == token::COMMA)
+            this->position++;
           if (look().kind == token::R_PAREN || look().kind == token::MUL) {
             break; // end
           } else {
@@ -541,28 +548,18 @@ ast::Stmt *Parser::stmt() {
     // for loop
   case token::FOR: {
     this->position++;
-
-    if (!look(token::IDENT)) {
-      error(exp::UNEXPECTED, "initializer for name muse be an identifier");
-    }
-
-    token::Token ident = this->previous(); // name
-    if (!look(token::COLON)) error(exp::UNEXPECTED, "expect ':' after name");
-
-    Type *T = this->type(); // type
-    if (!look(token::EQ)) error(exp::UNEXPECTED, "expect '=' after name");
-
-    ast::Expr *init = this->expr(); // init
+    
+    ast::Stmt *init = this->stmt(); // initializer
     if (!look(token::SEMICOLON))
       error(exp::UNEXPECTED, "expect ';' after expression");
 
-    ast::Expr *cond = this->expr(); // condition
+    ast::Stmt *cond = this->stmt(); // condition
     if (!look(token::SEMICOLON))
       error(exp::UNEXPECTED, "expect ';' after expression");
 
-    ast::Expr *more = this->expr(); // update
-    //
-    return new ast::ForStmt(ident, T, init, cond, more,
+    ast::Stmt *more = this->stmt(); // update
+
+    return new ast::ForStmt(init, cond, more,
                             this->block(token::END) /* block */);
   } break;
     // aop loop
@@ -707,15 +704,20 @@ Type *Parser::type(bool previous) {
     // skip type ident
     this->position++;
     // T1
-    if (now.literal == S_INT) return new Int();
+    if (now.literal == S_INT)
+      return new Int();
     // T2
-    if (now.literal == S_FLOAT) return new Float();
+    if (now.literal == S_FLOAT)
+      return new Float();
     // T3
-    if (now.literal == S_STR) return new Str;
+    if (now.literal == S_STR)
+      return new Str;
     // T4
-    if (now.literal == S_CHAR) return new Char();
+    if (now.literal == S_CHAR)
+      return new Char();
     // T5
-    if (now.literal == S_BOOL) return new Bool;
+    if (now.literal == S_BOOL)
+      return new Bool;
     // user define type
     return new User(now);
   }
@@ -777,7 +779,8 @@ Type *Parser::type(bool previous) {
       }
     }
 
-    if (look(token::R_ARROW)) ret = this->type(); // return
+    if (look(token::R_ARROW))
+      ret = this->type(); // return
     return new Func(arguments, ret);
   }
   error(exp::INVALID_SYNTAX, "invalid type");

@@ -130,24 +130,50 @@ void Compiler::expr(ast::Expr *expr) {
 
     switch (b->op.kind) {
     case token::ADD:
-    case token::AS_ADD: this->emitCode(byte::ADD); break;
+    case token::AS_ADD:
+      this->emitCode(byte::ADD);
+      break;
     case token::SUB:
-    case token::AS_SUB: this->emitCode(byte::SUB); break;
+    case token::AS_SUB:
+      this->emitCode(byte::SUB);
+      break;
     case token::MUL:
-    case token::AS_MUL: this->emitCode(byte::MUL); break;
+    case token::AS_MUL:
+      this->emitCode(byte::MUL);
+      break;
     case token::DIV:
-    case token::AS_DIV: this->emitCode(byte::DIV); break;
+    case token::AS_DIV:
+      this->emitCode(byte::DIV);
+      break;
     case token::SUR:
-    case token::AS_SUR: this->emitCode(byte::SUR); break;
+    case token::AS_SUR:
+      this->emitCode(byte::SUR);
+      break;
 
-    case token::GREATER: this->emitCode(byte::GR); break;
-    case token::LESS: this->emitCode(byte::LE); break;
-    case token::GR_EQ: this->emitCode(byte::GR_E); break;
-    case token::LE_EQ: this->emitCode(byte::LE_E); break;
-    case token::EQ_EQ: this->emitCode(byte::E_E); break;
-    case token::BANG_EQ: this->emitCode(byte::N_E); break;
-    case token::ADDR: this->emitCode(byte::AND); break;
-    case token::OR: this->emitCode(byte::OR); break;
+    case token::GREATER:
+      this->emitCode(byte::GR);
+      break;
+    case token::LESS:
+      this->emitCode(byte::LE);
+      break;
+    case token::GR_EQ:
+      this->emitCode(byte::GR_E);
+      break;
+    case token::LE_EQ:
+      this->emitCode(byte::LE_E);
+      break;
+    case token::EQ_EQ:
+      this->emitCode(byte::E_E);
+      break;
+    case token::BANG_EQ:
+      this->emitCode(byte::N_E);
+      break;
+    case token::ADDR:
+      this->emitCode(byte::AND);
+      break;
+    case token::OR:
+      this->emitCode(byte::OR);
+      break;
     }
 
     if (b->op.kind == token::AS_ADD || b->op.kind == token::AS_SUB ||
@@ -321,7 +347,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
   case ast::STMT_BLOCK: {
     ast::BlockStmt *b = static_cast<ast::BlockStmt *>(stmt);
 
-    for (auto i : b->block) this->stmt(i);
+    for (auto i : b->block)
+      this->stmt(i);
   } break;
   //
   case ast::STMT_IF: {
@@ -365,7 +392,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
         tempEfOffs.push_back(now->offsets.size());
       }
       // nf branch
-      if (i->nfBranch != nullptr) this->stmt(i->nfBranch);
+      if (i->nfBranch != nullptr)
+        this->stmt(i->nfBranch);
     }
     // nf branch
     else {
@@ -392,21 +420,16 @@ void Compiler::stmt(ast::Stmt *stmt) {
   case ast::STMT_FOR: {
     ast::ForStmt *f = static_cast<ast::ForStmt *>(stmt);
 
-    this->expr(f->init); // initializer
-
-    // first store to init variable
-    this->emitCode(byte::STORE);
-    this->emitName(f->name.literal);
-    this->emitType(f->T);
+    this->stmt(f->init); // initializer
 
     int original = now->codes.size(); // original state: for callback loops
 
-    this->expr(f->cond); // condition
+    this->stmt(f->cond); // condition
     this->emitCode(byte::F_JUMP);
     int ePos = now->offsets.size(); // skip loop for FALSE
 
-    this->stmt(f->body); // block
-    this->expr(f->more); // update
+    this->stmt(f->block); // block
+    this->stmt(f->more);  // update
 
     this->insertPosOffset(ePos, now->codes.size() + 1); // TO: (F_JUMP)
 
@@ -422,7 +445,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
 
     int original = now->codes.size(); // original state
 
-    if (a->expr == nullptr) this->stmt(a->block); // skip condition
+    if (a->expr == nullptr)
+      this->stmt(a->block); // skip condition
     //
     else {
       this->expr(a->expr);
@@ -444,7 +468,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
   case ast::STMT_OUT: {
     ast::OutStmt *o = static_cast<ast::OutStmt *>(stmt);
 
-    if (o->expr != nullptr) this->expr(o->expr);
+    if (o->expr != nullptr)
+      this->expr(o->expr);
 
     // jump straight out
     this->emitCode(o->expr == nullptr ? byte::JUMP : byte::T_JUMP);
@@ -455,7 +480,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
   case ast::STMT_GO: {
     ast::GoStmt *t = static_cast<ast::GoStmt *>(stmt);
 
-    if (t->expr != nullptr) this->expr(t->expr);
+    if (t->expr != nullptr)
+      this->expr(t->expr);
 
     // jump straight out
     this->emitCode(t->expr == nullptr ? byte::JUMP : byte::T_JUMP);
@@ -578,7 +604,8 @@ void Compiler::stmt(ast::Stmt *stmt) {
   case ast::STMT_RET: {
     ast::RetStmt *r = static_cast<ast::RetStmt *>(stmt);
 
-    if (r->stmt != nullptr) this->stmt(r->stmt);
+    if (r->stmt != nullptr)
+      this->stmt(r->stmt);
 
     this->emitCode(r->stmt == nullptr ? byte::RET_N : byte::RET);
   } break;
@@ -602,6 +629,7 @@ void Compiler::stmt(ast::Stmt *stmt) {
     this->emitName(static_cast<ast::DelStmt *>(stmt)->name.literal); // name
   } break;
   //
-  default: break;
+  default:
+    break;
   }
 }
