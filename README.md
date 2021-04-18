@@ -2,18 +2,23 @@
 
 <p align="center" style="font-weight: bold;">Refined, minimalist, modern, beautiful</p>
 
-<center><img src="./misc/DRIFT.svg"></center>
+<p align="center"><img src="./misc/DRIFT.svg"/></p>
 
-- Fourteen keywords
-- Twelve object types
+- Written in C++
+- Minimalist grammar, 14 keywords, 40 bytecode
+- Frame and Stack structure interpreter
 - Bytecode virtual machine
 
+For documentation and project architecuture,
+visit the official website https://drift-lang.fun/  
 Basic grammatical format of drift, please check the instance code `awesome.ft`
+
+**It's a toy language, Have Fun!!**
 
 ## Build
 
-- switch CC field in Makefile and specify your g++ compiler path
-- my gcc version is 10.2.0
+- Switch CC field in Makefile and specify your g++ compiler path
+- The development version is 10.2.0
 
 ```
 make
@@ -44,13 +49,6 @@ make install
 - Lack of FFI support
 - Syntax highlighting support for Virtual Studio Code, `tool` directory
 - Standard library and bug testing, etc
-
-## More
-
-For documentation and project architecuture,
-visit the official website https://drift-lang.fun/
-
-**It's a toy language, Have Fun!!**
 
 ## License
 ```

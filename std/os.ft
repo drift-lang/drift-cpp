@@ -1,9 +1,10 @@
+/* 
+ * Standard module: os
+ */
 mod os
 
 /*
- * desc: 提示
- * deep: 睡觉
- * op:   结束
+ * If desc is empty to print random str.
  */
 def (desc: str, deep + op: int) loop
   def i: int = 0

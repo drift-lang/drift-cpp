@@ -1,3 +1,6 @@
+/* 
+ * Standard module: str
+ */
 mod str
 
 // Return the count of character in string
@@ -28,7 +31,7 @@ def (lp: int) random_str -> []str
     ret []
   nf
     def res: [20]str
-                     
+    
     for def i: int = 0; lp > 0; lp -= 1
       res[i] = randomStr(20, T)
       i += 1

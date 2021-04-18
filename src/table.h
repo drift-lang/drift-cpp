@@ -19,15 +19,20 @@
 
 #include "object.h"
 
+// Symbol table structure
 struct Table {
-  std::map<std::string, object::Object *> symbols;
+  std::map<std::string, object::Object *> symbols; /* Elements */
 
+  // Remove a name
   void remove(std::string n) { symbols.erase(n); }
 
+  // Clear all elements
   void clear() { symbols.clear(); }
 
+  // Return is empty of elements
   bool empty() { return symbols.empty(); }
 
+  // Lookup a name
   object::Object *lookUp(std::string n) {
     for (auto i : symbols)
       if (i.first == n)
@@ -35,8 +40,10 @@ struct Table {
     return nullptr;
   }
 
+  // To emit a name with its object
   void emit(std::string n, object::Object *o) { symbols[n] = o; }
 
+  // Dissemble symbols in table
   void dissemble() {
     printf("SYMBOL: \n");
     for (auto i : symbols) {

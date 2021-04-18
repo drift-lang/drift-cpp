@@ -1,3 +1,6 @@
+/* 
+ * Standard module: math
+ */
 mod math
 
 // Return the max of two numbers.

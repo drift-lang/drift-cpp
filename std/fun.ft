@@ -1,5 +1,9 @@
+/* 
+ * Standard module: fun
+ */
 mod fun
 
+// Have fun
 def Fun
   // MY LOVE!!
   def () show
