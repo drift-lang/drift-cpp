@@ -1,0 +1,48 @@
+/*
+ * Standard module: fp
+ */
+mod fp
+
+use math /* MATH MODULE */
+
+def () f_len -> |str, str, int| -> str
+  ret def (
+    x + y: str,     /* Return max string */
+    l: int
+  ) -> str
+    if len(x) >= l
+      ret x
+    ef len(y) >= l
+      ret y
+    end
+    ret ""
+  end
+end
+
+// Just return function and call it
+def () f_nil -> ||
+  ret def () _
+    puts("CALL!")
+  end
+end
+
+// Return the function of max
+def () f_max -> |int, int| -> int
+  ret max
+end
+
+// Return function
+// 
+// f_nan()()()()() -> 2.53
+// 
+def () f_nan -> || -> || -> || -> float
+  ret def () -> ||
+    ret def () -> ||
+      ret def () -> ||
+        ret def () -> float
+          ret 2.53
+        end
+      end
+    end
+  end
+end

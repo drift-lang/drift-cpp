@@ -25,13 +25,37 @@ def (src: str) back -> char
   ret src[len(src) - 1]
 end
 
+(def back (src: str) -> int
+  (ret (len src)))
+(def random_str (lp: int) -> []str
+  (if (> lp 20)
+    (ret [])
+  (nf (
+    (def res [20]str)
+    (for (def i int) (> lp 0) (-= lp 1)
+      ((= ([i] res) (random_str 20 T))
+       (+= i 1)))))))
+(def front (str: str) -> char
+  (ret ([0] str)))
+(def max (a + b: int) -> int
+  (if (> a b)
+    (ret a)
+  (nf
+    (ret b))))
+(def count (src: str, tar: char) -> int
+  ((def count int)
+    (for (def i int) (< i (len src)) (+= i 1)
+      ((if (== ([i] src) tar)
+          (+= count 1)))))
+        (ret count))
+
 // Loop to generate some random string
 def (lp: int) random_str -> []str
   if lp > 20
     ret []
   nf
     def res: [20]str
-    
+
     for def i: int = 0; lp > 0; lp -= 1
       res[i] = randomStr(20, T)
       i += 1
