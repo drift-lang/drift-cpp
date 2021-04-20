@@ -1,26 +1,138 @@
-(def back (str) -> int
+:)	Hello! This is the awesome program of DRIFT.
+
+:>
+	Keyword:
+
+	def		ret 		new		for
+	aop		out		go 		if
+	ef		nf		del		use
+
+	12 items
+//
+	Object:
+
+	int		float		char		str
+	bool		array		tuple		map
+	function	whole		enum		module
+
+	12 items
+//
+	S Expr:
+
+	(<Func> [<Arg>..])
+:<
+
+(def x int 45) 	:) Name definition function (def <K> <T> <E>)
+(def x int)	:) Original value into `x`
+
+(put x)		:) 45 of `x` and its builtin function not Keyword
+
+(def x char 'p')				:) CHAR
+
+(def x <int str> {200: "OK", 401: "NotFound"})	:) MAP
+(def x ()int 2 3 4)				:) TUPLE
+(def x []int 2 3 4)				:) ARRAY
+
+:> CONTROL FOLLOW :<
+
+(def a int 45)
+(def b int 78)
+
+:) (if <E> <S> [<EF <E>>(S).. | <NF>(S)])
+(if (> a b) (put a) (nf (put b)))		:) Output the maximum value
+(if (== a b)
+	(put "A")
+	(ef (> a b)
+		(put "B"))
+	(ef (> a 0)
+		(put "C")
+	(nf
+		(put "P")))
+
+:) (aop <E> <S>)
+(def p int 0) (aop (< p 10000) (put p) (+= p 1))	:) Loop from 0 to 10000
+
+:) (for <E> <E> <E> <S>)
+(for (def i int) (< i 20) (+= i 2)			:) Loop from 0 to 20 step 2
+	(put i))
+
+:) (go <E> | _)
+:) (out <E> | _)
+(for (def i int) (< i 999) (+= i 1)
+	(if (== i 99)
+		(go _))			:) CONTINUE
+	(if (== i 888)
+		(out _)))		:) BREAK
+(for (def i int 20) (> i 10) (-= i 1)
+	(go (== (% i 2) 0)))		:) Step even numbers
+
+:> FUNCTION :<
+
+:) The parameter is automatically incremented from A to Z
+
+:) Return the maximum value
+(def (int int) max -> int
+	(if (> A B)
+		(ret A)
+		(nf
+			(ret B))))
+(def () fp -> |int int| -> int		:) Anonymouse function
+	(ret (def (int int) -> int
+		(ret (+ A B)))))
+(put (max 45 12))			:) 45
+(put ((fp) 2 5))			:) 7
+
+:) Return the last character of string
+(def (str) back -> int
 	(ret (len A)))
-(def random_str (int) -> []str
+(def (int) random_str -> []str
   	(if (> A 20)
     		(ret [])
   	(nf 
-		((def res [20]str)
+		(def res [20]str)
 		(for (def i int) (> lp 0) (-= lp 1)
-      			((= ([i] res) (random_str 20 T))
-       			(+= i 1)))))))
-(def front (str) -> char
-  	(ret (<- A 0)))
-(def max (int int) -> int
-  	(if (> A B)
-    		(ret A)
-  	(nf
-    		(ret B))))
-(def count (str char) -> int
+      			(= (<- res i) (random_str 20 T))
+       			(+= i 1)))) (ret res))
+
+(def (str) front -> char (ret (<- A 0))) :) Return the first character of a string
+
+(def (str char) count -> int
   	((def count int)
     	(for (def i int) (< i (len A)) (+= i 1)
       		((if (== (<- A i) B)
           		(+= count 1)))))
 	(ret count))
-(def fp () -> |int int| -> int
-	(ret (def (int int) -> int
-		(ret (+ A B)))))
+
+>: Object oriented :<
+
+:) (def <K> <S>)
+(def Foo
+	(def () *bar)			:) INTERFACE
+	(def (bool) *what -> bool)	:) INTERFACE
+
+	(def x int)			:) MEMBER
+	(def y str "HELLO!!")		:) MEMBER
+	
+	(def max (int int) -> int	:) METHOD
+		(if (> A B)
+			(ret A)
+			(nf
+				(ret B)))))
+:) New object do not set initial value
+(def f (new Foo)) (put (<- f (max 3 5)))	:) 5
+
+:) x is 30, KV pair
+(def f(new (Foo x 30)))	(put (< f x))		:) 30
+
+(def Bar <- Foo				:) INHERIT
+	(def () bar
+		(put "CALL BAR!!"))
+
+	(def (bool) what -> bool	:) OVERRIDE
+		(ret T))
+
+	(def () call			:) OVERRIDE
+		(put (max 2 8))))
+((<- (new Bar) call))	:) 8
+
+:) END
