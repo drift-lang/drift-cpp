@@ -1,0 +1,26 @@
+(def back (str) -> int
+	(ret (len A)))
+(def random_str (int) -> []str
+  	(if (> A 20)
+    		(ret [])
+  	(nf 
+		((def res [20]str)
+		(for (def i int) (> lp 0) (-= lp 1)
+      			((= ([i] res) (random_str 20 T))
+       			(+= i 1)))))))
+(def front (str) -> char
+  	(ret (<- A 0)))
+(def max (int int) -> int
+  	(if (> A B)
+    		(ret A)
+  	(nf
+    		(ret B))))
+(def count (str char) -> int
+  	((def count int)
+    	(for (def i int) (< i (len A)) (+= i 1)
+      		((if (== (<- A i) B)
+          		(+= count 1)))))
+	(ret count))
+(def fp () -> |int int| -> int
+	(ret (def (int int) -> int
+		(ret (+ A B)))))
