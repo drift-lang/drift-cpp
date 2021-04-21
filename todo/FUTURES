@@ -1,7 +1,7 @@
 :)	Hello! This is the awesome program of DRIFT.
 
 :>
-	Keyword:
+	Builtin function:
 
 	def		ret 		new		for
 	aop		out		go 		if
@@ -9,7 +9,7 @@
 
 	12 items
 //
-	Object:
+	Object of program:
 
 	int		float		char		str
 	bool		array		tuple		map
@@ -22,21 +22,21 @@
 	(<Func> [<Arg>..])
 :<
 
-(def x int 45) 	:) Name definition function (def <K> <T> <E>)
-(def x int)	:) Original value into `x`
+(def int x 45) 	:) Name definition function (def <T> <K> <E>)
+(def int x)	:) Original value into `x`
 
 (put x)		:) 45 of `x` and its builtin function not Keyword
 
-(def x char 'p')				:) CHAR
+(def char x 'p')				:) CHAR
 
-(def x <int str> {200: "OK", 401: "NotFound"})	:) MAP
-(def x ()int 2 3 4)				:) TUPLE
-(def x []int 2 3 4)				:) ARRAY
+(def <int str> x {200: "OK", 401: "NotFound"})	:) MAP
+(def ()int x 2 3 4)				:) TUPLE
+(def []int x 2 3 4)				:) ARRAY
 
 :> CONTROL FOLLOW :<
 
-(def a int 45)
-(def b int 78)
+(def int a 45)
+(def int b 78)
 
 :) (if <E> <S> [<EF <E>>(S).. | <NF>(S)])
 (if (> a b) (put a) (nf (put b)))		:) Output the maximum value
@@ -50,20 +50,20 @@
 		(put "P")))
 
 :) (aop <E> <S>)
-(def p int 0) (aop (< p 10000) (put p) (+= p 1))	:) Loop from 0 to 10000
+(def int p 0) (aop (< p 10000) (put p) (+= p 1))	:) Loop from 0 to 10000
 
 :) (for <E> <E> <E> <S>)
-(for (def i int) (< i 20) (+= i 2)			:) Loop from 0 to 20 step 2
+(for (def int i) (< i 20) (+= i 2)			:) Loop from 0 to 20 step 2
 	(put i))
 
 :) (go <E> | _)
 :) (out <E> | _)
-(for (def i int) (< i 999) (+= i 1)
+(for (def int i) (< i 999) (+= i 1)
 	(if (== i 99)
 		(go _))			:) CONTINUE
 	(if (== i 888)
 		(out _)))		:) BREAK
-(for (def i int 20) (> i 10) (-= i 1)
+(for (def int i 20) (> i 10) (-= i 1)
 	(go (== (% i 2) 0)))		:) Step even numbers
 
 :> FUNCTION :<
@@ -77,7 +77,7 @@
 		(nf
 			(ret B))))
 (def () fp -> |int int| -> int		:) Anonymouse function
-	(ret (def (int int) -> int
+	(ret (def (int int) _ -> int
 		(ret (+ A B)))))
 (put (max 45 12))			:) 45
 (put ((fp) 2 5))			:) 7
@@ -89,18 +89,18 @@
   	(if (> A 20)
     		(ret [])
   	(nf 
-		(def res [20]str)
-		(for (def i int) (> lp 0) (-= lp 1)
+		(def [20]str res)
+		(for (def int i) (> lp 0) (-= lp 1)
       			(= (<- res i) (random_str 20 T))
        			(+= i 1)))) (ret res))
 
 (def (str) front -> char (ret (<- A 0))) :) Return the first character of a string
 
 (def (str char) count -> int
-  	((def count int)
-    	(for (def i int) (< i (len A)) (+= i 1)
-      		((if (== (<- A i) B)
-          		(+= count 1)))))
+	(def int count)
+    	(for (def int i) (< i (len A)) (+= i 1)
+      		(if (== (<- A i) B)
+          		(+= count 1)))
 	(ret count))
 
 >: Object oriented :<
@@ -110,19 +110,19 @@
 	(def () *bar)			:) INTERFACE
 	(def (bool) *what -> bool)	:) INTERFACE
 
-	(def x int)			:) MEMBER
-	(def y str "HELLO!!")		:) MEMBER
+	(def int x)			:) MEMBER
+	(def str y "HELLO!!")		:) MEMBER
 	
-	(def max (int int) -> int	:) METHOD
+	(def (int int) max -> int	:) METHOD
 		(if (> A B)
 			(ret A)
 			(nf
 				(ret B)))))
 :) New object do not set initial value
-(def f (new Foo)) (put (<- f (max 3 5)))	:) 5
+(def Foo f (new Foo)) (put (<- f (max 3 5)))		:) 5
 
 :) x is 30, KV pair
-(def f(new (Foo x 30)))	(put (< f x))		:) 30
+(def Foo f (new Foo x 30)) (put (<- f x))		:) 30
 
 (def Bar <- Foo				:) INHERIT
 	(def () bar
@@ -133,6 +133,30 @@
 
 	(def () call			:) OVERRIDE
 		(put (max 2 8))))
-((<- (new Bar) call))	:) 8
+(put (<- (new Bar) call))		:) 8
+
+>: Enum :<
+
+:) (def <K> -> <E>)
+(def Color -> RED GREEN BLUE PINK)
+(def Color p Color <- BLUE) (put p)	:) BLUE
+
+(if
+	(!= p Color <- PINK)
+	(put "CALL!"))			:) CALL
+
+(use io)				:) MODULE
+(put ((<- io read) "./A.txt"))
+
+(def (int) fib -> int
+	(if (== n 0)
+		(ret 0)
+		(ef (== n 1)
+			(ret 1))
+		(nf
+			(ret (+ (fib (- n 1)) (fib (- n 2)))))))
+
+(put (fib 20))		:) 6757
+(del x) (put x)		:) exception
 
 :) END
