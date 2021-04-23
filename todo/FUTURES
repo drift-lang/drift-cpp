@@ -124,7 +124,7 @@
 :) x is 30, KV pair
 (def Foo f (new Foo x 30)) (put (<- f x))		:) 30
 
-(def Bar <- Foo				:) INHERIT
+(def Bar << Foo				:) INHERIT
 	(def () bar
 		(put "CALL BAR!!"))
 
