@@ -6,25 +6,24 @@
       Keyword:
 
       def   ret   for   aop
-      end   if    ef    nf
-      new   out   go    mod
-      del   use
+      if    ef    nf    new
+      out   go    mod   use
 
-      14 items.
+      12 items.
 */
 
 /*
       Object:
 
-      1.int
-      2.float
-      3.char
-      4.str
-      5.bool
-      6.array
-      7.tuple
-      8.map
-      9.enum
+      1. int
+      2. float
+      3. char
+      4. string
+      5. bool
+      6. array
+      7. tuple
+      8. map
+      9. enum
       10.function
       11.whole
       12.module
@@ -33,27 +32,28 @@
 /*
       Define name:
 
-      def <K>: <T> = <E>
+      def <K> <T> = <E>
 
       In drift, use the `def` keyword to define any type of name.
 */
 
-def x: int = 30
-def y: []int = [4, 5, 6]
+def x int = 30
+def y []int = [4, 5, 6]
+
 
 def Color
-  RED
-  PINK
-  NONE
-end
+    RED
+    PINK
+    NONE
+
 
 def Foo
-  def () show
-    putl("CALL")
-  end
-end
+    def () show
+        putl("CALL")
+
 
 putl(x, y, Color, Foo, 1 == Color.PINK)
+
 
 /*
       Control follow:
@@ -61,57 +61,53 @@ putl(x, y, Color, Foo, 1 == Color.PINK)
 1.IF JUMP
 
       if <E>
-        <B>
+          <B>
       [ef <E>]..
-        <B>
+          <B>
       [nf]
-        <B>
-      end
+          <B>
 
 2.AOP LOOP
 
       aop <E> | ->
-        <B>
-      end
+          <B>
 
 3.FOR LOOP
 
-      for <K>: <T> = <E>; <E>; <E>
-        <B>
-      end
+      for <E>; <E>; <E>
+          <B>
 */
 
-def x: int = 10
+def x int = 10
+
 
 if x > -1 & x != 0
-  putl("OK")
-end
+    putl("OK")
+
 
 if x == 5
-  putl("A")
+    putl("A")
 ef x == 8
-  putl("B")
+    putl("B")
 ef x == 10
-  putl("C")
+    putl("C")
 nf
-  putl("P")
-end
+    putl("P")
 
+ 
 aop x > 0
-  if x % 2 == 0
-    put(x)
-  end
-  x -= 2
-end
+    if x % 2 == 0
+        put(x)
+    x -= 2
 
-for i: float = 8.88; i > 0; i -= 0.01
-  go i <= 7 /* continue */
-  if i <= 8
-    out ->  /* break */
-  nf
-    put(i)
-  end
-end
+
+for def i float = 8.88; i > 0; i -= 0.01
+    go i <= 7 /* continue */
+    if i <= 8
+        out ->  /* break */
+    nf
+        put(i)
+
 
 /*
       Loop control:
@@ -123,105 +119,100 @@ end
       go <E>
 */
 
-def x: [5]int   /* original value */
-def y: (str) = ("OK", "NO", "PP")
-def z: <int, str> = {3: "A", 5: "K", 8: "L"}
+def x [5]int   /* original value */
+def y (string) = ("OK", "NO", "PP")
+def z <int, string> = {3: "A", 5: "K", 8: "L"}
+
 
 putl(x, y, z)
 putl(x[0], y.1, z[5])
+
 
 /*
       Function:
 
       def <K>(<E>..) | -> <E>
-        <B>
-      end
+          <B>
 */
 
-def (x + y: int, z: str) foo -> int
-  if len(z) != 0
-    putl(z)
-  end
-  ret (x + y) * 2
-end
+def (x, y int, z string) foo -> int
+    if len(z) != 0
+        putl(z)
+    ret (x + y) * 2
 
-def (a: int, b: int) add -> int
-  ret a + b
-end
 
-def (x: |int, int| -> int, a + b: int) sum -> int
-  ret x(a, b) + x(a, b)
-end
+def (a int, b int) add -> int
+    ret a + b
+
+
+def (x |int, int| -> int, a, b int) sum -> int
+    ret x(a, b) + x(a, b)
+
 
 def () set -> |int|
-  ret def (x: int) _    /* ANONYMOUSE */
-    puts(x * 2)
-  end
-end
+    ret def (x int) _    /* ANONYMOUSE */
+        puts(x * 2)
+
 
 set()(8)
 
-def (x: int) bar -> |int, int| -> []int
-  putl("x = ", x)
 
-  ret def (a + b: int) -> []int   /* ANONYMOUSE */
-    ret [
-          a,
-          b,
-          a + b,
-          a - b,
-          a * b,
-          a / b
-    ]
-  end
-end
+def (x int) bar -> |int, int| -> []int
+    putl("x = ", x)
+
+    ret def (a, b int) -> []int   /* ANONYMOUSE */
+        ret [
+                a,
+                b,
+                a + b,
+                a - b,
+                a * b,
+                a / b
+            ]
 
 put(
-  foo(2, 3, "p"), add(3, 1), sum(add, 4, 2), bar(12)(3, 4)
+    foo(2, 3, "p"), add(3, 1), sum(add, 4, 2), bar(12)(3, 4)
 )
 
 /*
       Whole:
 
       def <K>
-        <I>..
-        <M>..
-      end
+          <I>..
+          <M>..
+       
 */
 
 def Foo
-  def () *bar   /* INTERFACE */
-  def (bool) *what -> bool
+    def () *bar   /* INTERFACE */
+    def (bool) *what -> bool
 
-  def x: int
-  def y: str = "HELLO!!"
+    def x int
+    def y string = "HELLO!!"
 
-  def (x: int, y: int) max -> int
-    if x > y
-      ret x
-    nf
-      ret y
-    end
-  end
-end
+    def (x, y int) max -> int
+        if x > y
+            ret x
+        nf
+            ret y
+
 
 putl(new Foo.max(34, 12), new Foo.x, new Foo.y)
 
+
 def Kop
-  def () *more
-end
+    def () *more
+
 
 def Oop <- Foo + Kop    /* INHERIT */
-  def () more end
+    def () more  
 
-  def () bar 
-    putl(max(99, 98))   /* CALL INHERIT */
-  end
+    def () bar 
+        putl(max(99, 98))   /* CALL INHERIT */
 
-  def (x: bool) what -> bool
-    ret T
-  end
-end
+    def (x bool) what -> bool
+        ret T 
+
 
 putl(new Oop.bar())
 
@@ -229,16 +220,18 @@ putl(new Oop.bar())
       Others:
 */
 
-def x: int = 30
-def y: []int = [1, 2, 3]
-def z: [3]float
+def x int = 30
+def y []int = [1, 2, 3]
+def z [3]float
+
 
 putl("x = $x y = $y z = $z")
 
-aop ->
-  putl("x: $x  ") /* STRING TEMPLATE */
-  out x == 20
-  x -= 1
-end
 
-putl() // END
+aop ->
+    putl("x: $x  ") /* stringING TEMPLATE */
+    out x == 20
+    x -= 1
+
+
+putl() //  
