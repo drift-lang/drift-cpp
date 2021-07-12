@@ -119,9 +119,9 @@ for def i float = 8.88; i > 0; i -= 0.01
       go <E>
 */
 
-def x [5]int   /* original value */
-def y (string) = ("OK", "NO", "PP")
-def z <int, string> = {3: "A", 5: "K", 8: "L"}
+def x []int = [1, 2, 3, 4, 5, 6, 7, 8]
+def y ()string = ("OK", "NO", "PP")
+def z {}<int, string> = {3: "A", 5: "K", 8: "L"}
 
 
 putl(x, y, z)
@@ -141,7 +141,7 @@ def (x, y int, z string) foo -> int
     ret (x + y) * 2
 
 
-def (a int, b int) add -> int
+def (a, b int) add -> int
     ret a + b
 
 
@@ -150,7 +150,7 @@ def (x |int, int| -> int, a, b int) sum -> int
 
 
 def () set -> |int|
-    ret def (x int) _    /* ANONYMOUSE */
+    ret def (x int) foo
         puts(x * 2)
 
 
@@ -222,14 +222,14 @@ putl(new Oop.bar())
 
 def x int = 30
 def y []int = [1, 2, 3]
-def z [3]float
+def z []float = []
 
 
 putl("x = $x y = $y z = $z")
 
 
 aop ->
-    putl("x: $x  ") /* stringING TEMPLATE */
+    puts("x = ", x)
     out x == 20
     x -= 1
 
